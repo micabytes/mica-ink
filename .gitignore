@@ -1,0 +1,6 @@
+build/
+.gradle
+.idea/inspectionProfiles/
+.idea/libraries/
+.idea/misc.xml
+.idea/workspace.xml
