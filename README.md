@@ -1,5 +1,7 @@
 # jInk
 
+[![CI Status](http://img.shields.io/travis/micabytes/jink.svg?style=flat)](https://travis-ci.org/micabytes/jink)
+
 jInk is - or rather - may become a Java implementation of Inkle Studios (@inkle) scripting language ink for writing interactive narrative.
 
 At present, this is a mostly experimental implementation which I did while working through some of the low-level nuts and bolts of Ink. You should probably not make use of this for anything serious yet, as I am likely to change things around in future (plus maybe implement a more robust parser).
