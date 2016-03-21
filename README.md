@@ -7,8 +7,9 @@ jInk is - or rather - may become a Java implementation of Inkle Studios (@inkle)
 At present, this is a mostly experimental implementation which I did while working through some of the low-level nuts and bolts of Ink. You should probably not make use of this for anything serious yet, as I am likely to change things around in future (plus maybe implement a more robust parser).
 
 Currently, this reimplements Part 1 of the [Ink documentation](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md), with the following exceptions (that I know of - other things may be missing as well):
+- Conditional texts (simply forgot to implement)
 - Conditions on choices (as well as the choice text) cannot be multi-line.
-- evaluation of conditions has some limitations (lack of support for not, evaluation of 'and' and 'or' is space sensitive).  
+- evaluation of conditions has some limitations (lack of support for not, evaluation of 'and' and 'or' is space sensitive).
 - INCLUDE is not implemented.
 - Comments are not implemented.
 - CHOICE_COUNT and TURNS_SINCE are not implemented (essentially functions, and those haven't been implemented yet).
