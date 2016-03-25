@@ -85,6 +85,10 @@ public class Content {
     return type == ContentType.CHOICE_ONCE || type == ContentType.CHOICE_REPEATABLE;
   }
 
+  public boolean isGather() {
+    return type == ContentType.GATHER;
+  }
+
   public boolean isDivert() {
     return text.contains(Story.DIVERT);
   }

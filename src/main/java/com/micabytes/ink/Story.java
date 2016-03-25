@@ -9,65 +9,42 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Story {
-  private static final String GLUE = "<>";
-  static final String DIVERT = "->";
+  @NonNls private static final String GLUE = "<>";
+  @NonNls static final String DIVERT = "->";
   @NonNls private static final String DIVERT_END = "END";
+  public static final char LT = '<';
+  public static final char GT = '>';
 
   private final HashMap<String, Container> namedContainers = new HashMap<>();
   private Container currentContainer;
   private int currentCounter;
   private final ArrayList<Container> currentChoices = new ArrayList<>();
-
-  void add(Container container) {
-    if (container.getId() != null)
-      namedContainers.put(container.getId(), container);
-    // Set starting knot
-    if (currentContainer == null)
-      currentContainer = container;
-  }
+  private boolean running;
 
   void initialize() {
     if (currentContainer.type == ContentType.KNOT)
       currentContainer = (Container) currentContainer.getContent(0);
+    running = true;
   }
 
-
-  public boolean canContinue() {
+  public boolean hasNext() {
     return currentContainer != null && currentCounter < currentContainer.getContentSize();
   }
 
-  public boolean isEnded() {
-    return currentContainer == null;
-  }
-
-  public String nextLine() throws InkRunTimeException {
-    if (!canContinue())
+  public String next() throws InkRunTimeException {
+    if (!hasNext())
       throw new InkRunTimeException("Did you forget to run canContinue()?");
     String ret = "";
-    Content content = currentContainer.getContent(currentCounter);
+    Content content = nextContent();
     boolean linebreak = false;
     while (!linebreak) {
       linebreak = true;
       currentCounter++;
-      switch (content.type) {
-        case CHOICE_ONCE:
-          if (((Choice) content).count <= 0)
-            resolveChoiceContent((Choice) content);
-          break;
-        case CHOICE_REPEATABLE:
-          resolveChoiceContent((Choice) content);
-          break;
-        case TEXT:
-          ret += content.isDivert() ? resolveDivert(content) : content.getText(this);
-          content.increment();
-          break;
-        default:
-          break;
-      }
+      ret += resolveContent(content);
       if (ret.endsWith(GLUE))
         linebreak = false;
-      if (canContinue()) {
-        Content nextContent = currentContainer.getContent(currentCounter);
+      if (hasNext()) {
+        Content nextContent = lookAheadToContent();
         if (nextContent.text.startsWith(GLUE) || content.isChoice())
           linebreak = false;
         if (nextContent.type == ContentType.TEXT && nextContent.isDivert()) {
@@ -75,14 +52,67 @@ public class Story {
           if (divertTo != null && divertTo.getContent(0).text.startsWith(GLUE))
             linebreak = false;
         }
-        content = nextContent;
+        content = nextContent();
       } else
         linebreak = true;
     }
     return cleanUpText(ret);
   }
 
-  private void resolveChoiceContent(Choice choice) throws InkRunTimeException {
+  private String resolveContent(Content content) throws InkRunTimeException {
+    if (content.type == ContentType.TEXT) {
+      String ret = content.isDivert() ? resolveDivert(content) : content.getText(this);
+      content.increment();
+      return ret;
+    }
+    if (content.isChoice()) {
+      addChoice((Choice) content);
+    }
+    return "";
+  }
+
+  private Content nextContent() throws InkRunTimeException {
+    if (currentContainer == null)
+      throw new InkRunTimeException("Current text container is NULL.");
+    if (currentCounter >= currentContainer.getContentSize()) {
+      if (currentContainer.isChoice() || currentContainer.isGather()) {
+        Container p = currentContainer.parent;
+        while (p != null) {
+          Content c = p.getContent(p.getContentSize() - 1);
+          if (c.isGather()) {
+            currentContainer = (Container) c;
+            return currentContainer.getContent(0);
+          }
+          p = ((Container) c).parent;
+        }
+      }
+      //throw new InkRunTimeException("Knot or stitch on line " + currentContainer.lineNumber + " ended without choice or divert.");
+      return null;
+    }
+    return currentContainer.getContent(currentCounter);
+  }
+
+  private Content lookAheadToContent() {
+    if (currentContainer == null)
+      return null;
+    if (currentCounter >= currentContainer.getContentSize()) {
+      if (currentContainer.isChoice() || currentContainer.isGather()) {
+        Container p = currentContainer.parent;
+        while (p != null) {
+          Content c = p.getContent(p.getContentSize() - 1);
+          if (c.isGather()) {
+            return ((Container)c).getContent(0);
+          }
+          p = ((Container) c).parent;
+        }
+      }
+      //throw new InkRunTimeException("Knot or stitch on line " + currentContainer.lineNumber + " ended without choice or divert.");
+      return null;
+    }
+    return currentContainer.getContent(currentCounter);
+  }
+
+  private void addChoice(Choice choice) throws InkRunTimeException {
     // Check conditions
     if (!choice.evaluateConditions(this))
       return;
@@ -100,8 +130,8 @@ public class Story {
 
   public List<String> allLines() throws InkRunTimeException {
     ArrayList<String> ret = new ArrayList<>();
-    while (canContinue()) {
-      String text = nextLine();
+    while (hasNext()) {
+      String text = next();
       if (!text.isEmpty())
         ret.add(text);
     }
@@ -165,5 +195,18 @@ public class Story {
     }
     throw new InkRunTimeException("Could not identify the variable " + s);
   }
+
+  void add(Container container) {
+    if (container.getId() != null)
+      namedContainers.put(container.getId(), container);
+    // Set starting knot
+    if (currentContainer == null)
+      currentContainer = container;
+  }
+
+  public boolean isEnded() {
+    return currentContainer == null;
+  }
+
 
 }

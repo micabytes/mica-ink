@@ -43,7 +43,7 @@ class StitchSpec extends Specification {
       text.get(0) must beEqualTo("I settled my master.")
     }
 
-    "- not be diverted to if the knot has content" in {
+      "- not be diverted to if the knot has content" in {
       val inputStream = IOUtils.toInputStream(manualStitch, "UTF-8")
       val story = InkParser.parse(inputStream)
       val knotText = story.allLines()

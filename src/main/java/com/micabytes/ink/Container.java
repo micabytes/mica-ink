@@ -1,8 +1,12 @@
 package com.micabytes.ink;
 
+import com.udojava.evalex.Expression;
+
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Container extends Content {
@@ -35,4 +39,7 @@ public class Container extends Content {
     return content.get(i);
   }
 
+  public int getContentIndex(Container c) {
+    return content.indexOf(c);
+  }
 }

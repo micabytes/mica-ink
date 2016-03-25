@@ -21,7 +21,7 @@ public class Choice extends Container {
     lineNumber = l;
     char notation = str.charAt(0);
     type = notation == InkParser.CHOICE_DOT ? ContentType.CHOICE_ONCE : ContentType.CHOICE_REPEATABLE;
-    level = 2;
+    level = 3;
     String s = str.substring(1).trim();
     while (s.charAt(0) == notation) {
       level++;
@@ -76,6 +76,8 @@ public class Choice extends Container {
   }
 
   public boolean evaluateConditions(Story story) throws InkRunTimeException {
+    if (count > 0 && type == ContentType.CHOICE_ONCE)
+      return false;
     if (conditions == null)
       return true;
     for (String condition : conditions) {
@@ -85,7 +87,8 @@ public class Choice extends Container {
     return true;
   }
 
-  private static int evaluate(String str, Story story) throws InkRunTimeException {
+
+  protected static int evaluate(String str, Story story) throws InkRunTimeException {
     // TODO: Note that this means that spacing will mess up expressions; needs to be fixed
     String ev = str.replaceAll(AND_WS, " && ").replaceAll(OR_WS, " || ").replaceAll(TRUE_LC, TRUE_UC).replaceAll(FALSE_LC, FALSE_UC);
     com.udojava.evalex.Expression ex = new Expression(ev);
