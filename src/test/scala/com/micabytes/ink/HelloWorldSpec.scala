@@ -14,7 +14,7 @@ class HelloWorldSpec extends Specification {
     val story = InkParser.parse(inputStream)
 
     "- return a single line of text as output" in {
-      val text = story.allLines()
+      val text = story.nextChoice()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("Hello, world!")
     }
@@ -30,7 +30,7 @@ class HelloWorldSpec extends Specification {
           |Hello, are you there?""".stripMargin
       val inputStream = IOUtils.toInputStream(testData, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val text = story.allLines()
+      val text = story.nextChoice()
       text.size() must beEqualTo(3)
       text.get(0) must beEqualTo("Hello, world!")
       text.get(1) must beEqualTo("Hello?")
@@ -46,7 +46,7 @@ class HelloWorldSpec extends Specification {
           """.stripMargin
       val inputStream = IOUtils.toInputStream(testData, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val text = story.allLines()
+      val text = story.nextChoice()
       text.size() must beEqualTo(3)
       text.get(0) must beEqualTo("Hello, world!")
       text.get(1) must beEqualTo("Hello?")

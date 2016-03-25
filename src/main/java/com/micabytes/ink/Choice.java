@@ -91,7 +91,7 @@ public class Choice extends Container {
   protected static int evaluate(String str, Story story) throws InkRunTimeException {
     // TODO: Note that this means that spacing will mess up expressions; needs to be fixed
     String ev = str.replaceAll(AND_WS, " && ").replaceAll(OR_WS, " || ").replaceAll(TRUE_LC, TRUE_UC).replaceAll(FALSE_LC, FALSE_UC);
-    com.udojava.evalex.Expression ex = new Expression(ev);
+    Expression ex = new Expression(ev);
     Iterator<String> tokens = ex.getExpressionTokenizer();
     while (tokens.hasNext()) {
       String s = tokens.next();

@@ -16,7 +16,7 @@ Currently, this reimplements Part 1 of the [Ink documentation](https://github.co
 
 Most of the examples in that section of the documentation are implemented as tests, with a few additional test cases grabbed from the 'ink/Tests' where appropriate.
 
-The library is a combines runtime and parser, instead of splitting it up. Neither JSON output or input is supported at present; only plain Ink. Since the JSON format is not really stable yet, I probably won't be spending much time looking at that for now.
+The library is a combined runtime and parser, instead of splitting it up. Neither JSON output or input is supported at present; only plain Ink. Since the JSON format is not really stable yet, I probably won't be spending much time looking at that for now.
 
 To build the jar:
 ```
@@ -42,9 +42,15 @@ Loading a story file:
 
 Working through content line by line:
 ```
-  while (story.canContinue()) {
-    story.nextLine();
+  while (story.hasNext()) {
+    String line = story.next();
+    ...
   }
+```
+
+Working through all content content line by line:
+```
+  List<String> lines = story.nextChoice();
 ```
 
 Interface will almost certainly change later, though. Unfortunately, the existing ink interface doesn't work with standard Java (`continue` is a reserved keyword).

@@ -35,28 +35,79 @@ public class Story {
     if (!hasNext())
       throw new InkRunTimeException("Did you forget to run canContinue()?");
     String ret = "";
-    Content content = nextContent();
-    boolean linebreak = false;
-    while (!linebreak) {
-      linebreak = true;
-      currentCounter++;
+    Content content = getContent();
+    boolean processing = true;
+    while (processing) {
+      processing = false;
       ret += resolveContent(content);
-      if (ret.endsWith(GLUE))
-        linebreak = false;
-      if (hasNext()) {
-        Content nextContent = lookAheadToContent();
-        if (nextContent.text.startsWith(GLUE) || content.isChoice())
-          linebreak = false;
-        if (nextContent.type == ContentType.TEXT && nextContent.isDivert()) {
-          Container divertTo = getDivertTarget(nextContent);
-          if (divertTo != null && divertTo.getContent(0).text.startsWith(GLUE))
-            linebreak = false;
+      incrementContent(content);
+      if (currentContainer != null) {
+        Content nextContent = getContent();
+        if (nextContent != null) {
+          if (nextContent.text.startsWith(GLUE))
+            processing = true;
+          if (nextContent.isChoice() && !nextContent.isFallbackChoice())
+            processing = true;
+          if (nextContent.type == ContentType.TEXT && nextContent.text.startsWith(DIVERT)) {
+            Container divertTo = getDivertTarget(nextContent);
+            if (divertTo != null && divertTo.getContent(0).text.startsWith(GLUE))
+              processing = true;
+          }
         }
-        content = nextContent();
-      } else
-        linebreak = true;
+        if (ret.endsWith(GLUE) && nextContent != null)
+          processing = true;
+        content = nextContent;
+      }
     }
     return cleanUpText(ret);
+  }
+
+  private void incrementContent(Content content) throws InkRunTimeException {
+    if (content.isDivert()) {
+      currentContainer = getDivertTarget(content);
+      if (currentContainer != null)
+        currentContainer.increment();
+      else
+        running = false;
+      currentCounter = 0;
+      currentChoices.clear();
+      return;
+    }
+    currentCounter++;
+    if (currentCounter >= currentContainer.getContentSize()) {
+      if (currentContainer.isChoice() || currentContainer.isGather()) {
+        Container p = currentContainer.parent;
+        while (p != null) {
+          Content c = p.getContent(p.getContentSize() - 1);
+          if (c.isGather()) {
+            currentContainer = (Container) c;
+            currentContainer.increment();
+            currentCounter = 0;
+            return;
+          }
+          p = p.parent;
+        }
+      }
+    }
+    else {
+      Content next = getContent();
+      if (next.isFallbackChoice() && currentChoices.isEmpty()) {
+        currentContainer = (Container) next;
+        currentContainer.increment();
+        currentCounter = 0;
+        return;
+      }
+    }
+  }
+
+  private Content getContent() throws InkRunTimeException {
+    if (!running)
+      return null;
+    if (currentContainer == null && running)
+      throw new InkRunTimeException("Current text container is NULL.");
+    if (currentCounter >= currentContainer.getContentSize())
+      return null;
+    return currentContainer.getContent(currentCounter);
   }
 
   private String resolveContent(Content content) throws InkRunTimeException {
@@ -71,45 +122,25 @@ public class Story {
     return "";
   }
 
-  private Content nextContent() throws InkRunTimeException {
-    if (currentContainer == null)
-      throw new InkRunTimeException("Current text container is NULL.");
-    if (currentCounter >= currentContainer.getContentSize()) {
-      if (currentContainer.isChoice() || currentContainer.isGather()) {
-        Container p = currentContainer.parent;
-        while (p != null) {
-          Content c = p.getContent(p.getContentSize() - 1);
-          if (c.isGather()) {
-            currentContainer = (Container) c;
-            return currentContainer.getContent(0);
-          }
-          p = ((Container) c).parent;
-        }
-      }
-      //throw new InkRunTimeException("Knot or stitch on line " + currentContainer.lineNumber + " ended without choice or divert.");
-      return null;
-    }
-    return currentContainer.getContent(currentCounter);
+  private String resolveDivert(Content content) throws InkRunTimeException {
+    String ret = content.getText(this);
+    ret = ret.substring(0, ret.indexOf(DIVERT)).trim();
+    ret += GLUE;
+    return ret;
   }
 
-  private Content lookAheadToContent() {
-    if (currentContainer == null)
+  private Container getDivertTarget(Content content) throws InkRunTimeException {
+    String d = content.text.substring(content.text.indexOf(DIVERT) + 2).trim();
+    if (d.equals(DIVERT_END))
       return null;
-    if (currentCounter >= currentContainer.getContentSize()) {
-      if (currentContainer.isChoice() || currentContainer.isGather()) {
-        Container p = currentContainer.parent;
-        while (p != null) {
-          Content c = p.getContent(p.getContentSize() - 1);
-          if (c.isGather()) {
-            return ((Container)c).getContent(0);
-          }
-          p = ((Container) c).parent;
-        }
-      }
-      //throw new InkRunTimeException("Knot or stitch on line " + currentContainer.lineNumber + " ended without choice or divert.");
-      return null;
+    Container divertTo = namedContainers.get(d);
+    if (divertTo == null) {
+      Container currentKnot = currentContainer.getContainer(0);
+      divertTo = namedContainers.get(currentKnot.id + InkParser.DOT + d);
+      if (divertTo == null)
+        throw new InkRunTimeException("Attempt to divert to non-defined " + d + " in line " + content.lineNumber);
     }
-    return currentContainer.getContent(currentCounter);
+    return divertTo.type == ContentType.KNOT ? (Container) divertTo.getContent(0) : divertTo;
   }
 
   private void addChoice(Choice choice) throws InkRunTimeException {
@@ -128,7 +159,7 @@ public class Story {
     }
   }
 
-  public List<String> allLines() throws InkRunTimeException {
+  public List<String> nextChoice() throws InkRunTimeException {
     ArrayList<String> ret = new ArrayList<>();
     while (hasNext()) {
       String text = next();
@@ -156,31 +187,6 @@ public class Story {
     return (Choice) currentChoices.get(i);
   }
 
-  private String resolveDivert(Content content) throws InkRunTimeException {
-    String ret = content.text.substring(0, content.text.indexOf(DIVERT)).trim();
-    if (!ret.isEmpty())
-      ret += GLUE;
-    currentContainer = getDivertTarget(content);
-    if (currentContainer != null)
-      currentContainer.increment();
-    currentCounter = 0;
-    currentChoices.clear();
-    return ret;
-  }
-
-  private Container getDivertTarget(Content content) throws InkRunTimeException {
-    String d = content.text.substring(content.text.indexOf(DIVERT) + 2).trim();
-    if (d.equals(DIVERT_END))
-      return null;
-    Container divertTo = namedContainers.get(d);
-    if (divertTo == null) {
-      Container currentKnot = currentContainer.getContainer(0);
-      divertTo = namedContainers.get(currentKnot.id + InkParser.DOT + d);
-      if (divertTo == null)
-        throw new InkRunTimeException("Attempt to divert to non-defined " + d + " in line " + content.lineNumber);
-    }
-    return divertTo.type == ContentType.KNOT ? (Container) divertTo.getContent(0) : divertTo;
-  }
 
   private static String cleanUpText(@NonNls String str) {
     return str.replaceAll(GLUE, " ") // clean up glue

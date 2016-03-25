@@ -63,7 +63,7 @@ class DivertSpec extends Specification {
     "- divert text from one knot/stitch to another" in {
       val inputStream = IOUtils.toInputStream(simpleDivert, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val text = story.allLines()
+      val text = story.nextChoice()
       text.size() must beEqualTo(2)
       text.get(0) must beEqualTo("We arrived into London at 9.45pm exactly.")
       text.get(1) must beEqualTo("We hurried home to Savile Row as fast as we could.")
@@ -72,7 +72,7 @@ class DivertSpec extends Specification {
     "- divert from one line of text to new content invisibly" in {
       val inputStream = IOUtils.toInputStream(invisibleDivert, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val text = story.allLines()
+      val text = story.nextChoice()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("We hurried home to Savile Row as fast as we could.")
     }
@@ -80,9 +80,9 @@ class DivertSpec extends Specification {
     "- branch directly from choices" in {
       val inputStream = IOUtils.toInputStream(divertOnChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.allLines()
+      story.nextChoice()
       story.choose(0)
-      val text = story.allLines()
+      val text = story.nextChoice()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("You open the gate, and step out onto the path.")
     }
@@ -91,9 +91,9 @@ class DivertSpec extends Specification {
       // First path through text
       val inputStream = IOUtils.toInputStream(complexBranching, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.allLines()
+      story.nextChoice()
       story.choose(0)
-      val text = story.allLines()
+      val text = story.nextChoice()
       text.size() must beEqualTo(2)
       text.get(0) must beEqualTo("\"There is not a moment to lose!\" I declared.")
       text.get(1) must beEqualTo("We hurried home to Savile Row as fast as we could.")
@@ -103,9 +103,9 @@ class DivertSpec extends Specification {
       // Second path through text
       val inputStream = IOUtils.toInputStream(complexBranching, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.allLines()
+      story.nextChoice()
       story.choose(1)
-      val text = story.allLines()
+      val text = story.nextChoice()
       text.size() must beEqualTo(3)
       text.get(0) must beEqualTo("\"Monsieur, let us savour this moment!\" I declared.")
       text.get(1) must beEqualTo("My master clouted me firmly around the head and dragged me out of the door.")
@@ -116,9 +116,9 @@ class DivertSpec extends Specification {
       // Third path through text
       val inputStream = IOUtils.toInputStream(complexBranching, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.allLines()
+      story.nextChoice()
       story.choose(2)
-      val text = story.allLines()
+      val text = story.nextChoice()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("We hurried home to Savile Row as fast as we could.")
     }

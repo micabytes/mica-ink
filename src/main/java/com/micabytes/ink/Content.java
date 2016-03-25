@@ -85,6 +85,10 @@ public class Content {
     return type == ContentType.CHOICE_ONCE || type == ContentType.CHOICE_REPEATABLE;
   }
 
+  public boolean isFallbackChoice() {
+    return isChoice() && text.isEmpty();
+  }
+
   public boolean isGather() {
     return type == ContentType.GATHER;
   }
@@ -100,5 +104,4 @@ public class Content {
   public void increment() {
     count ++;
   }
-
 }
