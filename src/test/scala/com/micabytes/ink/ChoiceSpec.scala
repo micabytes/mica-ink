@@ -223,7 +223,7 @@ class ChoiceSpec extends Specification {
       story.nextChoice
       story.choose(0)
       story.nextChoice
-      story.getChoiceSize() must beEqualTo(1)
+      story.getChoiceSize must beEqualTo(1)
       story.getChoice(0).getChoiceText(story) must beEqualTo("Found gatherpoint")
     }
 
@@ -244,6 +244,30 @@ class ChoiceSpec extends Specification {
       story.choose(0)
       story.nextChoice must throwA[InkRunTimeException]
     }
+
+    val divertChoice =
+      """=== knot
+        |You see a soldier.
+        |*   [Pull a face]
+        |    You pull a face, and the soldier comes at you! -> shove
+        |*   (shove) [Shove the guard aside] You shove the guard to one side, but he comes back swinging.
+        |*   {shove} [Grapple and fight] -> fight_the_guard
+        |-   -> knot
+      """.stripMargin
+
+    "- be used up if they are once-only and a divert goes through them" in {
+      val inputStream = IOUtils.toInputStream(divertChoice, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice
+      story.getChoiceSize must beEqualTo(2)
+      story.choose(0)
+      val text = story.nextChoice
+      text.size() must beEqualTo(2)
+      text.get(0) must beEqualTo("You pull a face, and the soldier comes at you! You shove the guard to one side, but he comes back swinging.")
+      story.getChoiceSize must beEqualTo(1)
+      story.getChoice(0).getChoiceText(story) must beEqualTo("Grapple and fight")
+    }
+
 
   }
 

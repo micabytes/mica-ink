@@ -9,7 +9,7 @@ public class Gather extends Container {
     type = ContentType.GATHER;
     level = 2;
     String s = str.substring(1).trim();
-    while (s.charAt(0) == InkParser.GATHER_DASH) {
+    while (s.startsWith("- ")) {
       level++;
       s = s.substring(1).trim();
     }
@@ -34,8 +34,7 @@ public class Gather extends Container {
 
   public static boolean isGatherHeader(String str) {
     if (str.length() < 2) return false;
-    if (str.startsWith(Story.DIVERT)) return false;
-    return str.charAt(0) == InkParser.GATHER_DASH;
+    return str.startsWith("- ");
   }
 
 }
