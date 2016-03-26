@@ -21,7 +21,7 @@ public class Choice extends Container {
     lineNumber = l;
     char notation = str.charAt(0);
     type = notation == InkParser.CHOICE_DOT ? ContentType.CHOICE_ONCE : ContentType.CHOICE_REPEATABLE;
-    level = 3;
+    level = 2;
     String s = str.substring(1).trim();
     while (s.charAt(0) == notation) {
       level++;
@@ -31,13 +31,21 @@ public class Choice extends Container {
       throw new InkParseException("A choice must be nested within another knot, parent or choice/gather structure");
     parent = current.getContainer(level - 1);
     parent.add(this);
-    // TODO: Optional Name
     addLine(s);
   }
 
   public void addLine(String str) {
     String s = str;
-    if (s.startsWith("{") && conditions == null)
+    if (s.startsWith("(")) {
+      id = s.substring(s.indexOf("(") + 1, s.indexOf(")")).trim();
+      Container p = parent;
+      while (p != null) {
+        id = p.id + InkParser.DOT + id;
+        p = p.parent;
+      }
+      s = s.substring(s.indexOf(")") + 1).trim();
+    }
+    if (s.startsWith(CBRACE_LEFT) && conditions == null)
       conditions = new ArrayList<>();
     while (s.startsWith("{")) {
       String c = s.substring(s.indexOf(CBRACE_LEFT) + 1, s.indexOf(CBRACE_RIGHT)).trim();

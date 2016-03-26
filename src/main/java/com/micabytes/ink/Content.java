@@ -10,7 +10,7 @@ public class Content {
 
   int lineNumber;
   ContentType type = ContentType.TEXT;
-  String text;
+  String text = "";
   int count;
 
   public Content() {
@@ -79,6 +79,10 @@ public class Content {
     String[] tokens = s.split("[|]");
     int i = count < tokens.length ? count : tokens.length - 1;
     return tokens[i];
+  }
+
+  public boolean isStitch() {
+    return type == ContentType.STITCH;
   }
 
   public boolean isChoice() {

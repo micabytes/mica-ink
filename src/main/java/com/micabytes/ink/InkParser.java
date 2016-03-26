@@ -51,8 +51,8 @@ public final class InkParser {
             break;
           case CHOICE_DOT:
           case CHOICE_PLUS:
-            if (isEmptyKnotParent(current))
-              current = createDefaultStitch(lineNumber, current, story);
+            //if (isEmptyKnotParent(current))
+            //  current = createDefaultStitch(lineNumber, current, story);
             if (Choice.isChoiceHeader(trimmedLine)) {
               current = new Choice(lineNumber, trimmedLine, current);
               story.add(current);
@@ -75,8 +75,8 @@ public final class InkParser {
             current = new Knot(lineNumber, DEFAULT_KNOT_NAME);
             story.add(current);
           }
-          if (isEmptyKnotParent(current))
-            current = createDefaultStitch(lineNumber, current, story);
+          //if (isEmptyKnotParent(current))
+          //  current = createDefaultStitch(lineNumber, current, story);
           current.add(text);
         }
         line = bufferedReader.readLine();
@@ -108,6 +108,7 @@ public final class InkParser {
     return current.type == ContentType.KNOT && current.getContentSize() == 0;
   }
 
+  /*
   private static Stitch createDefaultStitch(int lineNumber, @Nullable Container current, Story story) throws InkParseException {
     if (current == null)
       throw new InkParseException("Missing parent for content in line number " + lineNumber);
@@ -115,5 +116,6 @@ public final class InkParser {
     story.add(stitch);
     return stitch;
   }
+  */
 
 }

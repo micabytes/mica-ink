@@ -17,13 +17,21 @@ public class Gather extends Container {
       throw new InkParseException("A gather must be nested within another knot, parent or choice/gather structure");
     parent = current.getContainer(level - 1);
     parent.add(this);
-    // TODO: Optional Name
-    text = "";
     addLine(s);
   }
 
   public void addLine(String str) {
-    Content res = new Content(lineNumber, str);
+    String s = str;
+    if (s.startsWith("(")) {
+      id = s.substring(s.indexOf("(") + 1, s.indexOf(")")).trim();
+      Container p = parent;
+      while (p != null) {
+        id = p.id + InkParser.DOT + id;
+        p = p.parent;
+      }
+      s = s.substring(s.indexOf(")") + 1).trim();
+    }
+    Content res = new Content(lineNumber, s);
     add(res);
   }
 

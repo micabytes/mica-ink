@@ -22,8 +22,10 @@ public class Story {
   private boolean running;
 
   void initialize() {
-    if (currentContainer.type == ContentType.KNOT)
-      currentContainer = (Container) currentContainer.getContent(0);
+    if (currentContainer.type == ContentType.KNOT) {
+      if (currentContainer.getContent(0).isStitch())
+        currentContainer = (Container) currentContainer.getContent(0);
+    }
     running = true;
   }
 
@@ -47,6 +49,8 @@ public class Story {
           if (nextContent.text.startsWith(GLUE))
             processing = true;
           if (nextContent.isChoice() && !nextContent.isFallbackChoice())
+            processing = true;
+          if (nextContent.isStitch())
             processing = true;
           if (nextContent.type == ContentType.TEXT && nextContent.text.startsWith(DIVERT)) {
             Container divertTo = getDivertTarget(nextContent);
@@ -74,27 +78,45 @@ public class Story {
       return;
     }
     currentCounter++;
-    if (currentCounter >= currentContainer.getContentSize()) {
+    if (currentCounter >= currentContainer.getContentSize() && currentChoices.isEmpty()) {
       if (currentContainer.isChoice() || currentContainer.isGather()) {
-        Container p = currentContainer.parent;
+        Container c = currentContainer;
+        Container p = c.parent;
         while (p != null) {
-          Content c = p.getContent(p.getContentSize() - 1);
-          if (c.isGather()) {
-            currentContainer = (Container) c;
-            currentContainer.increment();
-            currentCounter = 0;
-            return;
+          int i = p.getContentIndex(c) + 1;
+          while (i < p.getContentSize()) {
+            Content n = p.getContent(i);
+            if (n.isGather()) {
+              currentContainer = (Container) n;
+              currentContainer.increment();
+              currentCounter = 0;
+              currentChoices.clear();
+              return;
+            }
+            if (n.isChoice() && currentContainer.isGather()) {
+              currentContainer = p;
+              currentCounter = i;
+              currentChoices.clear();
+              return;
+            }
+            i++;
           }
-          p = p.parent;
+          c = p;
+          p = c.parent;
         }
+        currentContainer = null;
+        currentCounter = 0;
+        currentChoices.clear();
+        return;
       }
     }
     else {
       Content next = getContent();
-      if (next.isFallbackChoice() && currentChoices.isEmpty()) {
+      if (next != null && next.isFallbackChoice() && currentChoices.isEmpty()) {
         currentContainer = (Container) next;
         currentContainer.increment();
         currentCounter = 0;
+        currentChoices.clear();
         return;
       }
     }
@@ -135,12 +157,28 @@ public class Story {
       return null;
     Container divertTo = namedContainers.get(d);
     if (divertTo == null) {
-      Container currentKnot = currentContainer.getContainer(0);
-      divertTo = namedContainers.get(currentKnot.id + InkParser.DOT + d);
+      String fd = getFullId(d);
+      divertTo = namedContainers.get(fd);
       if (divertTo == null)
-        throw new InkRunTimeException("Attempt to divert to non-defined " + d + " in line " + content.lineNumber);
+        throw new InkRunTimeException("Attempt to divert to non-defined " + d + " or " + fd + " in line " + content.lineNumber);
     }
-    return divertTo.type == ContentType.KNOT ? (Container) divertTo.getContent(0) : divertTo;
+    if (divertTo.type == ContentType.KNOT && divertTo.getContent(0).isStitch())
+      divertTo = (Container) divertTo.getContent(0);
+    return divertTo;
+  }
+
+  private String getFullId(String id) {
+    if (id.equals(DIVERT_END))
+      return id;
+    if (id.contains(String.valueOf(InkParser.DOT)))
+      return id;
+    String ret = id;
+    Container p = currentContainer.parent;
+    while (p != null) {
+      ret = p.id + InkParser.DOT + ret;
+      p = p.parent;
+    }
+    return ret;
   }
 
   private void addChoice(Choice choice) throws InkRunTimeException {
