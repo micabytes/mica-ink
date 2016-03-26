@@ -1,7 +1,5 @@
 package com.micabytes.ink;
 
-import com.udojava.evalex.Expression;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,10 +37,7 @@ public class Choice extends Container {
     if (s.startsWith("(")) {
       id = s.substring(s.indexOf("(") + 1, s.indexOf(")")).trim();
       Container p = parent;
-      while (p != null) {
-        id = p.id + InkParser.DOT + id;
-        p = p.parent;
-      }
+      id = p.id + InkParser.DOT + id;
       s = s.substring(s.indexOf(")") + 1).trim();
     }
     if (s.startsWith(CBRACE_LEFT) && conditions == null)

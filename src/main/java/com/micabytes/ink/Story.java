@@ -172,13 +172,8 @@ public class Story {
       return id;
     if (id.contains(String.valueOf(InkParser.DOT)))
       return id;
-    String ret = id;
     Container p = currentContainer.parent;
-    while (p != null) {
-      ret = p.id + InkParser.DOT + ret;
-      p = p.parent;
-    }
-    return ret;
+    return p != null ? p.id + InkParser.DOT + id : id;
   }
 
   private void addChoice(Choice choice) throws InkRunTimeException {
@@ -237,7 +232,20 @@ public class Story {
       Container container = namedContainers.get(s);
       return BigDecimal.valueOf(container.getCount());
     }
-    throw new InkRunTimeException("Could not identify the variable " + s);
+    String pathId = getValueId(s);
+    if (namedContainers.containsKey(pathId)) {
+      Container container = namedContainers.get(pathId);
+      return BigDecimal.valueOf(container.getCount());
+    }
+    throw new InkRunTimeException("Could not identify the variable " + s + " or " + pathId);
+  }
+
+  private String getValueId(String id) {
+    if (id.equals(DIVERT_END))
+      return id;
+    if (id.contains(String.valueOf(InkParser.DOT)))
+      return id;
+    return currentContainer != null ? currentContainer.id + InkParser.DOT + id : id;
   }
 
   void add(Container container) {

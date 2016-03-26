@@ -123,7 +123,6 @@ class DivertSpec extends Specification {
       text.get(0) must beEqualTo("We hurried home to Savile Row as fast as we could.")
     }
 
-
   }
 
 

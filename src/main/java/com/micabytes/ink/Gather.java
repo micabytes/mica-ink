@@ -25,10 +25,7 @@ public class Gather extends Container {
     if (s.startsWith("(")) {
       id = s.substring(s.indexOf("(") + 1, s.indexOf(")")).trim();
       Container p = parent;
-      while (p != null) {
-        id = p.id + InkParser.DOT + id;
-        p = p.parent;
-      }
+      id = p.id + InkParser.DOT + id;
       s = s.substring(s.indexOf(")") + 1).trim();
     }
     Content res = new Content(lineNumber, s);

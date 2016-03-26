@@ -171,9 +171,80 @@ class ChoiceSpec extends Specification {
       story.getChoiceSize must beEqualTo(4)
     }
 
+    val labelFlow =
+      """=== meet_guard ===
+        |The guard frowns at you.
+        |*   (greet) [Greet him]
+        |    'Greetings.'
+        |*   (get_out) 'Get out of my way[.'],' you tell the guard.
+        |-   'Hmm,' replies the guard.        |
+        |*   {greet}     'Having a nice day?'
+        |*   'Hmm?'[] you reply.        |
+        |*   {get_out} [Shove him aside]
+        |    You shove him sharply. He stares in reply, and draws his sword!
+        |    -> END        |
+        |-   'Mff,' the guard replies, and then offers you a paper bag. 'Toffee?'
+        |    -> END
+      """.stripMargin
 
+    "- handle labels on choices and evaluate in expressions (example 1)" in {
+      val inputStream = IOUtils.toInputStream(labelFlow, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice
+      story.choose(0)
+      story.nextChoice
+      story.getChoiceSize() must beEqualTo(2)
+      story.getChoice(0).getChoiceText(story) must beEqualTo("\'Having a nice day?\'")
+    }
+
+    "- handle labels on choices and evaluate in expressions (example 2)" in {
+      val inputStream = IOUtils.toInputStream(labelFlow, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice
+      story.choose(1)
+      story.nextChoice
+      story.getChoiceSize() must beEqualTo(2)
+      story.getChoice(1).getChoiceText(story) must beEqualTo("Shove him aside")
+    }
+
+    val labelScope =
+      """=== knot ===
+        |  = stitch_one
+        |    * an option
+        |    - (gatherpoint) Some content.
+        |      -> knot.stitch_two
+        |  = stitch_two
+        |    * {knot.stitch_one.gatherpoint} Found gatherpoint
+      """.stripMargin
+
+    "- allow label references out of scope using the full path id" in {
+      val inputStream = IOUtils.toInputStream(labelScope, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice
+      story.choose(0)
+      story.nextChoice
+      story.getChoiceSize() must beEqualTo(1)
+      story.getChoice(0).getChoiceText(story) must beEqualTo("Found gatherpoint")
+    }
+
+    val labelScopeError =
+      """=== knot ===
+        |  = stitch_one
+        |    * an option
+        |    - (gatherpoint) Some content.
+        |      -> knot.stitch_two
+        |  = stitch_two
+        |    * {gatherpoint} Found gatherpoint
+      """.stripMargin
+
+    "- fail label references that are out of scope" in {
+      val inputStream = IOUtils.toInputStream(labelScopeError, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice
+      story.choose(0)
+      story.nextChoice must throwA[InkRunTimeException]
+    }
 
   }
-
 
 }

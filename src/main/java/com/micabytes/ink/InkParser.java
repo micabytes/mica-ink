@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+@SuppressWarnings("UtilityClass")
 public final class InkParser {
   @NonNls private static final String UTF_8 = "UTF-8";
   @NonNls private static final char WHITESPACE = ' ';
@@ -16,8 +17,7 @@ public final class InkParser {
   @NonNls static final char CHOICE_DOT = '*';
   @NonNls static final char CHOICE_PLUS = '+';
   @NonNls static final char DOT = '.';
-  @NonNls public static final String DEFAULT_KNOT_NAME = "BEGIN";
-  @NonNls public static final String DEFAULT_STITCH_NAME = "DEFAULT";
+  @NonNls public static final String DEFAULT_KNOT_NAME = "default";
 
   private InkParser() {
     // NOOP
@@ -51,8 +51,6 @@ public final class InkParser {
             break;
           case CHOICE_DOT:
           case CHOICE_PLUS:
-            //if (isEmptyKnotParent(current))
-            //  current = createDefaultStitch(lineNumber, current, story);
             if (Choice.isChoiceHeader(trimmedLine)) {
               current = new Choice(lineNumber, trimmedLine, current);
               story.add(current);
@@ -75,8 +73,6 @@ public final class InkParser {
             current = new Knot(lineNumber, DEFAULT_KNOT_NAME);
             story.add(current);
           }
-          //if (isEmptyKnotParent(current))
-          //  current = createDefaultStitch(lineNumber, current, story);
           current.add(text);
         }
         line = bufferedReader.readLine();
@@ -101,21 +97,5 @@ public final class InkParser {
     }
     return story;
   }
-
-  private static boolean isEmptyKnotParent(Container current) throws InkParseException {
-    if (current == null)
-      throw new InkParseException("Missing parent for stitch/choice/text");
-    return current.type == ContentType.KNOT && current.getContentSize() == 0;
-  }
-
-  /*
-  private static Stitch createDefaultStitch(int lineNumber, @Nullable Container current, Story story) throws InkParseException {
-    if (current == null)
-      throw new InkParseException("Missing parent for content in line number " + lineNumber);
-    Stitch stitch = new Stitch(lineNumber, current.id + DOT + DEFAULT_STITCH_NAME, current);
-    story.add(stitch);
-    return stitch;
-  }
-  */
 
 }
