@@ -19,6 +19,7 @@ public class Story {
   private Container currentContainer;
   private int currentCounter;
   private final ArrayList<Container> currentChoices = new ArrayList<>();
+  private final HashMap<String, Object> variables = new HashMap<>();
   private boolean running;
 
   void initialize() {
@@ -141,6 +142,8 @@ public class Story {
     if (content.isChoice()) {
       addChoice((Choice) content);
     }
+    if (content.isVariable())
+      ((Variable) content).evaluate(this);
     return "";
   }
 
@@ -220,24 +223,26 @@ public class Story {
     return (Choice) currentChoices.get(i);
   }
 
-
   private static String cleanUpText(@NonNls String str) {
     return str.replaceAll(GLUE, " ") // clean up glue
               .replaceAll("\\s+", " ") // clean up white space
               .trim();
   }
 
-  public BigDecimal getValue(String s) throws InkRunTimeException {
-    if (namedContainers.containsKey(s)) {
-      Container container = namedContainers.get(s);
+  public Object getValue(String key) throws InkRunTimeException {
+    if (namedContainers.containsKey(key)) {
+      Container container = namedContainers.get(key);
       return BigDecimal.valueOf(container.getCount());
     }
-    String pathId = getValueId(s);
+    String pathId = getValueId(key);
     if (namedContainers.containsKey(pathId)) {
       Container container = namedContainers.get(pathId);
       return BigDecimal.valueOf(container.getCount());
     }
-    throw new InkRunTimeException("Could not identify the variable " + s + " or " + pathId);
+    if (variables.containsKey(key)) {
+      return variables.get(key);
+    }
+    throw new InkRunTimeException("Could not identify the variable " + key + " or " + pathId);
   }
 
   private String getValueId(String id) {
@@ -260,5 +265,11 @@ public class Story {
     return currentContainer == null;
   }
 
+  public void putVariable(String key, Object value) {
+    variables.put(key, value);
+  }
 
+  public Container getContainer(String key) {
+    return namedContainers.get(key);
+  }
 }

@@ -7,4 +7,6 @@ enum ContentType {
   KNOT,
   TEXT,
   STITCH,
+  VARIABLE_DECLARATION,
+  VARIABLE_EXPRESSION,
 }

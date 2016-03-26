@@ -22,7 +22,7 @@ public class Content {
     text = str;
   }
 
-  public String getText(Story story) {
+  public String getText(Story story) throws InkRunTimeException {
     String ret = text;
     while (ret.contains(CBRACE_LEFT)) {
       int start = ret.lastIndexOf(CBRACE_LEFT);
@@ -34,7 +34,7 @@ public class Content {
     return ret;
   }
 
-  private String evaluateText(String str, Story story) {
+  private String evaluateText(String str, Story story) throws InkRunTimeException {
     String s = str.replace(CBRACE_LEFT, "").replace(CBRACE_RIGHT, "");
     if (s.contains(":"))
       return evaluateConditionalText(s, story);
@@ -44,7 +44,13 @@ public class Content {
       return evaluateOnceOnlyText(s);
     if (s.startsWith("~"))
       return evaluateShuffleText(s);
-    return evaluateSequenceText(s);
+    if (s.contains("|"))
+      return evaluateSequenceText(s);
+    return evaluteTextVariable(s, story);
+  }
+
+  private String evaluteTextVariable(String s, Story story) throws InkRunTimeException {
+    return story.getValue(s).toString();
   }
 
   private String evaluateSequenceText(String str) {
@@ -107,5 +113,9 @@ public class Content {
 
   public void increment() {
     count ++;
+  }
+
+  public boolean isVariable() {
+    return type == ContentType.VARIABLE_DECLARATION || type == ContentType.VARIABLE_EXPRESSION;
   }
 }

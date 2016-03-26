@@ -16,6 +16,8 @@ public final class InkParser {
   @NonNls static final char GATHER_DASH = '-';
   @NonNls static final char CHOICE_DOT = '*';
   @NonNls static final char CHOICE_PLUS = '+';
+  @NonNls private static final char VAR_DECL = 'V';
+  @NonNls private static final char VAR_STAT = '~';
   @NonNls static final char DOT = '.';
   @NonNls public static final String DEFAULT_KNOT_NAME = "default";
 
@@ -64,6 +66,16 @@ public final class InkParser {
               parsed = true;
             }
             break;
+          case VAR_DECL:
+          case VAR_STAT:
+            if (Variable.isVariableHeader(trimmedLine)) {
+              if (current == null) {
+                current = new Knot(lineNumber, DEFAULT_KNOT_NAME);
+                story.add(current);
+              }
+              current.add(new Variable(lineNumber, trimmedLine));
+              parsed = true;
+            }
           default:
             break;
         }

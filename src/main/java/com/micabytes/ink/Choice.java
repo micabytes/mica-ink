@@ -3,6 +3,7 @@ package com.micabytes.ink;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -60,7 +61,7 @@ public class Choice extends Container {
     return str.charAt(0) == InkParser.CHOICE_DOT || str.charAt(0) == InkParser.CHOICE_PLUS;
   }
 
-  public String getChoiceText(Story story) {
+  public String getChoiceText(Story story) throws InkRunTimeException {
     return getText(story);
   }
 
@@ -99,7 +100,7 @@ public class Choice extends Container {
     while (tokens.hasNext()) {
       String s = tokens.next();
       if (Character.isAlphabetic(s.charAt(0)) && !isKeyword(s)) {
-        ex = ex.with(s, story.getValue(s));
+        ex = ex.with(s, new BigDecimal(story.getValue(s).toString()));
       }
     }
     return ex.eval().intValue();
