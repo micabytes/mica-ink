@@ -1,19 +1,10 @@
 package com.micabytes.ink;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class Choice extends Container {
-  @NonNls public static final String AND_WS = " and ";
-  @NonNls public static final String OR_WS = " or ";
-  @NonNls public static final String TRUE_LC = "true";
-  @NonNls public static final String TRUE_UC = "TRUE";
-  @NonNls public static final String FALSE_LC = "false";
-  @NonNls public static final String FALSE_UC = "FALSE";
   private ArrayList<String> conditions;
 
   protected Choice(int l, String str, @Nullable Container current) throws InkParseException {
@@ -36,10 +27,11 @@ public class Choice extends Container {
   public void addLine(String str) {
     String s = str;
     if (s.startsWith("(")) {
-      id = s.substring(s.indexOf("(") + 1, s.indexOf(")")).trim();
+      id = s.substring(s.indexOf(BRACE_LEFT) + 1, s.indexOf(BRACE_RIGHT)).trim();
       Container p = parent;
+      assert p != null;
       id = p.id + InkParser.DOT + id;
-      s = s.substring(s.indexOf(")") + 1).trim();
+      s = s.substring(s.indexOf(BRACE_RIGHT) + 1).trim();
     }
     if (s.startsWith(CBRACE_LEFT) && conditions == null)
       conditions = new ArrayList<>();
@@ -85,29 +77,10 @@ public class Choice extends Container {
     if (conditions == null)
       return true;
     for (String condition : conditions) {
-      if (evaluate(condition, story) <= 0)
+      if (Variable.evaluate(condition, story).intValue() <= 0)
         return false;
     }
     return true;
-  }
-
-
-  protected static int evaluate(String str, Story story) throws InkRunTimeException {
-    // TODO: Note that this means that spacing will mess up expressions; needs to be fixed
-    String ev = str.replaceAll(AND_WS, " && ").replaceAll(OR_WS, " || ").replaceAll(TRUE_LC, TRUE_UC).replaceAll(FALSE_LC, FALSE_UC);
-    Expression ex = new Expression(ev);
-    Iterator<String> tokens = ex.getExpressionTokenizer();
-    while (tokens.hasNext()) {
-      String s = tokens.next();
-      if (Character.isAlphabetic(s.charAt(0)) && !isKeyword(s)) {
-        ex = ex.with(s, new BigDecimal(story.getValue(s).toString()));
-      }
-    }
-    return ex.eval().intValue();
-  }
-
-  private static boolean isKeyword(@NonNls String s) {
-    return "not".equalsIgnoreCase(s) || s.equalsIgnoreCase(TRUE_UC) || s.equalsIgnoreCase(FALSE_UC);
   }
 
 }

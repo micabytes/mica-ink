@@ -3,6 +3,8 @@ package com.micabytes.ink;
 import java.util.Random;
 
 public class Content {
+  static final String BRACE_RIGHT = ")";
+  static final String BRACE_LEFT = "(";
   static final String CBRACE_RIGHT = "}";
   static final String CBRACE_LEFT = "{";
   static final String SBRACE_LEFT = "[";
@@ -49,7 +51,7 @@ public class Content {
     return evaluteTextVariable(s, story);
   }
 
-  private String evaluteTextVariable(String s, Story story) throws InkRunTimeException {
+  private static String evaluteTextVariable(String s, Story story) throws InkRunTimeException {
     return story.getValue(s).toString();
   }
 
@@ -104,7 +106,7 @@ public class Content {
   }
 
   public boolean isDivert() {
-    return text.contains(Story.DIVERT);
+    return text.contains(Story.DIVERT) && !isVariable();
   }
 
   public int getCount() {

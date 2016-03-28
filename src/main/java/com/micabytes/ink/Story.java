@@ -162,8 +162,12 @@ public class Story {
     if (divertTo == null) {
       String fd = getFullId(d);
       divertTo = namedContainers.get(fd);
-      if (divertTo == null)
-        throw new InkRunTimeException("Attempt to divert to non-defined " + d + " or " + fd + " in line " + content.lineNumber);
+      if (divertTo == null) {
+        if (variables.containsKey(d))
+          divertTo = (Container) variables.get(d);
+        if (divertTo == null)
+          throw new InkRunTimeException("Attempt to divert to non-defined " + d + " or " + fd + " in line " + content.lineNumber);
+      }
     }
     if (divertTo.type == ContentType.KNOT && divertTo.getContent(0).isStitch())
       divertTo = (Container) divertTo.getContent(0);
@@ -263,6 +267,11 @@ public class Story {
 
   public boolean isEnded() {
     return currentContainer == null;
+  }
+
+
+  public boolean hasVariable(String variable) {
+    return variables.containsKey(variable);
   }
 
   public void putVariable(String key, Object value) {
