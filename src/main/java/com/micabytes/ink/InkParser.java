@@ -18,6 +18,8 @@ public final class InkParser {
   @NonNls static final char CHOICE_PLUS = '+';
   @NonNls private static final char VAR_DECL = 'V';
   @NonNls private static final char VAR_STAT = '~';
+  @NonNls static final char CONDITIONAL_HEADER = '{';
+  @NonNls static final String CONDITIONAL_END = "}";
   @NonNls static final char DOT = '.';
   @NonNls public static final String DEFAULT_KNOT_NAME = "default";
 
@@ -34,58 +36,30 @@ public final class InkParser {
       bufferedReader = new BufferedReader(inputStreamReader);
       String line = bufferedReader.readLine();
       int lineNumber = 1;
-      @Nullable Container current = null;
+      Container current = new Knot(lineNumber, "=== " + DEFAULT_KNOT_NAME);
+      story.add(current);
+      @Nullable Conditional conditional = null;
+      boolean parsingComment = false;
       while (line != null) {
         String trimmedLine = line.trim();
-        char firstChar = trimmedLine.isEmpty() ? WHITESPACE : trimmedLine.charAt(0);
-        boolean parsed = false;
-        switch (firstChar) {
-          case HEADER:
-            if (Knot.isKnotHeader(trimmedLine)) {
-              current = new Knot(lineNumber, trimmedLine);
-              story.add(current);
-              parsed = true;
-            } else if (Stitch.isStitchHeader(trimmedLine)) {
-              current = new Stitch(lineNumber, trimmedLine, current);
-              story.add(current);
-              parsed = true;
-            }
-            break;
-          case CHOICE_DOT:
-          case CHOICE_PLUS:
-            if (Choice.isChoiceHeader(trimmedLine)) {
-              current = new Choice(lineNumber, trimmedLine, current);
-              story.add(current);
-              parsed = true;
-            }
-            break;
-          case GATHER_DASH:
-            if (Gather.isGatherHeader(trimmedLine)) {
-              current = new Gather(lineNumber, trimmedLine, current);
-              story.add(current);
-              parsed = true;
-            }
-            break;
-          case VAR_DECL:
-          case VAR_STAT:
-            if (Variable.isVariableHeader(trimmedLine)) {
-              if (current == null) {
-                current = new Knot(lineNumber, DEFAULT_KNOT_NAME);
-                story.add(current);
-              }
-              current.add(new Variable(lineNumber, trimmedLine));
-              parsed = true;
-            }
-          default:
-            break;
+        if (trimmedLine.contains("//")) {
+          trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf("//")).trim();
         }
-        if (!parsed && !trimmedLine.isEmpty()) {
-          Content text = new Content(lineNumber, trimmedLine);
-          if (current == null) {
-            current = new Knot(lineNumber, DEFAULT_KNOT_NAME);
+        if (conditional != null) {
+          Conditional cond = (Conditional) current.getContent(current.getContentSize()-1);
+          cond.parseLine(lineNumber, trimmedLine);
+          if (trimmedLine.endsWith(CONDITIONAL_END))
+            conditional = null;
+        }
+        else {
+          Content cont = parseLine(lineNumber, trimmedLine, current);
+          if (cont != null && cont.isContainer()) {
+            current = (Container) cont;
             story.add(current);
           }
-          current.add(text);
+          if (cont != null && cont.isConditional()) {
+            conditional = (Conditional) cont;
+          }
         }
         line = bufferedReader.readLine();
         lineNumber++;
@@ -108,6 +82,45 @@ public final class InkParser {
       }
     }
     return story;
+  }
+
+  @SuppressWarnings("OverlyComplexMethod")
+  static Content parseLine(int lineNumber, String trimmedLine, Container current) throws InkParseException {
+    char firstChar = trimmedLine.isEmpty() ? WHITESPACE : trimmedLine.charAt(0);
+    switch (firstChar) {
+      case HEADER:
+        if (Knot.isKnotHeader(trimmedLine)) {
+          return new Knot(lineNumber, trimmedLine);
+        }
+        if (Stitch.isStitchHeader(trimmedLine)) {
+          return new Stitch(lineNumber, trimmedLine, current);
+        }
+        break;
+      case CHOICE_DOT:
+      case CHOICE_PLUS:
+        if (Choice.isChoiceHeader(trimmedLine))
+          return new Choice(lineNumber, trimmedLine, current);
+        break;
+      case GATHER_DASH:
+        if (Gather.isGatherHeader(trimmedLine))
+          return new Gather(lineNumber, trimmedLine, current);
+        break;
+      case VAR_DECL:
+      case VAR_STAT:
+        if (Variable.isVariableHeader(trimmedLine))
+          return new Variable(lineNumber, trimmedLine, current);
+        break;
+      case CONDITIONAL_HEADER:
+        if (Conditional.isConditionalHeader(trimmedLine))
+          return new Conditional(lineNumber, trimmedLine, current);
+        break;
+      default:
+        break;
+    }
+    if (!trimmedLine.isEmpty()) {
+      return new Content(lineNumber, trimmedLine, current);
+    }
+    return null;
   }
 
 }

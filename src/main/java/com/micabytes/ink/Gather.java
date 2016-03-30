@@ -28,8 +28,7 @@ public class Gather extends Container {
       id = p.id + InkParser.DOT + id;
       s = s.substring(s.indexOf(")") + 1).trim();
     }
-    Content res = new Content(lineNumber, s);
-    add(res);
+    Content res = new Content(lineNumber, s, this);
   }
 
   public static boolean isGatherHeader(String str) {

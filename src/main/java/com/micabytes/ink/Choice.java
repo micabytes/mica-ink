@@ -17,10 +17,10 @@ public class Choice extends Container {
       level++;
       s = s.substring(1).trim();
     }
-    if (current == null)
-      throw new InkParseException("A choice must be nested within another knot, parent or choice/gather structure");
-    parent = current.getContainer(level - 1);
-    parent.add(this);
+    if (current != null) {
+      parent = current.getContainer(level - 1);
+      parent.add(this);
+    }
     addLine(s);
   }
 
@@ -43,8 +43,7 @@ public class Choice extends Container {
     text = getChoiceText(s);
     String result = getResultText(s);
     if (!result.isEmpty()) {
-      Content res = new Content(lineNumber, result);
-      add(res);
+      Content res = new Content(lineNumber, result, this);
     }
   }
 

@@ -16,7 +16,7 @@ class Variable extends Content {
   @NonNls public static final String FALSE_LC = "false";
   @NonNls public static final String FALSE_UC = "FALSE";
 
-  Variable(int l, String str) {
+  Variable(int l, String str, Container parent) {
     lineNumber = l;
     if (str.startsWith(VAR_)) {
       type = ContentType.VARIABLE_DECLARATION;
@@ -25,6 +25,7 @@ class Variable extends Content {
       type = ContentType.VARIABLE_EXPRESSION;
       text = str.substring(2).trim();
     }
+    parent.add(this);
   }
 
   public static boolean isVariableHeader(String str) {

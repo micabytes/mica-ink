@@ -14,8 +14,9 @@ class StitchSpec extends Specification {
         |
         |= in_first_class
         |    I settled my master.
-        |    *   [Move to third class]
+        |    *  [Move to third class]
         |        -> in_third_class
+        |    *  [Are you sure] -> the_orient_express
         |
         |= in_third_class
         |    I put myself in third.
@@ -35,9 +36,19 @@ class StitchSpec extends Specification {
         |    I put myself in third.
       """.stripMargin
 
-    "- be automatically diverted to if there is no content in a knot" in {
+    "- be automatically started with if there is no content in a knot" in {
       val inputStream = IOUtils.toInputStream(autoStitch, "UTF-8")
       val story = InkParser.parse(inputStream)
+      val text = story.nextChoice()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("I settled my master.")
+    }
+
+    "- be automatically diverted to if there is no other content in a knot" in {
+      val inputStream = IOUtils.toInputStream(autoStitch, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice()
+      story.choose(1)
       val text = story.nextChoice()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("I settled my master.")

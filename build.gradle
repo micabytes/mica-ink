@@ -24,3 +24,6 @@ repositories {
 test {
     testLogging.showStandardStreams = true
 }
+dependencies {
+  compile 'com.intellij:annotations:12.0'
+}

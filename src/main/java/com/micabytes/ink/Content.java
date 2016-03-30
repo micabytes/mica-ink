@@ -19,9 +19,10 @@ public class Content {
     // NOOP
   }
 
-  public Content(int l, String str) {
+  public Content(int l, String str, Container current) {
     lineNumber = l;
     text = str;
+    current.add(this);
   }
 
   public String getText(Story story) throws InkRunTimeException {
@@ -89,6 +90,10 @@ public class Content {
     return tokens[i];
   }
 
+  public boolean isKnot() {
+    return type == ContentType.KNOT;
+  }
+
   public boolean isStitch() {
     return type == ContentType.STITCH;
   }
@@ -109,6 +114,10 @@ public class Content {
     return text.contains(Story.DIVERT) && !isVariable();
   }
 
+  public boolean isConditional() {
+    return type == ContentType.CONDITIONAL || type == ContentType.SEQUENCE_CYCLE || type == ContentType.SEQUENCE_ONCE || type == ContentType.SEQUENCE_SHUFFLE || type == ContentType.SEQUENCE_STOP;
+  }
+
   public int getCount() {
     return count;
   }
@@ -119,5 +128,9 @@ public class Content {
 
   public boolean isVariable() {
     return type == ContentType.VARIABLE_DECLARATION || type == ContentType.VARIABLE_EXPRESSION;
+  }
+
+  public boolean isContainer() {
+    return isKnot() || isStitch() || isChoice() || isGather();
   }
 }

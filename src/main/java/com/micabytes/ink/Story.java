@@ -27,11 +27,26 @@ public class Story {
       if (currentContainer.getContent(0).isStitch())
         currentContainer = (Container) currentContainer.getContent(0);
     }
+    currentCounter = -1;
     running = true;
+    try {
+      incrementContent(null);
+    } catch (InkRunTimeException e) {
+      e.printStackTrace();
+    }
+    /*Container def = namedContainers.get(InkParser.DEFAULT_KNOT_NAME);
+    if (def != currentContainer) {
+      namedContainers.remove(def);
+    }
+    */
   }
 
   public boolean hasNext() {
-    return currentContainer != null && currentCounter < currentContainer.getContentSize();
+    if (currentContainer == null)
+      return false;
+    //if (!currentContainer.isKnot() || !currentContainer.isStitch())
+    //  return true;
+    return currentCounter < currentContainer.getContentSize();
   }
 
   public String next() throws InkRunTimeException {
@@ -68,10 +83,14 @@ public class Story {
   }
 
   private void incrementContent(Content content) throws InkRunTimeException {
-    if (content.isDivert()) {
+    if (content != null && content.isDivert()) {
       currentContainer = getDivertTarget(content);
-      if (currentContainer != null)
+      if (currentContainer != null) {
+        if (currentContainer.isConditional()) {
+          ((Conditional) currentContainer).evaluate(this);
+        }
         currentContainer.increment();
+      }
       else
         running = false;
       currentCounter = 0;
@@ -79,8 +98,8 @@ public class Story {
       return;
     }
     currentCounter++;
-    if (currentCounter >= currentContainer.getContentSize() && currentChoices.isEmpty()) {
-      if (currentContainer.isChoice() || currentContainer.isGather()) {
+    if (currentCounter >= currentContainer.getContentSize()) {
+      if (currentChoices.isEmpty() && (currentContainer.isChoice() || currentContainer.isGather())) {
         Container c = currentContainer;
         Container p = c.parent;
         while (p != null) {
@@ -110,6 +129,12 @@ public class Story {
         currentChoices.clear();
         return;
       }
+      if (currentContainer.isConditional()) {
+        Container c = currentContainer;
+        currentContainer = currentContainer.parent;
+        currentCounter = currentContainer.getContentIndex(c) + 1;
+        return;
+      }
     }
     else {
       Content next = getContent();
@@ -118,6 +143,13 @@ public class Story {
         currentContainer.increment();
         currentCounter = 0;
         currentChoices.clear();
+        return;
+      }
+      if (next != null && next.isConditional()) {
+        currentContainer = (Container) next;
+        ((Conditional)currentContainer).evaluate(this);
+        currentContainer.increment();
+        currentCounter = 0;
         return;
       }
     }
@@ -169,8 +201,11 @@ public class Story {
           throw new InkRunTimeException("Attempt to divert to non-defined " + d + " or " + fd + " in line " + content.lineNumber);
       }
     }
-    if (divertTo.type == ContentType.KNOT && divertTo.getContent(0).isStitch())
+    if (divertTo.type == ContentType.KNOT && (divertTo.getContent(0).isStitch()))
       divertTo = (Container) divertTo.getContent(0);
+    if ((divertTo.type == ContentType.KNOT || divertTo.type == ContentType.STITCH )&& (divertTo.getContent(0).isConditional()))
+      divertTo = (Container) divertTo.getContent(0);
+    // TODO: Should increment for each run through?
     return divertTo;
   }
 
@@ -261,7 +296,7 @@ public class Story {
     if (container.getId() != null)
       namedContainers.put(container.getId(), container);
     // Set starting knot
-    if (currentContainer == null)
+    if (currentContainer == null || (currentContainer != null && currentContainer.getContentSize() == 0))
       currentContainer = container;
   }
 
