@@ -15,6 +15,7 @@ Currently, this reimplements Part 1 and Part 2 of the [Ink documentation](https:
 - CHOICE_COUNT and TURNS_SINCE are not implemented (essentially functions, and those haven't been implemented yet).
 - Doesn't parse check for -> END yet (i.e., quite happy to have knots and threads ending in nothing).
 - Have not tested "Advanced: Gathers directly after an option"
+- No temporary variables at this point (parameters exist, though).
 
 Most of the examples in that section of the documentation are implemented as tests, with a few additional test cases grabbed from the 'ink/Tests' where appropriate.
 

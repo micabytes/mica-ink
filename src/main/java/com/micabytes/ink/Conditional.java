@@ -48,7 +48,7 @@ class Conditional extends Container {
       if (str.startsWith(CONDITIONAL_DASH) && !str.startsWith(Story.DIVERT)) {
         if (!str.endsWith(CONDITIONAL_COLON))
           throw new InkParseException("Line Number " + l + ": Error in conditional block; condition not ended by \':\'.");
-        String condition = str.substring(0, str.length()-1).trim();
+        String condition = str.substring(1, str.length()-1).trim();
         content.add(new ConditionalOptions(condition));
       }
       else {
@@ -118,18 +118,20 @@ class Conditional extends Container {
       case CONDITIONAL:
         for (Content c : content) {
           ConditionalOptions opt = (ConditionalOptions) c;
-          if (content.indexOf(opt) == content.size()-1 && "else".equals(opt.condition)) {
-            selection = content.indexOf(opt);
+          if (content.indexOf(c) == content.size()-1 && "else".equals(opt.condition)) {
+            selection = content.indexOf(c);
             return;
           }
           else {
             BigDecimal val = Variable.evaluate(opt.condition, story);
             if (val.intValue() > 0) {
-              selection = content.indexOf(opt);
+              selection = content.indexOf(c);
               return;
             }
           }
         }
+        // Failed
+        selection = content.size();
         break;
       case SEQUENCE_CYCLE:
         selection = count % content.size();

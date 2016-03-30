@@ -84,15 +84,12 @@ public class Story {
 
   private void incrementContent(Content content) throws InkRunTimeException {
     if (content != null && content.isDivert()) {
-      currentContainer = getDivertTarget(content);
-      if (currentContainer != null) {
-        if (currentContainer.isConditional()) {
-          ((Conditional) currentContainer).evaluate(this);
-        }
-        currentContainer.increment();
-      }
+      Container container = getDivertTarget(content);
+      if (container != null)
+        container.initialize(this, content);
       else
         running = false;
+      currentContainer = container;
       currentCounter = 0;
       currentChoices.clear();
       return;
@@ -107,8 +104,9 @@ public class Story {
           while (i < p.getContentSize()) {
             Content n = p.getContent(i);
             if (n.isGather()) {
-              currentContainer = (Container) n;
-              currentContainer.increment();
+              Container container = (Container) n;
+              container.initialize(this, content);
+              currentContainer = container;
               currentCounter = 0;
               currentChoices.clear();
               return;
@@ -139,16 +137,17 @@ public class Story {
     else {
       Content next = getContent();
       if (next != null && next.isFallbackChoice() && currentChoices.isEmpty()) {
-        currentContainer = (Container) next;
-        currentContainer.increment();
+        Container container = (Container) next;
+        container.initialize(this, content);
+        currentContainer = container;
         currentCounter = 0;
         currentChoices.clear();
         return;
       }
       if (next != null && next.isConditional()) {
-        currentContainer = (Container) next;
-        ((Conditional)currentContainer).evaluate(this);
-        currentContainer.increment();
+        Container container = (Container) next;
+        container.initialize(this, content);
+        currentContainer = container;
         currentCounter = 0;
         return;
       }
@@ -188,6 +187,8 @@ public class Story {
 
   private Container getDivertTarget(Content content) throws InkRunTimeException {
     String d = content.text.substring(content.text.indexOf(DIVERT) + 2).trim();
+    if (d.contains(Content.BRACE_LEFT))
+      d = d.substring(0, d.indexOf(Content.BRACE_LEFT));
     if (d.equals(DIVERT_END))
       return null;
     Container divertTo = namedContainers.get(d);
@@ -201,6 +202,7 @@ public class Story {
           throw new InkRunTimeException("Attempt to divert to non-defined " + d + " or " + fd + " in line " + content.lineNumber);
       }
     }
+    // TODO: This needs to be rewritten for proper functioning of parameters (parameters on a knot with a base stitch)
     if (divertTo.type == ContentType.KNOT && (divertTo.getContent(0).isStitch()))
       divertTo = (Container) divertTo.getContent(0);
     if ((divertTo.type == ContentType.KNOT || divertTo.type == ContentType.STITCH )&& (divertTo.getContent(0).isConditional()))
@@ -269,6 +271,16 @@ public class Story {
   }
 
   public Object getValue(String key) throws InkRunTimeException {
+    if (currentContainer.isKnot() || currentContainer.isStitch()) {
+      if (((ParameterizedContainer)currentContainer).hasValue(key))
+        return ((ParameterizedContainer)currentContainer).getValue(key);
+    }
+    if (key.startsWith(DIVERT)) {
+      String k = key.substring(2).trim();
+      if (namedContainers.containsKey(k))
+        return namedContainers.get(k);
+      throw new InkRunTimeException("Could not identify container id: " + k);
+    }
     if (namedContainers.containsKey(key)) {
       Container container = namedContainers.get(key);
       return BigDecimal.valueOf(container.getCount());
@@ -292,9 +304,13 @@ public class Story {
     return currentContainer != null ? currentContainer.id + InkParser.DOT + id : id;
   }
 
-  void add(Container container) {
-    if (container.getId() != null)
+  void add(Container container) throws InkParseException {
+    if (container.getId() != null) {
+      if (namedContainers.containsKey(container.getId())) {
+        throw new InkParseException("Invalid container ID. Two containers may not have the same ID");
+      }
       namedContainers.put(container.getId(), container);
+    }
     // Set starting knot
     if (currentContainer == null || (currentContainer != null && currentContainer.getContentSize() == 0))
       currentContainer = container;

@@ -38,4 +38,12 @@ public class Container extends Content {
   public int getContentIndex(Container c) {
     return content.indexOf(c);
   }
+
+  public void initialize(Story story, Content content) throws InkRunTimeException {
+    if (isConditional()) {
+      ((Conditional) this).evaluate(story);
+    }
+    increment();
+  }
+
 }

@@ -8,6 +8,167 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class ConditionalSpec extends Specification {
 
+
+  "Conditionals" should {
+    val ifTrue =
+      """=== test
+        |VAR x = 2
+        |VAR y = 0
+        |{ x > 0:
+        |    ~ y = x - 1
+        |}
+        |The value is {y}.
+      """.stripMargin
+
+    "- evaluate the statements if the condition evaluates to true" in {
+      val inputStream = IOUtils.toInputStream(ifTrue, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      val text = story.nextChoice()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("The value is 1.")
+    }
+
+    val ifFalse =
+      """=== test
+        |VAR x = 0
+        |VAR y = 3
+        |{ x > 0:
+        |    ~ y = x - 1
+        |}
+        |The value is {y}.
+      """.stripMargin
+
+    "- not evaluate the statement if the condition evaluates to false" in {
+      val inputStream = IOUtils.toInputStream(ifFalse, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      val text = story.nextChoice()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("The value is 3.")
+    }
+
+    val ifElse =
+      """=== test
+        |VAR x = 0
+        |VAR y = 3
+        |{ x > 0:
+        |    ~ y = x - 1
+        |- else:
+        |    ~ y = x + 1
+        |}
+        |The value is {y}.
+      """.stripMargin
+
+    "- evaluate an else statement if it exists and no other condition evaluates to true" in {
+      val inputStream = IOUtils.toInputStream(ifElse, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      val text = story.nextChoice()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("The value is 1.")
+    }
+
+    val ifElseExt =
+      """=== test
+        |VAR x = -2
+        |VAR y = 3
+        |{
+        |    - x == 0:
+        |        ~ y = 0
+        |    - x > 0:
+        |        ~ y = x - 1
+        |    - else:
+        |        ~ y = x + 1
+        |}
+        |The value is {y}.
+      """.stripMargin
+
+    "- evaluate an extended else statement if it exists and no other condition evaluates to true" in {
+      val inputStream = IOUtils.toInputStream(ifElseExt, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      val text = story.nextChoice()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("The value is -1.")
+    }
+
+    val condText =
+      """ "We are going on a trip," said Monsieur Fogg.
+        |* [The wager.] -> know_about_wager
+        |* [I was surprised.] -> i_stared
+        |
+        |=== know_about_wager
+        |I had heard about the wager.
+        |-> i_stared
+        |
+        |=== i_stared
+        |I stared at Monsieur Fogg.
+        |{ know_about_wager:
+        |    <> "But surely you are not serious?" I demanded.
+        |- else:
+        |    <> "But there must be a reason for this trip," I observed.
+        |}
+        |He said nothing in reply, merely considering his newspaper with as much thoroughness as entomologist considering his latest pinned addition.
+      """.stripMargin
+
+    "- work with conditional content which is not only logic (example 1)" in {
+      val inputStream = IOUtils.toInputStream(condText, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice()
+      story.choose(0)
+      val text = story.nextChoice()
+      text.size() must beEqualTo(3)
+      text.get(1) must beEqualTo("I stared at Monsieur Fogg. \"But surely you are not serious?\" I demanded.")
+    }
+
+    "- work with conditional content which is not only logic (example 2)" in {
+      val inputStream = IOUtils.toInputStream(condText, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice()
+      story.choose(1)
+      val text = story.nextChoice()
+      text.size() must beEqualTo(2)
+      text.get(0) must beEqualTo("I stared at Monsieur Fogg. \"But there must be a reason for this trip,\" I observed.")
+    }
+
+    val condOpt =
+      """I looked...
+        |* [at the door]
+        |  -> door_open
+        |* [outside]
+        |  -> leave
+        |
+        |=== door_open
+        |at the door. It was open.
+        |-> leave
+        |
+        |=== leave
+        |I stood up and...        |
+        |{ door_open:
+        |    *   I strode out of the compartment[] and I fancied I heard my master quietly tutting to himself.           -> go_outside
+        |- else:
+        |    *   I asked permission to leave[] and Monsieur Fogg looked surprised.   -> open_door
+        |    *   I stood and went to open the door[]. Monsieur Fogg seemed untroubled by this small rebellion. -> open_door
+        |}
+      """.stripMargin
+
+    "- work with options as conditional content (example 1)" in {
+      val inputStream = IOUtils.toInputStream(condOpt, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice()
+      story.choose(0)
+      story.nextChoice()
+      story.getChoiceSize() must beEqualTo(1)
+    }
+
+    "- work with options as conditional content (example 2)" in {
+      val inputStream = IOUtils.toInputStream(condOpt, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice()
+      story.choose(1)
+      story.nextChoice()
+      story.getChoiceSize() must beEqualTo(2)
+    }
+
+  }
+
   "Multiline list blocks" should {
     val stopping =
       """=== test
