@@ -123,7 +123,7 @@ class Variable extends Content {
     return true;
   }
 
-  private static boolean isFloat(String str) {
+  static boolean isFloat(String str) {
     // Slow and dirty solution
     try {
       //noinspection ResultOfMethodCallIgnored

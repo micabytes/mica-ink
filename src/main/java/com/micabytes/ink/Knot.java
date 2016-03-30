@@ -21,7 +21,7 @@ class Knot extends ParameterizedContainer {
     parent = null;
     String fullId = str.replaceAll(header.toString(), "").trim();
     if (fullId.contains(BRACE_LEFT)) {
-      String params = fullId.substring(fullId.indexOf(BRACE_LEFT), fullId.indexOf(BRACE_RIGHT));
+      String params = fullId.substring(fullId.indexOf(BRACE_LEFT)+1, fullId.indexOf(BRACE_RIGHT));
       String[] param = params.split(",");
       parameters = new ArrayList<>();
       for (int i=0; i<param.length; i++)

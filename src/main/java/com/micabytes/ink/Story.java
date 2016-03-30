@@ -271,6 +271,7 @@ public class Story {
   }
 
   public Object getValue(String key) throws InkRunTimeException {
+    // TODO: Need to step through parents
     if (currentContainer.isKnot() || currentContainer.isStitch()) {
       if (((ParameterizedContainer)currentContainer).hasValue(key))
         return ((ParameterizedContainer)currentContainer).getValue(key);

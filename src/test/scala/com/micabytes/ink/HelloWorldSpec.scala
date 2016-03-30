@@ -55,4 +55,28 @@ class HelloWorldSpec extends Specification {
 
   }
 
+  "Knots" should {
+
+    val paramStrings =
+      """Who do you accuse?
+        |* [Accuse Hasting] -> accuse("Hastings")
+        |* [Accuse Mrs Black] -> accuse("Claudia")
+        |* [Accuse myself] -> accuse("myself")
+        |
+        |=== accuse(who) ===
+        |    "I accuse {who}!" Poirot declared.
+      """.stripMargin
+
+    "- handle string parameters in a divert" in {
+      val inputStream = IOUtils.toInputStream(paramStrings, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.nextChoice()
+      story.choose(2)
+      val text = story.nextChoice()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("\"I accuse myself!\" Poirot declared.")
+    }
+
+  }
+
 }
