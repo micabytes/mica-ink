@@ -39,7 +39,7 @@ class StitchSpec extends Specification {
     "- be automatically started with if there is no content in a knot" in {
       val inputStream = IOUtils.toInputStream(autoStitch, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val text = story.nextChoice()
+      val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("I settled my master.")
     }
@@ -47,9 +47,9 @@ class StitchSpec extends Specification {
     "- be automatically diverted to if there is no other content in a knot" in {
       val inputStream = IOUtils.toInputStream(autoStitch, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice()
+      story.nextAll()
       story.choose(1)
-      val text = story.nextChoice()
+      val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("I settled my master.")
     }
@@ -57,11 +57,11 @@ class StitchSpec extends Specification {
       "- not be diverted to if the knot has content" in {
       val inputStream = IOUtils.toInputStream(manualStitch, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val knotText = story.nextChoice()
+      val knotText = story.nextAll()
       knotText.size() must beEqualTo(1)
       knotText.get(0) must beEqualTo("How shall we travel?")
       story.choose(1)
-      val stitchText = story.nextChoice()
+      val stitchText = story.nextAll()
       stitchText.size() must beEqualTo(1)
       stitchText.get(0) must beEqualTo("I put myself in third.")
     }
@@ -69,11 +69,11 @@ class StitchSpec extends Specification {
     "- be usable locally without the full name" in {
       val inputStream = IOUtils.toInputStream(manualStitch, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val knotText = story.nextChoice()
+      val knotText = story.nextAll()
       knotText.size() must beEqualTo(1)
       knotText.get(0) must beEqualTo("How shall we travel?")
       story.choose(0)
-      val stitchText = story.nextChoice()
+      val stitchText = story.nextAll()
       stitchText.size() must beEqualTo(1)
       stitchText.get(0) must beEqualTo("I settled my master.")
     }

@@ -19,7 +19,7 @@ class VariableSpec extends Specification {
     "- be declared with a VAR statement and print out a text value when used in content" in {
       val inputStream = IOUtils.toInputStream(variableDeclaration, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val text = story.nextChoice()
+      val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("\"My name is Jean Passepartout, but my friend's call me Jackie. I'm 23 years old.\"")
     }
@@ -40,7 +40,7 @@ class VariableSpec extends Specification {
     "- be declared with a VAR statement and print out a text value when used in content" in {
       val inputStream = IOUtils.toInputStream(varCalc, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val text = story.nextChoice()
+      val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The values are true and -1 and -6.")
     }
@@ -63,9 +63,9 @@ class VariableSpec extends Specification {
     "- be declarable as diverts and be usable in text" in {
       val inputStream = IOUtils.toInputStream(varDivert, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice()
+      story.nextAll()
       story.choose(1)
-      val text = story.nextChoice()
+      val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("Everybody dies.")
     }

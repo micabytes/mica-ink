@@ -3,6 +3,8 @@ package com.micabytes.ink;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+// TODO: Functions should check that stitches are not added.
+
 class Knot extends ParameterizedContainer {
   private static final String KNOT_HEADER = "==";
   private static final String FUNCTION = "function";
@@ -20,6 +22,10 @@ class Knot extends ParameterizedContainer {
     level = 0;
     parent = null;
     String fullId = str.replaceAll(header.toString(), "").trim();
+    if (fullId.startsWith("function")) {
+      type = ContentType.FUNCTION;
+      fullId = fullId.replaceFirst("function", "");
+    }
     if (fullId.contains(BRACE_LEFT)) {
       String params = fullId.substring(fullId.indexOf(BRACE_LEFT)+1, fullId.indexOf(BRACE_RIGHT));
       String[] param = params.split(",");

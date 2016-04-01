@@ -238,7 +238,7 @@ public class Story {
     }
   }
 
-  public List<String> nextChoice() throws InkRunTimeException {
+  public List<String> nextAll() throws InkRunTimeException {
     ArrayList<String> ret = new ArrayList<>();
     while (hasNext()) {
       String text = next();

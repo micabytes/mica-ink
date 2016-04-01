@@ -69,7 +69,7 @@ class ChoiceSpec extends Specification {
     "- demarcate end of text for parent container" in {
       val inputStream = IOUtils.toInputStream(singleChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      val text = story.nextChoice
+      val text = story.nextAll
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("Hello, world!")
     }
@@ -77,9 +77,9 @@ class ChoiceSpec extends Specification {
     "- continue processing with the choice text when a choice is selected" in {
       val inputStream = IOUtils.toInputStream(singleChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice
+      story.nextAll
       story.choose(0)
-      val text = story.nextChoice
+      val text = story.nextAll
       text.size() must beEqualTo(2)
       text.get(0) must beEqualTo("Hello back!")
       text.get(1) must beEqualTo("Nice to hear from you")
@@ -88,9 +88,9 @@ class ChoiceSpec extends Specification {
     "- continue with the text of the selected choice when multiple choices exist" in {
       val inputStream = IOUtils.toInputStream(multiChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice
+      story.nextAll
       story.choose(1)
-      val text = story.nextChoice
+      val text = story.nextAll
       text.size() must beEqualTo(2)
       text.get(0) must beEqualTo("Goodbye")
       text.get(1) must beEqualTo("See you later")
@@ -99,11 +99,11 @@ class ChoiceSpec extends Specification {
     "- be suppressed in the text flow using the [] syntax" in {
       val inputStream = IOUtils.toInputStream(suppressChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice()
+      story.nextAll()
       val choice = story.getChoice(0)
       choice.getChoiceText(story) must beEqualTo("Hello back!")
       story.choose(0)
-      val text = story.nextChoice()
+      val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("Nice to hear from you.")
     }
@@ -111,11 +111,11 @@ class ChoiceSpec extends Specification {
     "- be mixed in to the text using the [] syntax" in {
       val inputStream = IOUtils.toInputStream(mixedChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice()
+      story.nextAll()
       val choice = story.getChoice(0)
       choice.getChoiceText(story) must beEqualTo("Hello back!")
       story.choose(0)
-      val text = story.nextChoice()
+      val text = story.nextAll()
       text.size() must beEqualTo(2)
       text.get(0) must beEqualTo("Hello right back to you!")
       text.get(1) must beEqualTo("Nice to hear from you.")
@@ -124,10 +124,10 @@ class ChoiceSpec extends Specification {
     "- disappear when used if they are a once-only choice" in {
       val inputStream = IOUtils.toInputStream(varyingChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice()
+      story.nextAll()
       story.getChoiceSize must beEqualTo(2)
       story.choose(0)
-      story.nextChoice()
+      story.nextAll()
       story.getChoiceSize must beEqualTo(1)
       val choice = story.getChoice(0)
       choice.getChoiceText(story) must beEqualTo("The man with the briefcase?")
@@ -136,29 +136,29 @@ class ChoiceSpec extends Specification {
     "- not disappear when used if they are a sticky choices" in {
       val inputStream = IOUtils.toInputStream(stickyChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice()
+      story.nextAll()
       story.getChoiceSize must beEqualTo(2)
       story.choose(0)
-      story.nextChoice()
+      story.nextAll()
       story.getChoiceSize must beEqualTo(2)
     }
 
     "- not be shown if it is a fallback choice and there are non-fallback choices available" in {
       val inputStream = IOUtils.toInputStream(fallbackChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice
+      story.nextAll
       story.getChoiceSize must beEqualTo(2)
     }
 
     "- should be diverted to directly if it is a fallback choice and no others exist" in {
       val inputStream = IOUtils.toInputStream(fallbackChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice()
+      story.nextAll()
       story.getChoiceSize must beEqualTo(2)
       story.choose(0)
-      story.nextChoice()
+      story.nextAll()
       story.choose(0)
-      story.nextChoice()
+      story.nextAll()
       story.isEnded must beEqualTo(true)
     }
 
@@ -167,7 +167,7 @@ class ChoiceSpec extends Specification {
     "- not be visible if their conditions evaluate to 0" in {
       val inputStream = IOUtils.toInputStream(conditionalChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice()
+      story.nextAll()
       story.getChoiceSize must beEqualTo(4)
     }
 
@@ -190,9 +190,9 @@ class ChoiceSpec extends Specification {
     "- handle labels on choices and evaluate in expressions (example 1)" in {
       val inputStream = IOUtils.toInputStream(labelFlow, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice
+      story.nextAll
       story.choose(0)
-      story.nextChoice
+      story.nextAll
       story.getChoiceSize() must beEqualTo(2)
       story.getChoice(0).getChoiceText(story) must beEqualTo("\'Having a nice day?\'")
     }
@@ -200,9 +200,9 @@ class ChoiceSpec extends Specification {
     "- handle labels on choices and evaluate in expressions (example 2)" in {
       val inputStream = IOUtils.toInputStream(labelFlow, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice
+      story.nextAll
       story.choose(1)
-      story.nextChoice
+      story.nextAll
       story.getChoiceSize() must beEqualTo(2)
       story.getChoice(1).getChoiceText(story) must beEqualTo("Shove him aside")
     }
@@ -220,9 +220,9 @@ class ChoiceSpec extends Specification {
     "- allow label references out of scope using the full path id" in {
       val inputStream = IOUtils.toInputStream(labelScope, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice
+      story.nextAll
       story.choose(0)
-      story.nextChoice
+      story.nextAll
       story.getChoiceSize must beEqualTo(1)
       story.getChoice(0).getChoiceText(story) must beEqualTo("Found gatherpoint")
     }
@@ -240,9 +240,9 @@ class ChoiceSpec extends Specification {
     "- fail label references that are out of scope" in {
       val inputStream = IOUtils.toInputStream(labelScopeError, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice
+      story.nextAll
       story.choose(0)
-      story.nextChoice must throwA[RuntimeException]
+      story.nextAll must throwA[RuntimeException]
     }
 
     val divertChoice =
@@ -258,10 +258,10 @@ class ChoiceSpec extends Specification {
     "- be used up if they are once-only and a divert goes through them" in {
       val inputStream = IOUtils.toInputStream(divertChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
-      story.nextChoice
+      story.nextAll
       story.getChoiceSize must beEqualTo(2)
       story.choose(0)
-      val text = story.nextChoice
+      val text = story.nextAll
       text.size() must beEqualTo(2)
       text.get(0) must beEqualTo("You pull a face, and the soldier comes at you! You shove the guard to one side, but he comes back swinging.")
       story.getChoiceSize must beEqualTo(1)
