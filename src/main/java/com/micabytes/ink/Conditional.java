@@ -123,7 +123,7 @@ class Conditional extends Container {
             return;
           }
           else {
-            BigDecimal val = Variable.evaluate(opt.condition, story);
+            BigDecimal val = (BigDecimal)Variable.evaluate(opt.condition, story);
             if (val.intValue() > 0) {
               selection = content.indexOf(c);
               return;

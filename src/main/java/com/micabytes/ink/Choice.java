@@ -2,6 +2,7 @@ package com.micabytes.ink;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 public class Choice extends Container {
@@ -76,7 +77,7 @@ public class Choice extends Container {
     if (conditions == null)
       return true;
     for (String condition : conditions) {
-      if (Variable.evaluate(condition, story).intValue() <= 0)
+      if (((BigDecimal)Variable.evaluate(condition, story)).intValue() <= 0)
         return false;
     }
     return true;

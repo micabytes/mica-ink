@@ -23,6 +23,8 @@ public class Story {
   private boolean running;
 
   void initialize() {
+    variables.put("TRUE", BigDecimal.ONE);
+    variables.put("FALSE", BigDecimal.ZERO);
     if (currentContainer.type == ContentType.KNOT) {
       if (currentContainer.getContent(0).isStitch())
         currentContainer = (Container) currentContainer.getContent(0);
@@ -271,10 +273,13 @@ public class Story {
   }
 
   public Object getValue(String key) throws InkRunTimeException {
-    // TODO: Need to step through parents
-    if (currentContainer.isKnot() || currentContainer.isStitch()) {
-      if (((ParameterizedContainer)currentContainer).hasValue(key))
-        return ((ParameterizedContainer)currentContainer).getValue(key);
+    Container c = currentContainer;
+    while (c != null) {
+      if (c.isKnot() || c.isStitch()) {
+        if (((ParameterizedContainer) c).hasValue(key))
+          return ((ParameterizedContainer) c).getValue(key);
+      }
+      c = c.parent;
     }
     if (key.startsWith(DIVERT)) {
       String k = key.substring(2).trim();
@@ -323,10 +328,42 @@ public class Story {
 
 
   public boolean hasVariable(String variable) {
+    Container c = currentContainer;
+    while (c != null) {
+      if (c.isKnot() || c.isStitch()) {
+        if (((ParameterizedContainer) c).hasValue(variable))
+          return true;
+      }
+      c = c.parent;
+    }
+    if (namedContainers.containsKey(variable))
+      return true;
+    if (namedContainers.containsKey(getValueId(variable)))
+      return true;
     return variables.containsKey(variable);
   }
 
+  private String getPathId(String id) {
+    if (currentContainer == null)
+      return id;
+    Container p = currentContainer;
+    while (!p.isKnot() || !p.isStitch())
+      p = p.parent;
+    return p != null ? p.id + InkParser.DOT + id : id;
+  }
+
+
   public void putVariable(String key, Object value) {
+    Container c = currentContainer;
+    while (c != null) {
+      if (c.isKnot() || c.isStitch()) {
+        if (((ParameterizedContainer) c).hasValue(key)) {
+          ((ParameterizedContainer) c).setValue(key, value);
+          return;
+        }
+      }
+      c = c.parent;
+    }
     variables.put(key, value);
   }
 

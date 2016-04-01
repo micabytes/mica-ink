@@ -1,5 +1,6 @@
 package com.micabytes.ink;
 
+import java.math.BigDecimal;
 import java.util.Random;
 
 public class Content {
@@ -53,7 +54,10 @@ public class Content {
   }
 
   private static String evaluteTextVariable(String s, Story story) throws InkRunTimeException {
-    return story.getValue(s).toString();
+    Object obj = story.getValue(s);
+    if (obj instanceof BigDecimal) // We don't want BigDecimal canonical form
+      return ((BigDecimal) obj).toPlainString();
+    return obj.toString();
   }
 
   private String evaluateSequenceText(String str) {

@@ -3,7 +3,6 @@ package com.micabytes.ink;
 import org.jetbrains.annotations.NonNls;
 
 import java.math.BigDecimal;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 
 class Variable extends Content {
@@ -52,9 +51,9 @@ class Variable extends Content {
     else if (value.equals(FALSE_LC))
       story.putVariable(variable, Boolean.FALSE);
     else if (isInteger(value))
-      story.putVariable(variable, Integer.parseInt(value));
+      story.putVariable(variable, new BigDecimal(value));
     else if (isFloat(value))
-      story.putVariable(variable, Float.parseFloat(value));
+      story.putVariable(variable, new BigDecimal(value));
     else if (value.startsWith("\"") && value.endsWith("\"")) {
       value = value.substring(1, value.length() - 1);
       if (value.contains(Story.DIVERT))
@@ -93,24 +92,26 @@ class Variable extends Content {
       else
         throw new InkRunTimeException("Variable " + variable + " declared to equals invalid address " + address);
     } else {
-      BigDecimal val = evaluate(value, story);
-      story.putVariable(variable, val);
+      story.putVariable(variable, evaluate(value, story));
     }
   }
 
-  public static BigDecimal evaluate(String str, Story story) throws InkRunTimeException {
+  public static Object evaluate(String str, Story story) throws InkRunTimeException {
     // TODO: Note that this means that spacing will mess up expressions; needs to be fixed
     String ev = str.replaceAll(AND_WS, " && ").replaceAll(OR_WS, " || ").replaceAll(TRUE_LC, TRUE_UC).replaceAll(FALSE_LC, FALSE_UC);
     Expression ex = new Expression(ev);
-    Iterator<String> tokens = ex.getExpressionTokenizer();
-    while (tokens.hasNext()) {
-      String s = tokens.next();
-      if (Character.isAlphabetic(s.charAt(0)) && !isKeyword(s)) {
-        ex = ex.with(s, new BigDecimal(story.getValue(s).toString()));
-      }
-    }
-    return ex.eval();
+    return ex.eval(story);
   }
+
+  /*
+  else if (Variable.isInteger(p)) {
+    variables.put(parameters.get(i), Integer.valueOf(p));
+  }
+  else if (Variable.isFloat(p)) {
+    variables.put(parameters.get(i), Float.valueOf(p));
+  }
+  else
+  */
 
   public static boolean isInteger(String str) {
     // Slow and dirty solution

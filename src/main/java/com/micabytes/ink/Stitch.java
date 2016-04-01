@@ -23,7 +23,7 @@ class Stitch extends ParameterizedContainer {
       String[] param = params.split(",");
       parameters = new ArrayList<>();
       for (int i=0; i<param.length; i++)
-        parameters.add(param[i]);
+        parameters.add(param[i].trim());
       fullId = fullId.substring(0, fullId.indexOf(BRACE_LEFT));
     }
     //if (fullId.startsWith(FUNCTION)) {

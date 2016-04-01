@@ -3,6 +3,7 @@ package com.micabytes.ink;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public abstract class ParameterizedContainer extends Container {
   protected ArrayList<String> parameters;
@@ -17,21 +18,16 @@ public abstract class ParameterizedContainer extends Container {
       String[] param = params.split(",");
       if (param.length != parameters.size())
         throw new InkRunTimeException("LineNumber: " + content.lineNumber + ". Mismatch in the parameter declaration in the call to " + id);
-      variables = new HashMap<>();
+      HashMap<String, Object> vs = new HashMap<>();
       for (int i=0; i<param.length; i++) {
-        String p = param[i];
-        if (p.startsWith("\"") && p.endsWith("\"")) {
-          // String parameter
-          variables.put(parameters.get(i), p.substring(1, p.length() - 1));
-        }
-        else if (Variable.isInteger(p)) {
-          variables.put(parameters.get(i), Integer.valueOf(p));
-        }
-        else if (Variable.isFloat(p)) {
-          variables.put(parameters.get(i), Float.valueOf(p));
-        }
-        else
-          variables.put(parameters.get(i), story.getValue(p));
+        String p = param[i].trim();
+        vs.put(parameters.get(i),Variable.evaluate(p, story));
+      }
+      if (variables == null)
+        variables = vs;
+      else {
+        variables.clear();
+        variables.putAll(vs);
       }
     }
   }
@@ -44,4 +40,10 @@ public abstract class ParameterizedContainer extends Container {
   Object getValue(String key) {
     return variables.get(key);
   }
+
+  void setValue(String key, Object value) {
+    if (variables == null) variables = new HashMap<>();
+    variables.put(key, value);
+  }
+
 }
