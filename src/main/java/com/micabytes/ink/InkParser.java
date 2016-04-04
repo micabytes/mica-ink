@@ -89,6 +89,9 @@ public final class InkParser {
     char firstChar = trimmedLine.isEmpty() ? WHITESPACE : trimmedLine.charAt(0);
     switch (firstChar) {
       case HEADER:
+        if (KnotFunction.isFunctionHeader(trimmedLine)) {
+          return new KnotFunction(lineNumber, trimmedLine);
+        }
         if (Knot.isKnotHeader(trimmedLine)) {
           return new Knot(lineNumber, trimmedLine);
         }

@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Story {
   @NonNls private static final String GLUE = "<>";
@@ -14,9 +16,13 @@ public class Story {
   @NonNls private static final String DIVERT_END = "END";
   public static final char LT = '<';
   public static final char GT = '>';
+  /**
+   * All defined functions with name and implementation.
+   */
+  Map<String, Function> functions = new TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER);
 
   private final HashMap<String, Container> namedContainers = new HashMap<>();
-  private Container currentContainer;
+  Container currentContainer;
   private int currentCounter;
   private final ArrayList<Container> currentChoices = new ArrayList<>();
   private final HashMap<String, Object> variables = new HashMap<>();
@@ -275,7 +281,7 @@ public class Story {
   public Object getValue(String key) throws InkRunTimeException {
     Container c = currentContainer;
     while (c != null) {
-      if (c.isKnot() || c.isStitch()) {
+      if (c.isKnot() || c.isFunction() || c.isStitch()) {
         if (((ParameterizedContainer) c).hasValue(key))
           return ((ParameterizedContainer) c).getValue(key);
       }
@@ -315,7 +321,10 @@ public class Story {
       if (namedContainers.containsKey(container.getId())) {
         throw new InkParseException("Invalid container ID. Two containers may not have the same ID");
       }
-      namedContainers.put(container.getId(), container);
+      if (container.isFunction())
+        functions.put(container.getId(), (Function) container);
+      else
+        namedContainers.put(container.getId(), container);
     }
     // Set starting knot
     if (currentContainer == null || (currentContainer != null && currentContainer.getContentSize() == 0))
@@ -330,7 +339,7 @@ public class Story {
   public boolean hasVariable(String variable) {
     Container c = currentContainer;
     while (c != null) {
-      if (c.isKnot() || c.isStitch()) {
+      if (c.isKnot() || c.isFunction() || c.isStitch()) {
         if (((ParameterizedContainer) c).hasValue(variable))
           return true;
       }
@@ -347,7 +356,7 @@ public class Story {
     if (currentContainer == null)
       return id;
     Container p = currentContainer;
-    while (!p.isKnot() || !p.isStitch())
+    while (!p.isKnot() || !p.isFunction() || !p.isStitch())
       p = p.parent;
     return p != null ? p.id + InkParser.DOT + id : id;
   }
@@ -356,7 +365,7 @@ public class Story {
   public void putVariable(String key, Object value) {
     Container c = currentContainer;
     while (c != null) {
-      if (c.isKnot() || c.isStitch()) {
+      if (c.isKnot() || c.isFunction() || c.isStitch()) {
         if (((ParameterizedContainer) c).hasValue(key)) {
           ((ParameterizedContainer) c).setValue(key, value);
           return;

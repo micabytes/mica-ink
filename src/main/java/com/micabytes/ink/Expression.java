@@ -13,126 +13,35 @@ import java.util.TreeMap;
 
 @SuppressWarnings("ALL")
 public class Expression {
-
-  /**
-   * The {@link MathContext} to use for calculations.
-   */
+  /// The {@link MathContext} to use for calculations.
   private MathContext mc = null;
-
-  /**
-   * The original infix expression.
-   */
+  /// The original infix expression.
   private String expression = null;
-
-  /**
-   * The cached RPN (Reverse Polish Notation) of the expression.
-   */
+  /// The cached RPN (Reverse Polish Notation) of the expression.
   private List<String> rpn = null;
-
-  /**
-   * All defined operators with name and implementation.
-   */
+  /// All defined operators with name and implementation.
   private Map<String, Operator> operators = new TreeMap<String, Operator>(String.CASE_INSENSITIVE_ORDER);
-
-  /**
-   * All defined functions with name and implementation.
-   */
-  private Map<String, Function> functions = new TreeMap<String, Expression.Function>(String.CASE_INSENSITIVE_ORDER);
-
-  /**
-   * What character to use for decimal separators.
-   */
+  /// What character to use for decimal separators.
   private static final char decimalSeparator = '.';
-
-  /**
-   * What character to use for minus sign (negative values).
-   */
+  /// What character to use for minus sign (negative values).
   private static final char minusSign = '-';
-
-  /**
-   * The BigDecimal representation of the left parenthesis,
-   * used for parsing varying numbers of function parameters.
-   */
+  /// The BigDecimal representation of the left parenthesis, used for parsing varying numbers of function parameters.
   private static final BigDecimal PARAMS_START = new BigDecimal(0);
 
-  /**
-   * The expression evaluators exception class.
-   */
+  /// The expression evaluators exception class.
   public static class ExpressionException extends RuntimeException {
-    private static final long serialVersionUID = 1118142866870779047L;
-
     public ExpressionException(String message) {
       super(message);
     }
   }
 
-  /**
-   * Abstract definition of a supported expression function. A function is
-   * defined by a name, the number of parameters and the actual processing
-   * implementation.
-   */
-  public abstract class Function {
-    /**
-     * Name of this function.
-     */
-    private String name;
-    /**
-     * Number of parameters expected for this function.
-     * <code>-1</code> denotes a variable number of parameters.
-     */
-    private int numParams;
-
-    /**
-     * Creates a new function with given name and parameter count.
-     *
-     * @param name      The name of the function.
-     * @param numParams The number of parameters for this function.
-     *                  <code>-1</code> denotes a variable number of parameters.
-     */
-    public Function(String name, int numParams) {
-      this.name = name.toUpperCase(Locale.ROOT);
-      this.numParams = numParams;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public int getNumParams() {
-      return numParams;
-    }
-
-    public boolean numParamsVaries() {
-      return numParams < 0;
-    }
-
-    /**
-     * Implementation for this function.
-     *
-     * @param parameters Parameters will be passed by the expression evaluator as a
-     *                   {@link List} of {@link BigDecimal} values.
-     * @return The function must return a new {@link BigDecimal} value as a
-     * computing result.
-     */
-    public abstract BigDecimal eval(List<BigDecimal> parameters);
-  }
-
-  /**
-   * Abstract definition of a supported operator. An operator is defined by
-   * its name (pattern), precedence and if it is left- or right associative.
-   */
+  /// Abstract definition of a supported operator. An operator is defined by its name (pattern), precedence and if it is left- or right associative.
   public abstract class Operator {
-    /**
-     * This operators name (pattern).
-     */
+    /// This operators name (pattern).
     private String oper;
-    /**
-     * Operators precedence.
-     */
+    /// Operators precedence.
     private int precedence;
-    /**
-     * Operator is left associative.
-     */
+    /// Operator is left associative.
     private boolean leftAssoc;
 
     /**
@@ -188,9 +97,7 @@ public class Expression {
     private char peekNextChar() {
       if (pos < (input.length() - 1)) {
         return input.charAt(pos + 1);
-      } else {
-        return 0;
-      }
+      } else return 0;
     }
 
     @Override
@@ -391,7 +298,7 @@ public class Expression {
     });
 
     /*
-    addFunction(new Function("NOT", 1) {
+    addFunction(new KnotFunction("NOT", 1) {
       @Override
       public BigDecimal eval(List<BigDecimal> parameters) {
         boolean zero = parameters.get(0).compareTo(BigDecimal.ZERO) == 0;
@@ -399,7 +306,7 @@ public class Expression {
       }
     });
 
-    addFunction(new Function("RANDOM", 0) {
+    addFunction(new KnotFunction("RANDOM", 0) {
       @Override
       public BigDecimal eval(List<BigDecimal> parameters) {
         double d = Math.random();
@@ -442,7 +349,7 @@ public class Expression {
         outputQueue.add(token);
       } else if (story.hasVariable(token)) {
         outputQueue.add(token);
-      } else if (functions.containsKey(token.toUpperCase(Locale.ROOT))) {
+      } else if (story.functions.containsKey(token)) {
         stack.push(token);
         lastFunction = token;
       } else if (Character.isLetter(token.charAt(0))) {
@@ -477,7 +384,7 @@ public class Expression {
           }
           // if the ( is preceded by a valid function, then it
           // denotes the start of a parameter list
-          if (functions.containsKey(previousToken.toUpperCase(Locale.ROOT))) {
+          if (story.functions.containsKey(previousToken.toUpperCase(Locale.ROOT))) {
             outputQueue.add(token);
           }
         }
@@ -491,7 +398,7 @@ public class Expression {
         }
         stack.pop();
         if (!stack.isEmpty()
-            && functions.containsKey(stack.peek().toUpperCase(
+            && story.functions.containsKey(stack.peek().toUpperCase(
             Locale.ROOT))) {
           outputQueue.add(stack.pop());
         }
@@ -517,7 +424,7 @@ public class Expression {
    *
    * @return The result of the expression.
    */
-  public Object eval(Story story) {
+  public Object eval(Story story) throws InkRunTimeException {
 
     Stack<Object> stack = new Stack<>();
 
@@ -544,10 +451,9 @@ public class Expression {
         } catch (InkRunTimeException e) {
           e.printStackTrace();
         }
-      } else if (functions.containsKey(token.toUpperCase(Locale.ROOT))) {
-        Function f = functions.get(token.toUpperCase(Locale.ROOT));
-        ArrayList<BigDecimal> p = new ArrayList<BigDecimal>(
-            !f.numParamsVaries() ? f.getNumParams() : 0);
+      } else if (story.functions.containsKey(token.toUpperCase(Locale.ROOT))) {
+        Function f = story.functions.get(token.toUpperCase(Locale.ROOT));
+        List<Object> p = new ArrayList<>(!f.numParamsVaries() ? f.getNumParams() : 0);
         // pop parameters off the stack until we hit the start of
         // this function's parameter list
         while (!stack.isEmpty() && stack.peek() != PARAMS_START) {
@@ -559,7 +465,7 @@ public class Expression {
         if (!f.numParamsVaries() && p.size() != f.getNumParams()) {
           throw new ExpressionException("Function " + token + " expected " + f.getNumParams() + " parameters, got " + p.size());
         }
-        BigDecimal fResult = f.eval(p);
+        Object fResult = f.eval(p, story);
         stack.push(fResult);
       } else if ("(".equals(token)) {
         stack.push(PARAMS_START);
@@ -615,10 +521,11 @@ public class Expression {
    * @param function The function to add.
    * @return The previous operator with that name, or <code>null</code> if
    * there was none.
-   */
-  public Function addFunction(Function function) {
-    return functions.put(function.getName(), function);
+   *
+  public KnotFunction addFunction(KnotFunction function) {
+    return story.functions.put(function.getName(), function);
   }
+  */
 
   /**
    * Cached access to the RPN notation of this expression, ensures only one
@@ -630,7 +537,7 @@ public class Expression {
   private List<String> getRPN(Story story) {
     if (rpn == null) {
       rpn = shuntingYard(this.expression, story);
-      validate(rpn);
+      validate(rpn, story);
     }
     return rpn;
   }
@@ -640,7 +547,7 @@ public class Expression {
    * requirements of the operators and functions, also check
    * for only 1 result stored at the end of the evaluation.
    */
-  private void validate(List<String> rpn) {
+  private void validate(List<String> rpn, Story story) {
 		/*- 
 		* Thanks to Norman Ramsey:
 		* http://http://stackoverflow.com/questions/789847/postfix-notation-validation
@@ -659,7 +566,7 @@ public class Expression {
         // start a new parameter count
         params.push(0);
       } else if (!params.isEmpty()) {
-        if (functions.containsKey(token.toUpperCase(Locale.ROOT))) {
+        if (story.functions.containsKey(token.toUpperCase(Locale.ROOT))) {
           // remove the parameters and the ( from the counter
           counter -= params.pop() + 1;
         } else {

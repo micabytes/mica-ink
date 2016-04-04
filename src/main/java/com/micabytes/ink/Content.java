@@ -54,7 +54,7 @@ public class Content {
   }
 
   private static String evaluteTextVariable(String s, Story story) throws InkRunTimeException {
-    Object obj = story.getValue(s);
+    Object obj = Variable.evaluate(s, story);
     if (obj instanceof BigDecimal) // We don't want BigDecimal canonical form
       return ((BigDecimal) obj).toPlainString();
     return obj.toString();
@@ -98,6 +98,10 @@ public class Content {
     return type == ContentType.KNOT;
   }
 
+  public boolean isFunction() {
+    return type == ContentType.FUNCTION;
+  }
+
   public boolean isStitch() {
     return type == ContentType.STITCH;
   }
@@ -131,10 +135,14 @@ public class Content {
   }
 
   public boolean isVariable() {
-    return type == ContentType.VARIABLE_DECLARATION || type == ContentType.VARIABLE_EXPRESSION;
+    return type == ContentType.VARIABLE_DECLARATION || type == ContentType.VARIABLE_EXPRESSION || type == ContentType.VARIABLE_RETURN;
+  }
+
+  public boolean isVariableReturn() {
+    return type == ContentType.VARIABLE_RETURN;
   }
 
   public boolean isContainer() {
-    return isKnot() || isStitch() || isChoice() || isGather();
+    return isKnot() || isFunction() || isStitch() || isChoice() || isGather();
   }
 }

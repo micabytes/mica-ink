@@ -23,6 +23,10 @@ class Variable extends Content {
     } else if (str.startsWith(TILDE_)) {
       type = ContentType.VARIABLE_EXPRESSION;
       text = str.substring(2).trim();
+      if (text.startsWith("return")) {
+        type = ContentType.VARIABLE_RETURN;
+        text = text.replaceFirst("return", "return =").trim();
+      }
     }
     parent.add(this);
   }
@@ -66,6 +70,9 @@ class Variable extends Content {
         story.putVariable(variable, directTo);
       else
         throw new InkRunTimeException("Variable " + variable + " declared to equals invalid address " + address);
+    }
+    else {
+      story.putVariable(variable, evaluate(value, story));
     }
   }
 

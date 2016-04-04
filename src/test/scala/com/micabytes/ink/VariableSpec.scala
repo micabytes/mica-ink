@@ -42,7 +42,7 @@ class VariableSpec extends Specification {
       val story = InkParser.parse(inputStream)
       val text = story.nextAll()
       text.size() must beEqualTo(1)
-      text.get(0) must beEqualTo("The values are true and -1 and -6.")
+      text.get(0) must beEqualTo("The values are 1 and -1 and -6.")
     }
 
     val varDivert =
