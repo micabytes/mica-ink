@@ -1,12 +1,13 @@
 package com.micabytes.ink;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
@@ -333,9 +334,7 @@ public class Expression {
   private List<String> shuntingYard(String expression, Story story) {
     List<String> outputQueue = new ArrayList<String>();
     Stack<String> stack = new Stack<String>();
-
     Tokenizer tokenizer = new Tokenizer(expression);
-
     String lastFunction = null;
     String previousToken = null;
     while (tokenizer.hasNext()) {
@@ -349,7 +348,10 @@ public class Expression {
         outputQueue.add(token);
       } else if (story.hasVariable(token)) {
         outputQueue.add(token);
-      } else if (story.functions.containsKey(token)) {
+      } else if (story.hasFunction(token)) {
+        stack.push(token);
+        lastFunction = token;
+      } else if (story.checkObject(token)) {
         stack.push(token);
         lastFunction = token;
       } else if (Character.isLetter(token.charAt(0))) {
@@ -384,7 +386,7 @@ public class Expression {
           }
           // if the ( is preceded by a valid function, then it
           // denotes the start of a parameter list
-          if (story.functions.containsKey(previousToken.toUpperCase(Locale.ROOT))) {
+          if (story.hasFunction(previousToken) || story.checkObject(previousToken)) {
             outputQueue.add(token);
           }
         }
@@ -398,8 +400,7 @@ public class Expression {
         }
         stack.pop();
         if (!stack.isEmpty()
-            && story.functions.containsKey(stack.peek().toUpperCase(
-            Locale.ROOT))) {
+            && (story.hasFunction(stack.peek())||story.checkObject(stack.peek()))) {
           outputQueue.add(stack.pop());
         }
       }
@@ -425,9 +426,7 @@ public class Expression {
    * @return The result of the expression.
    */
   public Object eval(Story story) throws InkRunTimeException {
-
     Stack<Object> stack = new Stack<>();
-
     for (String token : getRPN(story)) {
       if (operators.containsKey(token)) {
         Object v1 = stack.pop();
@@ -451,8 +450,8 @@ public class Expression {
         } catch (InkRunTimeException e) {
           e.printStackTrace();
         }
-      } else if (story.functions.containsKey(token.toUpperCase(Locale.ROOT))) {
-        Function f = story.functions.get(token.toUpperCase(Locale.ROOT));
+      } else if (story.hasFunction(token)) {
+        Function f = story.functions.get(token);
         List<Object> p = new ArrayList<>(!f.numParamsVaries() ? f.getNumParams() : 0);
         // pop parameters off the stack until we hit the start of
         // this function's parameter list
@@ -467,6 +466,36 @@ public class Expression {
         }
         Object fResult = f.eval(p, story);
         stack.push(fResult);
+      } else if (story.checkObject(token)) {
+        String var = token.substring(0, token.indexOf("."));
+        String function = token.substring(token.indexOf(".")+1);
+        Object val = story.getValue(var);
+        List<Object> p = new ArrayList<>();
+        // pop parameters off the stack until we hit the start of  this function's parameter list
+        while (!stack.isEmpty() && stack.peek() != PARAMS_START) {
+          p.add(0, (BigDecimal) stack.pop());
+        }
+        if (stack.peek() == PARAMS_START) {
+          stack.pop();
+        }
+        Class[] paramTypes = new Class[p.size()];
+        Object[] params = new Object[p.size()];
+        for (int i=0; i<p.size(); i++) {
+          paramTypes[i] = p.get(i).getClass();
+          params[i] = p.get(i);
+        }
+        Class valClass = val.getClass();
+        try {
+          Method m = valClass.getMethod(function, paramTypes);
+          Object fResult = m.invoke(val, params);
+          stack.push(fResult);
+        } catch (NoSuchMethodException e) {
+          throw new InkRunTimeException("Could not identify a method " + function + " on variable " + var + " with those parameters");
+        } catch (InvocationTargetException e) {
+          throw new InkRunTimeException("Could not invoke a method " + function + " on variable " + var + " with those parameters");
+        } catch (IllegalAccessException e) {
+          throw new InkRunTimeException("Could not access a method " + function + " on variable " + var + " with those parameters");
+        }
       } else if ("(".equals(token)) {
         stack.push(PARAMS_START);
       } else {
@@ -566,7 +595,7 @@ public class Expression {
         // start a new parameter count
         params.push(0);
       } else if (!params.isEmpty()) {
-        if (story.functions.containsKey(token.toUpperCase(Locale.ROOT))) {
+        if (story.hasFunction(token) || story.checkObject(token)) {
           // remove the parameters and the ( from the counter
           counter -= params.pop() + 1;
         } else {

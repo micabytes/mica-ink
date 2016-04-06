@@ -27,6 +27,8 @@ And of course, the key elements of Part 4 are missing:
 
 Most of the examples in the implemented section of the documentation are used as tests, with a few additional test cases grabbed from the 'ink/Tests' where appropriate.
 
+This implementation does one thing that the standard Ink implementation does not, which is to allow the use of native Java objects as variables, and permit the calling of methods on those objects.
+
 ## Roadmap
 
 I would like to use this implementation in some of my own (Java-based) games, so I plan to continue working on this as and when circumstances allow,

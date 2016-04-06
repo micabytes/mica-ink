@@ -379,4 +379,17 @@ public class Story {
   public Container getContainer(String key) {
     return namedContainers.get(key);
   }
+
+  boolean hasFunction(String fct) {
+    return functions.containsKey(fct);
+  }
+
+  boolean checkObject(String fct) {
+    if (fct.contains(".")) {
+      return hasVariable(fct.substring(0, fct.indexOf(InkParser.DOT)));
+    }
+    return false;
+  }
+
+
 }
