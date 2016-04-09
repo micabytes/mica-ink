@@ -35,7 +35,7 @@ class ExternSpec extends Specification {
     }
 
     val helloNoBrace =
-      """{x.hello}
+      """{x.hello()}
         |-> END
       """.stripMargin
 

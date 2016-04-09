@@ -473,7 +473,7 @@ public class Expression {
         List<Object> p = new ArrayList<>();
         // pop parameters off the stack until we hit the start of  this function's parameter list
         while (!stack.isEmpty() && stack.peek() != PARAMS_START) {
-          p.add(0, (BigDecimal) stack.pop());
+          p.add(0, stack.pop());
         }
         if (stack.peek() == PARAMS_START) {
           stack.pop();

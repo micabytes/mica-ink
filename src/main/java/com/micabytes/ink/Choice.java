@@ -1,5 +1,7 @@
 package com.micabytes.ink;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -77,7 +79,12 @@ public class Choice extends Container {
     if (conditions == null)
       return true;
     for (String condition : conditions) {
-      if (((BigDecimal)Variable.evaluate(condition, story)).intValue() <= 0)
+      Object obj = Variable.evaluate(condition, story);
+      if (obj == null)
+        return false;
+      if (obj instanceof Boolean && !((Boolean)obj).booleanValue())
+        return false;
+      if (obj instanceof BigDecimal && ((BigDecimal)obj).intValue() <= 0)
         return false;
     }
     return true;

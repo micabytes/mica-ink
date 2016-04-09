@@ -177,7 +177,7 @@ class ChoiceSpec extends Specification {
         |*   (greet) [Greet him]
         |    'Greetings.'
         |*   (get_out) 'Get out of my way[.'],' you tell the guard.
-        |-   'Hmm,' replies the guard.        |
+        |-   'Hmm,' replies the guard.
         |*   {greet}     'Having a nice day?'
         |*   'Hmm?'[] you reply.        |
         |*   {get_out} [Shove him aside]

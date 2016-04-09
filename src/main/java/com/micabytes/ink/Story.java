@@ -20,13 +20,23 @@ public class Story {
    * All defined functions with name and implementation.
    */
   Map<String, Function> functions = new TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER);
-
   private final HashMap<String, Container> namedContainers = new HashMap<>();
   Container currentContainer;
   private int currentCounter;
   private final ArrayList<Container> currentChoices = new ArrayList<>();
   private final HashMap<String, Object> variables = new HashMap<>();
   private boolean running;
+  private boolean processing;
+
+  Story() {
+    // NOOP
+  }
+
+  Story(Story story) {
+    functions.putAll(story.functions);
+    namedContainers.putAll(story.namedContainers);
+    variables.putAll(story.variables);
+  }
 
   void initialize() {
     variables.put("TRUE", BigDecimal.ONE);
@@ -37,6 +47,7 @@ public class Story {
     }
     currentCounter = -1;
     running = true;
+    processing = true;
     try {
       incrementContent(null);
     } catch (InkRunTimeException e) {
@@ -50,16 +61,16 @@ public class Story {
   }
 
   public boolean hasNext() {
+    if (!processing) return false;
     if (currentContainer == null)
       return false;
-    //if (!currentContainer.isKnot() || !currentContainer.isStitch())
-    //  return true;
     return currentCounter < currentContainer.getContentSize();
   }
 
   public String next() throws InkRunTimeException {
     if (!hasNext())
       throw new InkRunTimeException("Did you forget to run canContinue()?");
+    processing = true;
     String ret = "";
     Content content = getContent();
     boolean processing = true;
@@ -158,6 +169,9 @@ public class Story {
         currentContainer = container;
         currentCounter = 0;
         return;
+      }
+      if (next != null && next.isGather()) {
+        processing = false;
       }
     }
   }
@@ -260,6 +274,7 @@ public class Story {
       currentContainer.increment();
       currentCounter = 0;
       currentChoices.clear();
+      processing = true;
     } else
       throw new InkRunTimeException("Trying to select a choice that does not exist");
   }

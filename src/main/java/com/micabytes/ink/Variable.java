@@ -78,8 +78,12 @@ class Variable extends Content {
 
   private void calculate(Story story) throws InkRunTimeException {
     String[] tokens = EQ_SPLITTER.split(text);
-    if (tokens.length != 2)
-      throw new InkRunTimeException("Invalid variable expression. Expected variables, values, and operators after \'=\'.");
+    if (tokens.length == 1) {
+      evaluate(tokens[0], story);
+      return;
+    }
+    if (tokens.length > 2)
+      throw new InkRunTimeException("Invalid variable expression. Expected variables, values, and operators after \'=\' in line " + lineNumber);
     String variable = tokens[0].trim();
     String value = tokens[1].trim();
     if (!story.hasVariable(variable))
