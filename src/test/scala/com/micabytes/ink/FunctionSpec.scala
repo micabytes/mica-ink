@@ -27,6 +27,23 @@ class FunctionSpec extends Specification {
       text.get(0) must beEqualTo("The value of x is 3.8.")
     }
 
+    val funcNone =
+      """VAR x = f()
+        |The value of x is {x}.
+        |-> END
+        |
+        |=== function f() ===
+        |    ~ return 3.8
+      """.stripMargin
+
+    "- return a value from a function with no parameters" in {
+      val inputStream = IOUtils.toInputStream(funcNone, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      val text = story.nextAll()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("The value of x is 3.8.")
+    }
+
     val funcInline =
       """The value of x is {lerp(2, 8, 0.3)}.
         |-> END

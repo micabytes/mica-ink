@@ -488,6 +488,12 @@ public class Expression {
         try {
           Method m = valClass.getMethod(function, paramTypes);
           Object fResult = m.invoke(val, params);
+          if (fResult instanceof Integer)
+            fResult = BigDecimal.valueOf((Integer)fResult);
+          if (fResult instanceof Float)
+            fResult = BigDecimal.valueOf((Float)fResult);
+          if (fResult instanceof Double)
+            fResult = BigDecimal.valueOf((Double)fResult);
           stack.push(fResult);
         } catch (NoSuchMethodException e) {
           throw new InkRunTimeException("Could not identify a method " + function + " on variable " + var + " with those parameters");

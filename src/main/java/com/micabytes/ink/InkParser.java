@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("UtilityClass")
 public final class InkParser {
@@ -22,6 +23,7 @@ public final class InkParser {
   @NonNls static final String CONDITIONAL_END = "}";
   @NonNls static final char DOT = '.';
   @NonNls public static final String DEFAULT_KNOT_NAME = "default";
+  private static final Pattern AT_SPLITTER = Pattern.compile("[@]");
 
   private InkParser() {
     // NOOP
@@ -43,9 +45,11 @@ public final class InkParser {
       while (line != null) {
         String trimmedLine = line.trim();
         if (trimmedLine.contains("//")) {
+          String comment = trimmedLine.substring(trimmedLine.indexOf("//")).trim();
+          parseComment(comment, current);
           trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf("//")).trim();
         }
-        if (conditional != null) {
+        else if (conditional != null) {
           Conditional cond = (Conditional) current.getContent(current.getContentSize()-1);
           cond.parseLine(lineNumber, trimmedLine);
           if (trimmedLine.endsWith(CONDITIONAL_END))
@@ -124,6 +128,19 @@ public final class InkParser {
       return new Content(lineNumber, trimmedLine, current);
     }
     return null;
+  }
+
+  static private void parseComment(String comment, Container current) {
+    String token[] = AT_SPLITTER.split(comment);
+    if (token.length < 2) return;
+    for (int i=1; i<token.length; i++) {
+      if (token[i].startsWith("img(")) {
+        String img = token[i].substring(token[i].indexOf("(") + 1, token[i].indexOf(")")).trim();
+        if (current != null) {
+          current.setBackground(img);
+        }
+      }
+    }
   }
 
 }

@@ -1,6 +1,8 @@
 
 package com.micabytes.ink;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import org.jetbrains.annotations.NonNls;
 
 import java.math.BigDecimal;
@@ -24,6 +26,7 @@ public class Story {
   Container currentContainer;
   private int currentCounter;
   private final ArrayList<Container> currentChoices = new ArrayList<>();
+  private String currentBackground;
   private final HashMap<String, Object> variables = new HashMap<>();
   private boolean running;
   private boolean processing;
@@ -58,6 +61,49 @@ public class Story {
       namedContainers.remove(def);
     }
     */
+    functions.put("isNull", new Function() {
+      @Override
+      public String getId() {
+        return "isNull";
+      }
+      @Override
+      public int getNumParams() {
+        return 1;
+      }
+      @Override
+      public boolean numParamsVaries() {
+        return false;
+      }
+      @Override
+      public Object eval(List<Object> parameters, Story story) throws InkRunTimeException {
+        Object param = parameters.get(0);
+        return param == null;
+      }
+    });
+    functions.put("not", new Function() {
+      @Override
+      public String getId() {
+        return "not";
+      }
+      @Override
+      public int getNumParams() {
+        return 1;
+      }
+      @Override
+      public boolean numParamsVaries() {
+        return false;
+      }
+      @Override
+      public Object eval(List<Object> parameters, Story story) throws InkRunTimeException {
+        Object param = parameters.get(0);
+        if (param instanceof Boolean)
+          return !((Boolean) param);
+        if (param instanceof BigDecimal)
+          return ((BigDecimal) param).intValue() == 0 ? Boolean.TRUE : Boolean.FALSE;
+        return Boolean.FALSE;
+      }
+    });
+
   }
 
   public boolean hasNext() {
@@ -97,6 +143,9 @@ public class Story {
           processing = true;
         content = nextContent;
       }
+    }
+    if (currentContainer != null && currentContainer.getBackground() != null) {
+      currentBackground = currentContainer.getBackground();
     }
     return cleanUpText(ret);
   }
@@ -406,5 +455,8 @@ public class Story {
     return false;
   }
 
+  public String getCurrentBackground() {
+    return currentBackground;
+  }
 
 }

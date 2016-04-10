@@ -25,8 +25,10 @@ public class KnotFunction extends ParameterizedContainer implements Function {
       String params = fullId.substring(fullId.indexOf(BRACE_LEFT)+1, fullId.indexOf(BRACE_RIGHT));
       String[] param = params.split(",");
       parameters = new ArrayList<>();
-      for (String aParam : param)
-        parameters.add(aParam.trim());
+      for (String aParam : param) {
+        if (!aParam.trim().isEmpty())
+          parameters.add(aParam.trim());
+      }
       fullId = fullId.substring(0, fullId.indexOf(BRACE_LEFT)).trim();
     }
     id = fullId;

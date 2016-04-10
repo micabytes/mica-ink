@@ -10,6 +10,7 @@ public class Container extends Content {
   int level;
   @Nullable Container parent;
   List<Content> content = new ArrayList<>();
+  @Nullable private String background = null;
 
   public void add(Content item) {
     content.add(item);
@@ -44,6 +45,14 @@ public class Container extends Content {
       ((Conditional) this).evaluate(story);
     }
     increment();
+  }
+
+  public void setBackground(String img) {
+    background = img;
+  }
+
+  public String getBackground() {
+    return background;
   }
 
 }
