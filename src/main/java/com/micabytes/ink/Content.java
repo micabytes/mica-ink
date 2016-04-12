@@ -87,6 +87,31 @@ public class Content {
   }
 
   private String evaluateConditionalText(String str, Story story) {
+    if (str.startsWith("#")) {
+      String condition = str.substring(1, str.indexOf(":")).trim();
+      String text = str.substring(str.indexOf(":")+1);
+      String[] options = text.split("[|]");
+      int val = 0;
+      try {
+        Object value = Variable.evaluate(condition, story);
+        if (value instanceof Boolean) {
+          val = ((Boolean)value) ? 1 : 0;
+        }
+        else if (value instanceof BigDecimal) {
+          val = ((BigDecimal) value).intValue();
+        }
+        else {
+          val = value == null ?  0 : 1;
+        }
+      } catch (InkRunTimeException e) {
+        // NOOP
+      }
+      if (val >= options.length)
+        return options[options.length-1];
+      if (val < 0)
+        return options[0];
+      return options[val];
+    }
     // TODO: Not implemented yet
     String s = str.substring(1);
     String[] tokens = s.split("[|]");

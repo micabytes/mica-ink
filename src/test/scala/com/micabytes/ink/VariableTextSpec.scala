@@ -113,16 +113,6 @@ class VariableTextSpec extends Specification {
         |The radio hissed into life. {||"One!"}
         |+ [Again] -> test
       """.stripMargin
-    val listInChoice =
-      """=== test
-        |He looked at me oddly.
-        |+ ["Hello, {&Master|Monsieur|you}!"] -> test
-      """.stripMargin
-    val nestedList =
-      """=== test
-        |The radio hissed into life. {||"One!"}
-        |+ [Again] -> test
-      """.stripMargin
 
     "- allow for empty text elements in the list" in {
       val inputStream = IOUtils.toInputStream(emptyElements, "UTF-8")
@@ -140,6 +130,12 @@ class VariableTextSpec extends Specification {
       text2.get(0) must beEqualTo("The radio hissed into life. \"One!\"")
     }
 
+    val listInChoice =
+      """=== test
+        |He looked at me oddly.
+        |+ ["Hello, {&Master|Monsieur|you}!"] -> test
+      """.stripMargin
+
     "- be usable in a choice test" in {
       val inputStream = IOUtils.toInputStream(listInChoice, "UTF-8")
       val story = InkParser.parse(inputStream)
@@ -156,6 +152,62 @@ class VariableTextSpec extends Specification {
       choice2.getChoiceText(story) must beEqualTo("\"Hello, you!\"")
     }
 
+    /*
+    val nestedList =
+      """=== test
+        |The radio hissed into life. {||"One!"}
+        |+ [Again] -> test
+      """.stripMargin
+    */
+    // TODO: add test
+
+  }
+
+  "Value evaluated lists" should {
+    val one =
+      """=== test
+        |VAR x = 1
+        |We needed to find {# x : nothing|one apple|two pears|many oranges}.
+        |-> END
+      """.stripMargin
+
+    "- return the text string in the sequence if the condition is a valid value" in {
+      val inputStream = IOUtils.toInputStream(one, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      val text0 = story.nextAll()
+      text0.size() must beEqualTo(1)
+      text0.get(0) must beEqualTo("We needed to find one apple.")
+    }
+
+    val minusOne =
+      """=== test
+        |VAR x = -1
+        |We needed to find {# x : nothing|one apple|two pears|many oranges}.
+        |-> END
+      """.stripMargin
+
+    "- return the text string in the sequence if the condition is a valid value" in {
+      val inputStream = IOUtils.toInputStream(minusOne, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      val text0 = story.nextAll()
+      text0.size() must beEqualTo(1)
+      text0.get(0) must beEqualTo("We needed to find nothing.")
+    }
+
+    val ten =
+      """=== test
+        |VAR x = 10
+        |We needed to find {# x : nothing|one apple|two pears|many oranges}.
+        |-> END
+      """.stripMargin
+
+    "- return the text string in the sequence if the condition is a valid value" in {
+      val inputStream = IOUtils.toInputStream(ten, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      val text0 = story.nextAll()
+      text0.size() must beEqualTo(1)
+      text0.get(0) must beEqualTo("We needed to find many oranges.")
+    }
   }
 
 

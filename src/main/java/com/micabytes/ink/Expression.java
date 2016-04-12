@@ -441,11 +441,11 @@ public class Expression {
             else
               stack.push(BigDecimal.ZERO);
           }
-          else if (obj instanceof String) {
-            stack.push(obj);
+          else if (obj instanceof BigDecimal){
+            stack.push(((BigDecimal) obj).round(mc));
           }
           else {
-            stack.push(((BigDecimal) obj).round(mc));
+            stack.push(obj);
           }
         } catch (InkRunTimeException e) {
           e.printStackTrace();
@@ -456,7 +456,7 @@ public class Expression {
         // pop parameters off the stack until we hit the start of
         // this function's parameter list
         while (!stack.isEmpty() && stack.peek() != PARAMS_START) {
-          p.add(0, (BigDecimal) stack.pop());
+          p.add(0, stack.pop());
         }
         if (stack.peek() == PARAMS_START) {
           stack.pop();

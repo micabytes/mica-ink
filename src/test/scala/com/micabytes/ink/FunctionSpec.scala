@@ -60,6 +60,9 @@ class FunctionSpec extends Specification {
       text.get(0) must beEqualTo("The value of x is 3.8.")
     }
 
+
+    //TODO: Should tests that all different kinds of data can be passed as parameters: booleans, numbers, strings, and game objects.
+
   }
 
 }

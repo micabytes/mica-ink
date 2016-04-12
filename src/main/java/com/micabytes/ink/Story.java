@@ -31,11 +31,7 @@ public class Story {
   private boolean running;
   private boolean processing;
 
-  Story() {
-    // NOOP
-  }
-
-  Story(Story story) {
+  void addAll(Story story) {
     functions.putAll(story.functions);
     namedContainers.putAll(story.namedContainers);
     variables.putAll(story.variables);
