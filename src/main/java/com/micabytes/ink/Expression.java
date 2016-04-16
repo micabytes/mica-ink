@@ -470,37 +470,45 @@ public class Expression {
         String var = token.substring(0, token.indexOf("."));
         String function = token.substring(token.indexOf(".")+1);
         Object val = story.getValue(var);
-        List<Object> p = new ArrayList<>();
-        // pop parameters off the stack until we hit the start of  this function's parameter list
-        while (!stack.isEmpty() && stack.peek() != PARAMS_START) {
-          p.add(0, stack.pop());
+        if (val == null) {
+          stack.push("");
         }
-        if (stack.peek() == PARAMS_START) {
-          stack.pop();
-        }
-        Class[] paramTypes = new Class[p.size()];
-        Object[] params = new Object[p.size()];
-        for (int i=0; i<p.size(); i++) {
-          paramTypes[i] = p.get(i).getClass();
-          params[i] = p.get(i);
-        }
-        Class valClass = val.getClass();
-        try {
-          Method m = valClass.getMethod(function, paramTypes);
-          Object fResult = m.invoke(val, params);
-          if (fResult instanceof Integer)
-            fResult = BigDecimal.valueOf((Integer)fResult);
-          if (fResult instanceof Float)
-            fResult = BigDecimal.valueOf((Float)fResult);
-          if (fResult instanceof Double)
-            fResult = BigDecimal.valueOf((Double)fResult);
-          stack.push(fResult);
-        } catch (NoSuchMethodException e) {
-          throw new InkRunTimeException("Could not identify a method " + function + " on variable " + var + " with those parameters");
-        } catch (InvocationTargetException e) {
-          throw new InkRunTimeException("Could not invoke a method " + function + " on variable " + var + " with those parameters");
-        } catch (IllegalAccessException e) {
-          throw new InkRunTimeException("Could not access a method " + function + " on variable " + var + " with those parameters");
+        else {
+          List<Object> p = new ArrayList<>();
+          // pop parameters off the stack until we hit the start of  this function's parameter list
+          while (!stack.isEmpty() && stack.peek() != PARAMS_START) {
+            p.add(0, stack.pop());
+          }
+          if (stack.peek() == PARAMS_START) {
+            stack.pop();
+          }
+          Class[] paramTypes = new Class[p.size()];
+          Object[] params = new Object[p.size()];
+          for (int i = 0; i < p.size(); i++) {
+            paramTypes[i] = p.get(i).getClass();
+            params[i] = p.get(i);
+          }
+          Class valClass = val.getClass();
+          try {
+            Method m = valClass.getMethod(function, paramTypes);
+            Object fResult = m.invoke(val, params);
+            if (fResult instanceof Integer)
+              fResult = BigDecimal.valueOf((Integer) fResult);
+            if (fResult instanceof Float)
+              fResult = BigDecimal.valueOf((Float) fResult);
+            if (fResult instanceof Double)
+              fResult = BigDecimal.valueOf((Double) fResult);
+            stack.push(fResult);
+          } catch (NoSuchMethodException e) {
+            String errMsg = "Could not identify a method " + function + " on variable " + var + " with the parameters:";
+            for (int i = 0; i < paramTypes.length; i++)
+              errMsg += " " + paramTypes[i].getName();
+            throw new InkRunTimeException(errMsg);
+          } catch (InvocationTargetException e) {
+            throw new InkRunTimeException("Could not invoke a method " + function + " on variable " + var + " with those parameters");
+          } catch (IllegalAccessException e) {
+            throw new InkRunTimeException("Could not access a method " + function + " on variable " + var + " with those parameters");
+          }
         }
       } else if ("(".equals(token)) {
         stack.push(PARAMS_START);

@@ -11,6 +11,7 @@ public class Content {
   static final String SBRACE_LEFT = "[";
   static final String SBRACE_RIGHT = "]";
 
+  String id;
   int lineNumber;
   ContentType type = ContentType.TEXT;
   String text = "";
@@ -26,11 +27,23 @@ public class Content {
     current.add(this);
   }
 
+  public String getId() {
+    return id;
+  }
+
+  public String generateId(Container p) {
+    int i = p.getContentIndex(this);
+    id = p.getId() + InkParser.DOT + Integer.toString(i);
+    return id;
+  }
+
   public String getText(Story story) throws InkRunTimeException {
     String ret = text;
     while (ret.contains(CBRACE_LEFT)) {
       int start = ret.lastIndexOf(CBRACE_LEFT);
       int end = ret.indexOf(CBRACE_RIGHT, start);
+      if (end < 0)
+        throw new InkRunTimeException("Mismatched curly braces in line " + lineNumber);
       String s = ret.substring(start, end + 1);
       String res = evaluateText(s, story);
       ret = ret.replace(s, res);
@@ -170,4 +183,5 @@ public class Content {
   public boolean isContainer() {
     return isKnot() || isFunction() || isStitch() || isChoice() || isGather();
   }
+
 }

@@ -99,7 +99,7 @@ class Conditional extends Container {
   }
 
   @Override
-  public int getContentIndex(Container c) {
+  public int getContentIndex(Content c) {
     if (selection >= content.size())
       return 0;
     ConditionalOptions opt = (ConditionalOptions) content.get(selection);

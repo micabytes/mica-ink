@@ -1,15 +1,20 @@
 
 package com.micabytes.ink;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.jetbrains.annotations.NonNls;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 public class Story {
@@ -18,11 +23,11 @@ public class Story {
   @NonNls private static final String DIVERT_END = "END";
   public static final char LT = '<';
   public static final char GT = '>';
-  /**
-   * All defined functions with name and implementation.
-   */
+  // All defined functions with name and implementation.
   Map<String, Function> functions = new TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER);
-  private final HashMap<String, Container> namedContainers = new HashMap<>();
+  // Named containers
+  String fileName;
+  private final HashMap<String, Content> storyContent = new HashMap<>();
   Container currentContainer;
   private int currentCounter;
   private final ArrayList<Container> currentChoices = new ArrayList<>();
@@ -31,9 +36,117 @@ public class Story {
   private boolean running;
   private boolean processing;
 
+  public ObjectNode saveData() {
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode retNode = mapper.createObjectNode();
+    if (fileName != null)
+      retNode.put("file", fileName);
+    for (Map.Entry<String, Content> entry : storyContent.entrySet())
+    {
+      Content content = entry.getValue();
+      if (content.count > 0) {
+        ObjectNode node = mapper.createObjectNode();
+        node.put("id", content.id);
+        node.put("#n", content.count);
+        if (content instanceof ParameterizedContainer) {
+          ParameterizedContainer container = (ParameterizedContainer) content;
+          if (container.variables != null) {
+            for (Map.Entry<String, Object> var : container.variables.entrySet())
+            {
+              ObjectNode varNode = mapper.createObjectNode();
+              varNode.put("id", var.getKey());
+              saveObject(var.getValue(), varNode);
+              node.withArray("vars").add(varNode);
+            }
+          }
+        }
+        retNode.withArray("content").add(node);
+      }
+    }
+    retNode.put("currentContainer", currentContainer.id);
+    retNode.put("currentCounter", currentCounter);
+    for (Container choice : currentChoices) {
+      retNode.withArray("currentChoices").add(choice.getId());
+    }
+    if (currentBackground != null)
+      retNode.put("currentBackground", currentBackground);
+    for (Map.Entry<String, Object> var : variables.entrySet())
+    {
+      ObjectNode varNode = mapper.createObjectNode();
+      varNode.put("id", var.getKey());
+      saveObject(var.getValue(), varNode);
+      retNode.withArray("vars").add(varNode);
+    }
+    retNode.put("running", running);
+    return retNode;
+  }
+
+  private void saveObject(Object val, ObjectNode varNode) {
+    if (val instanceof Boolean) {
+      varNode.put("val", (Boolean) val);
+      return;
+    }
+    if (val instanceof BigDecimal) {
+      varNode.put("val", (BigDecimal) val);
+      return;
+    }
+    if (val instanceof String) {
+      varNode.put("val", (String) val);
+      return;
+    }
+    Class valClass = val.getClass();
+    try {
+      Method m = valClass.getMethod("getSaveId", null);
+      Object id = m.invoke(val, null);
+      varNode.put("val", (String) id);
+    } catch (Exception ignored) {
+      // NOOP
+      // TODO: Loss of data. Handle this different?
+    }
+  }
+
+  public void loadData(JsonNode sNode, StoryProvider provider) {
+    for (JsonNode node : sNode.withArray("content")) {
+      String id = node.get("id").asText();
+      Content content = storyContent.get(id);
+      content.count = node.get("#n").asInt();
+      if (node.has("vars")) {
+        ParameterizedContainer container = (ParameterizedContainer) content;
+        for (JsonNode v : node.withArray("vars")) {
+          container.variables.put(v.get("id").asText(), loadObject(v, provider));
+        }
+      }
+    }
+    currentContainer = (Container) storyContent.get(sNode.get("currentContainer").asText());
+    currentCounter = sNode.get("currentCounter").asInt();
+    for (JsonNode cNode : sNode.withArray("currentChoices")) {
+      currentChoices.add((Container) storyContent.get(cNode.asText()));
+    }
+    if (sNode.has("currentBackground"))
+      currentBackground = sNode.get("currentBackground").asText();
+    if (sNode.has("vars")) {
+      for (JsonNode v : sNode.withArray("vars")) {
+        variables.put(v.get("id").asText(), loadObject(v, provider));
+      }
+    }
+    running = sNode.get("running").asBoolean();
+  }
+
+  private Object loadObject(JsonNode v, StoryProvider provider) {
+    JsonNode node = v.get("val");
+    if (node.isBoolean())
+      return node.asBoolean();
+    if (node.isInt())
+      return BigDecimal.valueOf(node.asInt());
+    if (node.isDouble())
+      return BigDecimal.valueOf(node.asDouble());
+    return provider.getStoryObject(node.asText());
+  }
+
   void addAll(Story story) {
+    // TODO: Need to handle name collissions
     functions.putAll(story.functions);
-    namedContainers.putAll(story.namedContainers);
+    storyContent.putAll(story.storyContent);
     variables.putAll(story.variables);
   }
 
@@ -52,9 +165,9 @@ public class Story {
     } catch (InkRunTimeException e) {
       e.printStackTrace();
     }
-    /*Container def = namedContainers.get(InkParser.DEFAULT_KNOT_NAME);
+    /*Container def = storyContent.get(InkParser.DEFAULT_KNOT_NAME);
     if (def != currentContainer) {
-      namedContainers.remove(def);
+      storyContent.remove(def);
     }
     */
     functions.put("isNull", new Function() {
@@ -73,7 +186,7 @@ public class Story {
       @Override
       public Object eval(List<Object> parameters, Story story) throws InkRunTimeException {
         Object param = parameters.get(0);
-        return param == null;
+        return param != null;
       }
     });
     functions.put("not", new Function() {
@@ -97,6 +210,27 @@ public class Story {
         if (param instanceof BigDecimal)
           return ((BigDecimal) param).intValue() == 0 ? Boolean.TRUE : Boolean.FALSE;
         return Boolean.FALSE;
+      }
+    });
+    functions.put("random", new Function() {
+      @Override
+      public String getId() {
+        return "random";
+      }
+      @Override
+      public int getNumParams() {
+        return 1;
+      }
+      @Override
+      public boolean numParamsVaries() {
+        return false;
+      }
+      @Override
+      public Object eval(List<Object> parameters, Story story) throws InkRunTimeException {
+        Object param = parameters.get(0);
+        if (param instanceof BigDecimal)
+          return new BigDecimal(new Random().nextInt(((BigDecimal) param).intValue()));
+        return 0;
       }
     });
 
@@ -258,10 +392,10 @@ public class Story {
       d = d.substring(0, d.indexOf(Content.BRACE_LEFT));
     if (d.equals(DIVERT_END))
       return null;
-    Container divertTo = namedContainers.get(d);
+    Container divertTo = (Container) storyContent.get(d);
     if (divertTo == null) {
       String fd = getFullId(d);
-      divertTo = namedContainers.get(fd);
+      divertTo = (Container) storyContent.get(fd);
       if (divertTo == null) {
         if (variables.containsKey(d))
           divertTo = (Container) variables.get(d);
@@ -349,17 +483,17 @@ public class Story {
     }
     if (key.startsWith(DIVERT)) {
       String k = key.substring(2).trim();
-      if (namedContainers.containsKey(k))
-        return namedContainers.get(k);
+      if (storyContent.containsKey(k))
+        return storyContent.get(k);
       throw new InkRunTimeException("Could not identify container id: " + k);
     }
-    if (namedContainers.containsKey(key)) {
-      Container container = namedContainers.get(key);
+    if (storyContent.containsKey(key)) {
+      Container container = (Container) storyContent.get(key);
       return BigDecimal.valueOf(container.getCount());
     }
     String pathId = getValueId(key);
-    if (namedContainers.containsKey(pathId)) {
-      Container container = namedContainers.get(pathId);
+    if (storyContent.containsKey(pathId)) {
+      Container container = (Container) storyContent.get(pathId);
       return BigDecimal.valueOf(container.getCount());
     }
     if (variables.containsKey(key)) {
@@ -376,19 +510,23 @@ public class Story {
     return currentContainer != null ? currentContainer.id + InkParser.DOT + id : id;
   }
 
-  void add(Container container) throws InkParseException {
-    if (container.getId() != null) {
-      if (namedContainers.containsKey(container.getId())) {
+  void add(Content content) throws InkParseException {
+    if (content.getId() != null) {
+      if (storyContent.containsKey(content.getId())) {
         throw new InkParseException("Invalid container ID. Two containers may not have the same ID");
       }
-      if (container.isFunction())
-        functions.put(container.getId(), (Function) container);
+      if (content.isFunction())
+        functions.put(content.getId(), (Function) content);
       else
-        namedContainers.put(container.getId(), container);
+        storyContent.put(content.getId(), content);
+    }
+    else {
+      // Should not be possible.
+      throw new InkParseException("No ID for content. This should not be possible.");
     }
     // Set starting knot
-    if (currentContainer == null || (currentContainer != null && currentContainer.getContentSize() == 0))
-      currentContainer = container;
+    if ((content.isKnot())&&(currentContainer == null || (currentContainer != null && currentContainer.getContentSize() == 0)))
+      currentContainer = (Container) content;
   }
 
   public boolean isEnded() {
@@ -397,6 +535,8 @@ public class Story {
 
 
   public boolean hasVariable(String variable) {
+    if (Character.isDigit(variable.charAt(0)))
+      return false;
     Container c = currentContainer;
     while (c != null) {
       if (c.isKnot() || c.isFunction() || c.isStitch()) {
@@ -405,9 +545,9 @@ public class Story {
       }
       c = c.parent;
     }
-    if (namedContainers.containsKey(variable))
+    if (storyContent.containsKey(variable))
       return true;
-    if (namedContainers.containsKey(getValueId(variable)))
+    if (storyContent.containsKey(getValueId(variable)))
       return true;
     return variables.containsKey(variable);
   }
@@ -437,7 +577,7 @@ public class Story {
   }
 
   public Container getContainer(String key) {
-    return namedContainers.get(key);
+    return (Container) storyContent.get(key);
   }
 
   boolean hasFunction(String fct) {

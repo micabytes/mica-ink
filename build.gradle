@@ -6,6 +6,10 @@ targetCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
   compile fileTree(include: ['*.jar'], dir: 'libs')
+  // JSON Libraries
+  // Remember to modify proguard-rules.pro also
+  compile 'com.fasterxml.jackson.core:jackson-core:2.7.0'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.7.0'
   //noinspection GradleDynamicVersion
   compile 'com.intellij:annotations:+@jar'
   compile 'org.scala-lang:scala-library:2.11.7'

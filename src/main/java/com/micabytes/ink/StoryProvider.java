@@ -7,4 +7,6 @@ import java.io.InputStream;
  */
 public interface StoryProvider {
   public InputStream getStream(String fileId);
+
+  public Object getStoryObject(String objId);
 }

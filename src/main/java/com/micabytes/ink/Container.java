@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Container extends Content {
-  String id;
   int level;
   @Nullable Container parent;
   List<Content> content = new ArrayList<>();
@@ -24,7 +23,11 @@ public class Container extends Content {
     return c;
   }
 
-  public String getId() {
+  @Override
+  public String generateId(Container p) {
+    if (id != null) return id;
+    int i = parent.getContentIndex(this);
+    id = parent.getId() + InkParser.DOT + Integer.toString(i);
     return id;
   }
 
@@ -36,7 +39,7 @@ public class Container extends Content {
     return content.get(i);
   }
 
-  public int getContentIndex(Container c) {
+  public int getContentIndex(Content c) {
     return content.indexOf(c);
   }
 

@@ -33,6 +33,15 @@ public final class InkParser {
     return parse(inputStream, null);
   }
 
+  public static Story parse(String fileName, StoryProvider provider) throws InkParseException {
+    if (provider == null)
+      throw new InkParseException("The StoryProvider passed to Ink is null.");
+    InputStream in = provider.getStream(fileName);
+    Story story = parse(in, provider);
+    story.fileName = fileName;
+    return story;
+  }
+
   public static Story parse(InputStream inputStream, StoryProvider provider) throws InkParseException {
     InputStreamReader inputStreamReader = null;
     BufferedReader bufferedReader = null;
@@ -54,7 +63,9 @@ public final class InkParser {
           trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf("//")).trim();
         }
         if (trimmedLine.startsWith("INCLUDE")) {
-          parseInclude(trimmedLine, provider, story);
+          String file = trimmedLine.replace("INCLUDE", "").trim();
+          Story incl = parse(file, provider);
+          story.addAll(incl);
         }
         else if (conditional != null) {
           Conditional cond = (Conditional) current.getContent(current.getContentSize()-1);
@@ -64,9 +75,13 @@ public final class InkParser {
         }
         else {
           Content cont = parseLine(lineNumber, trimmedLine, current);
-          if (cont != null && cont.isContainer()) {
-            current = (Container) cont;
-            story.add(current);
+          if (cont != null) {
+            if (cont.getId() == null)
+              cont.generateId(current);
+            story.add(cont);
+            if (cont.isContainer()) {
+              current = (Container) cont;
+            }
           }
           if (cont != null && cont.isConditional()) {
             conditional = (Conditional) cont;
@@ -148,14 +163,6 @@ public final class InkParser {
         }
       }
     }
-  }
-
-  static private void parseInclude(String str, StoryProvider provider, Story story) throws InkParseException {
-    if (provider == null)
-      throw new InkParseException("The StoryProvider passed to Ink is null. For INCLUDE to work, you need to pass a valid StoryProvider.");
-    InputStream in = provider.getStream(str.replace("INCLUDE", "").trim());
-    Story incl = InkParser.parse(in, provider);
-    story.addAll(incl);
   }
 
 }
