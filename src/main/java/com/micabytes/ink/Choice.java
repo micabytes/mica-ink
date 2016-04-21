@@ -28,7 +28,7 @@ public class Choice extends Container {
   }
 
   public void addLine(String str) {
-    String s = str;
+    String s = str.trim();
     if (s.startsWith("(")) {
       id = s.substring(s.indexOf(BRACE_LEFT) + 1, s.indexOf(BRACE_RIGHT)).trim();
       Container p = parent;

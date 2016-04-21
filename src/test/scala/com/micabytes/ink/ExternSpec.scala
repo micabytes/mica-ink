@@ -15,6 +15,9 @@ class ExternSpec extends Specification {
     def number(b: java.math.BigDecimal) = {
       "Mambo Number " + b.toPlainString()
     }
+    def wrong() = {
+      false
+    }
   }
 
 
@@ -62,6 +65,22 @@ class ExternSpec extends Specification {
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("Mambo Number 5")
     }
+
+    val externChoices =
+    """=== choice_test ===
+      |Test conditional choices
+      |+ {x.wrong()} not displayed
+      |+ shown
+      """.stripMargin
+
+    "- resolve external bools correctly in conditional choices" in {
+      val inputStream = IOUtils.toInputStream(externChoices, "UTF-8")
+      val story = InkParser.parse(inputStream)
+      story.putVariable("x", new testClass())
+      story.nextAll()
+      story.getChoiceSize must beEqualTo(1)
+    }
+
 
   }
 

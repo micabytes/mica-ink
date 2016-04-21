@@ -268,7 +268,6 @@ class ChoiceSpec extends Specification {
       story.getChoice(0).getChoiceText(story) must beEqualTo("Grapple and fight")
     }
 
-
   }
 
 }
