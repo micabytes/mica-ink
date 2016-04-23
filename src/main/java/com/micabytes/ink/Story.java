@@ -35,6 +35,7 @@ public class Story {
   private final HashMap<String, Object> variables = new HashMap<>();
   private boolean running;
   private boolean processing;
+  private ArrayList<String> errorLog = new ArrayList<>();
 
   public ObjectNode saveData() {
     ObjectMapper mapper = new ObjectMapper();
@@ -54,9 +55,14 @@ public class Story {
             for (Map.Entry<String, Object> var : container.variables.entrySet())
             {
               ObjectNode varNode = mapper.createObjectNode();
-              varNode.put("id", var.getKey());
-              saveObject(var.getValue(), varNode);
-              node.withArray("vars").add(varNode);
+              if (var.getValue() != null) {
+                varNode.put("id", var.getKey());
+                saveObject(var.getValue(), varNode);
+                node.withArray("vars").add(varNode);
+              }
+              else {
+                errorLog.add("SaveData: " + var.getKey() + " contains a null value");
+              }
             }
           }
         }
@@ -72,10 +78,15 @@ public class Story {
       retNode.put("currentBackground", currentBackground);
     for (Map.Entry<String, Object> var : variables.entrySet())
     {
-      ObjectNode varNode = mapper.createObjectNode();
-      varNode.put("id", var.getKey());
-      saveObject(var.getValue(), varNode);
-      retNode.withArray("vars").add(varNode);
+      if (var.getValue() != null) {
+        ObjectNode varNode = mapper.createObjectNode();
+        varNode.put("id", var.getKey());
+        saveObject(var.getValue(), varNode);
+        retNode.withArray("vars").add(varNode);
+      }
+      else {
+        errorLog.add("SaveData: " + var.getKey() + " contains a null value");
+      }
     }
     retNode.put("running", running);
     return retNode;
@@ -228,9 +239,12 @@ public class Story {
       @Override
       public Object eval(List<Object> parameters, Story story) throws InkRunTimeException {
         Object param = parameters.get(0);
-        if (param instanceof BigDecimal)
-          return new BigDecimal(new Random().nextInt(((BigDecimal) param).intValue()));
-        return 0;
+        if (param instanceof BigDecimal) {
+          int val = ((BigDecimal) param).intValue();
+          if (val <= 0) return BigDecimal.ZERO;
+          return new BigDecimal(new Random().nextInt(val));
+        }
+        return BigDecimal.ZERO;
       }
     });
 
