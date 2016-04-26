@@ -1,12 +1,14 @@
 
 package com.micabytes.ink;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.jetbrains.annotations.NonNls;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -92,6 +94,73 @@ public class Story {
     return retNode;
   }
 
+  public void saveStream(JsonGenerator g) throws IOException {
+    g.writeStartObject();
+    if (fileName != null)
+      g.writeStringField("file", fileName);
+    g.writeFieldName("content");
+    g.writeStartArray();
+    for (Map.Entry<String, Content> entry : storyContent.entrySet())
+    {
+      Content content = entry.getValue();
+      if (content.count > 0) {
+        g.writeStartObject();
+        g.writeStringField("id", content.id);
+        g.writeNumberField("#n", content.count);
+        if (content instanceof ParameterizedContainer) {
+          ParameterizedContainer container = (ParameterizedContainer) content;
+          if (container.variables != null) {
+            g.writeFieldName("vars");
+            g.writeStartArray();
+            for (Map.Entry<String, Object> var : container.variables.entrySet())
+            {
+              if (var.getValue() != null) {
+                g.writeStartObject();
+                g.writeStringField("id", var.getKey());
+                saveObject(var.getValue(), g);
+                g.writeEndObject();
+              }
+              else {
+                errorLog.add("SaveData: " + var.getKey() + " contains a null value");
+              }
+            }
+            g.writeEndArray();
+          }
+        }
+        g.writeEndObject();
+      }
+    }
+    g.writeEndArray();
+    if (currentContainer != null)
+    g.writeStringField("currentContainer", currentContainer.id);
+    g.writeNumberField("currentCounter", currentCounter);
+    g.writeFieldName("currentChoices");
+    g.writeStartArray();
+    for (Container choice : currentChoices) {
+      g.writeString(choice.getId());
+    }
+    g.writeEndArray();
+    if (currentBackground != null)
+      g.writeStringField("currentBackground", currentBackground);
+    g.writeFieldName("vars");
+    g.writeStartArray();
+    for (Map.Entry<String, Object> var : variables.entrySet())
+    {
+      if (var.getValue() != null) {
+        g.writeStartObject();
+        g.writeStringField("id", var.getKey());
+        saveObject(var.getValue(), g);
+        g.writeEndObject();
+      }
+      else {
+        errorLog.add("SaveData: " + var.getKey() + " contains a null value");
+      }
+    }
+    g.writeEndArray();
+    g.writeBooleanField("running", running);
+    g.writeEndObject();
+  }
+
   private void saveObject(Object val, ObjectNode varNode) {
     if (val instanceof Boolean) {
       varNode.put("val", (Boolean) val);
@@ -115,6 +184,29 @@ public class Story {
       // TODO: Loss of data. Handle this different?
     }
   }
+  private void saveObject(Object val, JsonGenerator g) throws IOException {
+    if (val instanceof Boolean) {
+      g.writeBooleanField("val", (Boolean) val);
+      return;
+    }
+    if (val instanceof BigDecimal) {
+      g.writeNumberField("val", (BigDecimal) val);
+      return;
+    }
+    if (val instanceof String) {
+      g.writeStringField("val", (String) val);
+      return;
+    }
+    Class valClass = val.getClass();
+    try {
+      Method m = valClass.getMethod("getSaveId", null);
+      Object id = m.invoke(val, null);
+      g.writeStringField("val", (String) id);
+    } catch (Exception ignored) {
+      errorLog.add("SaveObject: Could not save " + val.toString() +". Not Boolean, Number or String.");
+    }
+  }
+
 
   public void loadData(JsonNode sNode, StoryProvider provider) {
     for (JsonNode node : sNode.withArray("content")) {
