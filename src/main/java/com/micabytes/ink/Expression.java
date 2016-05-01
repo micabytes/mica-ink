@@ -108,7 +108,7 @@ public class Expression {
         return previousToken = null;
       }
       char ch = input.charAt(pos);
-      while (Character.isWhitespace(ch) && pos < input.length()) {
+      while (Character.isSpaceChar(ch) && pos < input.length()) {
         ch = input.charAt(++pos);
       }
       if (Character.isDigit(ch)) {
@@ -141,7 +141,7 @@ public class Expression {
         pos++;
       } else {
         while (!Character.isLetter(ch) && !Character.isDigit(ch)
-            && ch != '_' && !Character.isWhitespace(ch)
+            && ch != '_' && !Character.isSpaceChar(ch)
             && ch != '(' && ch != ')' && ch != ','
             && (pos < input.length())) {
           token.append(input.charAt(pos));
@@ -194,38 +194,38 @@ public class Expression {
     addOperator(new Operator("+", 20, true) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal)v1).add((BigDecimal)v2, mc);
+        return ((BigDecimal) v1).add((BigDecimal) v2, mc);
       }
     });
     addOperator(new Operator("-", 20, true) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal)v1).subtract((BigDecimal)v2, mc);
+        return ((BigDecimal) v1).subtract((BigDecimal) v2, mc);
       }
     });
     addOperator(new Operator("*", 30, true) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal)v1).multiply((BigDecimal)v2, mc);
+        return ((BigDecimal) v1).multiply((BigDecimal) v2, mc);
       }
     });
     addOperator(new Operator("/", 30, true) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal)v1).divide((BigDecimal)v2, mc);
+        return ((BigDecimal) v1).divide((BigDecimal) v2, mc);
       }
     });
     addOperator(new Operator("%", 30, true) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal)v1).remainder((BigDecimal)v2, mc);
+        return ((BigDecimal) v1).remainder((BigDecimal) v2, mc);
       }
     });
     addOperator(new Operator("&&", 4, false) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        boolean b1 = !((BigDecimal)v1).equals(BigDecimal.ZERO);
-        boolean b2 = !((BigDecimal)v2).equals(BigDecimal.ZERO);
+        boolean b1 = !((BigDecimal) v1).equals(BigDecimal.ZERO);
+        boolean b2 = !((BigDecimal) v2).equals(BigDecimal.ZERO);
         return b1 && b2 ? BigDecimal.ONE : BigDecimal.ZERO;
       }
     });
@@ -233,8 +233,8 @@ public class Expression {
     addOperator(new Operator("||", 2, false) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        boolean b1 = !((BigDecimal)v1).equals(BigDecimal.ZERO);
-        boolean b2 = !((BigDecimal)v2).equals(BigDecimal.ZERO);
+        boolean b1 = !((BigDecimal) v1).equals(BigDecimal.ZERO);
+        boolean b2 = !((BigDecimal) v2).equals(BigDecimal.ZERO);
         return b1 || b2 ? BigDecimal.ONE : BigDecimal.ZERO;
       }
     });
@@ -242,21 +242,21 @@ public class Expression {
     addOperator(new Operator(">", 10, false) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal)v1).compareTo((BigDecimal)v2) == 1 ? BigDecimal.ONE : BigDecimal.ZERO;
+        return ((BigDecimal) v1).compareTo((BigDecimal) v2) == 1 ? BigDecimal.ONE : BigDecimal.ZERO;
       }
     });
 
     addOperator(new Operator(">=", 10, false) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal)v1).compareTo((BigDecimal)v2) >= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
+        return ((BigDecimal) v1).compareTo((BigDecimal) v2) >= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
       }
     });
 
     addOperator(new Operator("<", 10, false) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal)v1).compareTo((BigDecimal)v2) == -1 ? BigDecimal.ONE
+        return ((BigDecimal) v1).compareTo((BigDecimal) v2) == -1 ? BigDecimal.ONE
             : BigDecimal.ZERO;
       }
     });
@@ -264,7 +264,7 @@ public class Expression {
     addOperator(new Operator("<=", 10, false) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal)v1).compareTo((BigDecimal)v2) <= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
+        return ((BigDecimal) v1).compareTo((BigDecimal) v2) <= 0 ? BigDecimal.ONE : BigDecimal.ZERO;
       }
     });
 
@@ -272,9 +272,9 @@ public class Expression {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
         if (v1 instanceof BigDecimal && v2 instanceof BigDecimal)
-          return ((BigDecimal)v1).compareTo((BigDecimal)v2) == 0 ? BigDecimal.ONE : BigDecimal.ZERO;
-        if  (v1 instanceof String && v2 instanceof String)
-          return ((String) v1).equals(v2) ? BigDecimal.ONE : BigDecimal.ZERO;
+          return ((BigDecimal) v1).compareTo((BigDecimal) v2) == 0 ? BigDecimal.ONE : BigDecimal.ZERO;
+        if (v1 instanceof String && v2 instanceof String)
+          return (stripStringParameter((String) v1)).equals(stripStringParameter((String) v2)) ? BigDecimal.ONE : BigDecimal.ZERO;
         throw new ExpressionException("Both sides of an expression must be either numerical or a string");
       }
     });
@@ -331,7 +331,23 @@ public class Expression {
     return true;
   }
 
-  private List<String> shuntingYard(String expression, Story story) {
+  private boolean isStringParameter(String st) {
+    if (st.startsWith("\"") && st.endsWith("\""))
+      return true;
+    if (st.startsWith("\'") && st.endsWith("\'"))
+      return true;
+    return false;
+  }
+
+  private String stripStringParameter(String st) {
+    if (st.startsWith("\"") && st.endsWith("\""))
+      return st.substring(1, st.length() - 1);
+    if (st.startsWith("\'") && st.endsWith("\'"))
+      return st.substring(1, st.length() - 1);
+    return st;
+  }
+
+  private List<String> shuntingYard(String expression, Story story) throws InkRunTimeException {
     List<String> outputQueue = new ArrayList<String>();
     Stack<String> stack = new Stack<String>();
     Tokenizer tokenizer = new Tokenizer(expression);
@@ -341,10 +357,7 @@ public class Expression {
       String token = tokenizer.next();
       if (isNumber(token)) {
         outputQueue.add(token);
-      } else if (token.charAt(0) == '\"') {
-        if (token.startsWith("\"") && token.endsWith("\"")) {
-          token = token.substring(1, token.length() - 1);
-        }
+      } else if (isStringParameter(token)) {
         outputQueue.add(token);
       } else if (story.hasVariable(token)) {
         outputQueue.add(token);
@@ -396,11 +409,11 @@ public class Expression {
           outputQueue.add(stack.pop());
         }
         if (stack.isEmpty()) {
-          throw new RuntimeException("Mismatched parentheses");
+          throw new InkRunTimeException("Mismatched parentheses");
         }
         stack.pop();
         if (!stack.isEmpty()
-            && (story.hasFunction(stack.peek())||story.checkObject(stack.peek()))) {
+            && (story.hasFunction(stack.peek()) || story.checkObject(stack.peek()))) {
           outputQueue.add(stack.pop());
         }
       }
@@ -409,10 +422,10 @@ public class Expression {
     while (!stack.isEmpty()) {
       String element = stack.pop();
       if ("(".equals(element) || ")".equals(element)) {
-        throw new RuntimeException("Mismatched parentheses");
+        throw new InkRunTimeException("Mismatched parentheses");
       }
       if (!operators.containsKey(element)) {
-        throw new RuntimeException("Unknown operator or function: "
+        throw new InkRunTimeException("Unknown operator or function: "
             + element);
       }
       outputQueue.add(element);
@@ -435,16 +448,14 @@ public class Expression {
       } else if (story.hasVariable(token)) {
         try {
           Object obj = story.getValue(token);
-          if (obj instanceof  Boolean) {
-            if (((Boolean)obj).booleanValue())
+          if (obj instanceof Boolean) {
+            if (((Boolean) obj).booleanValue())
               stack.push(BigDecimal.ONE);
             else
               stack.push(BigDecimal.ZERO);
-          }
-          else if (obj instanceof BigDecimal){
+          } else if (obj instanceof BigDecimal) {
             stack.push(((BigDecimal) obj).round(mc));
-          }
-          else {
+          } else {
             stack.push(obj);
           }
         } catch (InkRunTimeException e) {
@@ -456,7 +467,11 @@ public class Expression {
         // pop parameters off the stack until we hit the start of
         // this function's parameter list
         while (!stack.isEmpty() && stack.peek() != PARAMS_START) {
-          p.add(0, stack.pop());
+          Object param = stack.pop();
+          if (param instanceof String)
+            p.add(0, stripStringParameter((String) param));
+          else
+            p.add(0, param);
         }
         if (stack.peek() == PARAMS_START) {
           stack.pop();
@@ -468,18 +483,21 @@ public class Expression {
         stack.push(fResult);
       } else if (story.checkObject(token)) {
         String var = token.substring(0, token.indexOf("."));
-        String function = token.substring(token.indexOf(".")+1);
+        String function = token.substring(token.indexOf(".") + 1);
         Object val = story.getValue(var);
         if (val == null) {
           stack.push("");
-        }
-        else {
+        } else {
           List<Object> p = new ArrayList<>();
           // pop parameters off the stack until we hit the start of  this function's parameter list
           while (!stack.isEmpty() && stack.peek() != PARAMS_START) {
             Object obj = stack.pop();
-            if (obj != null)
-              p.add(0, obj);
+            if (obj != null) {
+              if (obj instanceof String)
+                p.add(0, stripStringParameter((String) obj));
+              else
+                p.add(0, obj);
+            }
           }
           if (stack.peek() == PARAMS_START) {
             stack.pop();
@@ -529,7 +547,13 @@ public class Expression {
     }
     Object obj = stack.pop();
     if (obj instanceof BigDecimal)
-      return ((BigDecimal)obj).stripTrailingZeros();
+      return ((BigDecimal) obj).stripTrailingZeros();
+    if (obj instanceof String) {
+      String s = (String) obj;
+      if (isStringParameter(s))
+        return stripStringParameter(s);
+      return s;
+    }
     return obj;
   }
 
@@ -574,9 +598,9 @@ public class Expression {
    * there was none.
    *
   public KnotFunction addFunction(KnotFunction function) {
-    return story.functions.put(function.getName(), function);
+  return story.functions.put(function.getName(), function);
   }
-  */
+   */
 
   /**
    * Cached access to the RPN notation of this expression, ensures only one
@@ -585,7 +609,7 @@ public class Expression {
    *
    * @return The cached RPN instance.
    */
-  private List<String> getRPN(Story story) {
+  private List<String> getRPN(Story story) throws InkRunTimeException {
     if (rpn == null) {
       rpn = shuntingYard(this.expression, story);
       validate(rpn, story);
@@ -599,7 +623,7 @@ public class Expression {
    * for only 1 result stored at the end of the evaluation.
    */
   private void validate(List<String> rpn, Story story) {
-		/*- 
+    /*-
 		* Thanks to Norman Ramsey:
 		* http://http://stackoverflow.com/questions/789847/postfix-notation-validation
 		*/

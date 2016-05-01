@@ -31,6 +31,10 @@ public class Content {
     return id;
   }
 
+  void setId(String s) {
+    id = s;
+  }
+
   public String generateId(Container p) {
     int i = p.getContentIndex(this);
     id = p.getId() + InkParser.DOT + Integer.toString(i);
@@ -66,11 +70,17 @@ public class Content {
     return evaluteTextVariable(s, story);
   }
 
-  private static String evaluteTextVariable(String s, Story story) throws InkRunTimeException {
-    Object obj = Variable.evaluate(s, story);
-    if (obj instanceof BigDecimal) // We don't want BigDecimal canonical form
-      return ((BigDecimal) obj).toPlainString();
-    return obj.toString();
+  private static String evaluteTextVariable(String s, Story story) {
+    try {
+      Object obj = Variable.evaluate(s, story);
+      if (obj instanceof BigDecimal) // We don't want BigDecimal canonical form
+        return ((BigDecimal) obj).toPlainString();
+      return obj.toString();
+    }
+    catch (InkRunTimeException e) {
+      story.errorLog.add(e.getMessage());
+      return "ERROR";
+    }
   }
 
   private String evaluateSequenceText(String str) {
@@ -157,7 +167,7 @@ public class Content {
   }
 
   public boolean isDivert() {
-    return text.contains(Story.DIVERT) && !isVariable();
+    return text.contains(Symbol.DIVERT) && !isVariable();
   }
 
   public boolean isConditional() {

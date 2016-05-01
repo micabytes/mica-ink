@@ -9,4 +9,6 @@ public interface StoryProvider {
   public InputStream getStream(String fileId);
 
   public Object getStoryObject(String objId);
+
+  StoryInterrupt getInterrupt(String s);
 }

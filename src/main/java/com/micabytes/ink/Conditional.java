@@ -18,6 +18,7 @@ class Conditional extends Container {
 
     ConditionalOptions(String cond) {
       condition = cond;
+      type = ContentType.CONDITIONAL_OPTION;
     }
   }
 
@@ -45,7 +46,7 @@ class Conditional extends Container {
         ? line.substring(0, line.indexOf(InkParser.CONDITIONAL_END))
         : line;
     if (type == ContentType.CONDITIONAL) {
-      if (str.startsWith(CONDITIONAL_DASH) && !str.startsWith(Story.DIVERT)) {
+      if (str.startsWith(CONDITIONAL_DASH) && !str.startsWith(Symbol.DIVERT)) {
         if (!str.endsWith(CONDITIONAL_COLON))
           throw new InkParseException("Line Number " + l + ": Error in conditional block; condition not ended by \':\'.");
         String condition = str.substring(1, str.length()-1).trim();
@@ -56,7 +57,7 @@ class Conditional extends Container {
       }
     }
     else {
-      if (str.startsWith(CONDITIONAL_DASH) && !str.startsWith(Story.DIVERT)) {
+      if (str.startsWith(CONDITIONAL_DASH) && !str.startsWith(Symbol.DIVERT)) {
         String first = str.substring(1).trim();
         content.add(new ConditionalOptions(""));
         InkParser.parseLine(l, first, this);

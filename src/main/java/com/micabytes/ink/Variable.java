@@ -60,10 +60,10 @@ class Variable extends Content {
       story.putVariable(variable, new BigDecimal(value));
     else if (value.startsWith("\"") && value.endsWith("\"")) {
       value = value.substring(1, value.length() - 1);
-      if (value.contains(Story.DIVERT))
+      if (value.contains(Symbol.DIVERT))
         throw new InkRunTimeException("Line number" + lineNumber + ": String expressions cannot contain diverts (->)");
       story.putVariable(variable, value);
-    } else if (value.startsWith(Story.DIVERT)) {
+    } else if (value.startsWith(Symbol.DIVERT)) {
       String address = value.substring(2).trim();
       Container directTo = story.getContainer(address);
       if (directTo != null)
@@ -95,7 +95,7 @@ class Variable extends Content {
     else if (value.startsWith("\"") && value.endsWith("\"")) {
       value = value.substring(1, value.length() - 1);
       story.putVariable(variable, value);
-    } else if (value.startsWith(Story.DIVERT)) {
+    } else if (value.startsWith(Symbol.DIVERT)) {
       String address = value.substring(3).trim();
       Container directTo = story.getContainer(address);
       if (directTo != null)
@@ -108,6 +108,8 @@ class Variable extends Content {
   }
 
   public static Object evaluate(String str, Story story) throws InkRunTimeException {
+    if (str == null)
+      return Boolean.TRUE;
     // TODO: Note that this means that spacing will mess up expressions; needs to be fixed
     String ev = str.replaceAll(AND_WS, " && ").replaceAll(OR_WS, " || ").replaceAll(TRUE_LC, TRUE_UC).replaceAll(FALSE_LC, FALSE_UC);
     Expression ex = new Expression(ev);

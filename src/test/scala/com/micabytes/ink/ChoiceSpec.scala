@@ -242,7 +242,7 @@ class ChoiceSpec extends Specification {
       val story = InkParser.parse(inputStream)
       story.nextAll
       story.choose(0)
-      story.nextAll must throwA[RuntimeException]
+      story.nextAll must throwA[InkRunTimeException]
     }
 
     val divertChoice =

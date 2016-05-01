@@ -1,9 +1,7 @@
 package com.micabytes.ink;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public abstract class ParameterizedContainer extends Container {
   protected ArrayList<String> parameters;
@@ -12,7 +10,7 @@ public abstract class ParameterizedContainer extends Container {
   @Override
   public void initialize(Story story, Content content) throws InkRunTimeException {
     super.initialize(story, content);
-    String d = content.text.substring(content.text.indexOf(Story.DIVERT) + 2).trim();
+    String d = content.text.substring(content.text.indexOf(Symbol.DIVERT) + 2).trim();
     if (d.contains(Content.BRACE_LEFT) && parameters != null) {
       String params = d.substring(d.indexOf(BRACE_LEFT) + 1, d.indexOf(BRACE_RIGHT));
       String[] param = params.split(",");
