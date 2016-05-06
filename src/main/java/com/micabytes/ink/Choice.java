@@ -30,18 +30,18 @@ public class Choice extends Container {
   public void addLine(String str) {
     String s = str.trim();
     if (s.startsWith("(")) {
-      id = s.substring(s.indexOf(BRACE_LEFT) + 1, s.indexOf(BRACE_RIGHT)).trim();
+      id = s.substring(s.indexOf(StoryText.BRACE_LEFT) + 1, s.indexOf(StoryText.BRACE_RIGHT)).trim();
       Container p = parent;
       assert p != null;
       id = p.id + InkParser.DOT + id;
-      s = s.substring(s.indexOf(BRACE_RIGHT) + 1).trim();
+      s = s.substring(s.indexOf(StoryText.BRACE_RIGHT) + 1).trim();
     }
-    if (s.startsWith(CBRACE_LEFT) && conditions == null)
+    if (s.startsWith(StoryText.CBRACE_LEFT) && conditions == null)
       conditions = new ArrayList<>();
     while (s.startsWith("{")) {
-      String c = s.substring(s.indexOf(CBRACE_LEFT) + 1, s.indexOf(CBRACE_RIGHT)).trim();
+      String c = s.substring(s.indexOf(StoryText.CBRACE_LEFT) + 1, s.indexOf(StoryText.CBRACE_RIGHT)).trim();
       conditions.add(c);
-      s = s.substring(s.indexOf(CBRACE_RIGHT) + 1).trim();
+      s = s.substring(s.indexOf(StoryText.CBRACE_RIGHT) + 1).trim();
     }
     text = getChoiceText(s);
     String result = getResultText(s);
@@ -56,12 +56,12 @@ public class Choice extends Container {
   }
 
   public String getChoiceText(Story story) throws InkRunTimeException {
-    return getText(story);
+    return StoryText.getText(text, count, story);
   }
 
   private static String getChoiceText(String str) {
     if (str.contains("]")) {
-      return str.substring(0, str.indexOf(SBRACE_RIGHT)).replace(SBRACE_LEFT, "").trim();
+      return str.substring(0, str.indexOf(StoryText.SBRACE_RIGHT)).replace(StoryText.SBRACE_LEFT, "").trim();
     }
     return str.trim();
   }

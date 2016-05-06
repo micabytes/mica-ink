@@ -18,13 +18,13 @@ class Stitch extends ParameterizedContainer {
         .append(InkParser.DOT)
         .append(str.replaceAll(String.valueOf(InkParser.HEADER), "").trim())
         .toString();
-    if (fullId.contains(BRACE_LEFT)) {
-      String params = fullId.substring(fullId.indexOf(BRACE_LEFT)+1, fullId.indexOf(BRACE_RIGHT));
+    if (fullId.contains(StoryText.BRACE_LEFT)) {
+      String params = fullId.substring(fullId.indexOf(StoryText.BRACE_LEFT)+1, fullId.indexOf(StoryText.BRACE_RIGHT));
       String[] param = params.split(",");
       parameters = new ArrayList<>();
       for (int i=0; i<param.length; i++)
         parameters.add(param[i].trim());
-      fullId = fullId.substring(0, fullId.indexOf(BRACE_LEFT));
+      fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT));
     }
     //if (fullId.startsWith(FUNCTION)) {
     //

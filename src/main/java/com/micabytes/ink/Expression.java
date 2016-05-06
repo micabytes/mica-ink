@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
 
+/* Based on https://github.com/uklimaschewski/EvalEx */
 @SuppressWarnings("ALL")
 public class Expression {
   /// The {@link MathContext} to use for calculations.
@@ -347,7 +348,7 @@ public class Expression {
     return st;
   }
 
-  private List<String> shuntingYard(String expression, Story story) throws InkRunTimeException {
+  private List<String> shuntingYard(String expression, VariableMap story) throws InkRunTimeException {
     List<String> outputQueue = new ArrayList<String>();
     Stack<String> stack = new Stack<String>();
     Tokenizer tokenizer = new Tokenizer(expression);
@@ -438,7 +439,7 @@ public class Expression {
    *
    * @return The result of the expression.
    */
-  public Object eval(Story story) throws InkRunTimeException {
+  public Object eval(VariableMap story) throws InkRunTimeException {
     Stack<Object> stack = new Stack<>();
     for (String token : getRPN(story)) {
       if (operators.containsKey(token)) {
@@ -446,23 +447,19 @@ public class Expression {
         Object v2 = stack.pop();
         stack.push(operators.get(token).eval(v2, v1));
       } else if (story.hasVariable(token)) {
-        try {
-          Object obj = story.getValue(token);
-          if (obj instanceof Boolean) {
-            if (((Boolean) obj).booleanValue())
-              stack.push(BigDecimal.ONE);
-            else
-              stack.push(BigDecimal.ZERO);
-          } else if (obj instanceof BigDecimal) {
-            stack.push(((BigDecimal) obj).round(mc));
-          } else {
-            stack.push(obj);
-          }
-        } catch (InkRunTimeException e) {
-          e.printStackTrace();
+        Object obj = story.getValue(token);
+        if (obj instanceof Boolean) {
+          if (((Boolean) obj).booleanValue())
+            stack.push(BigDecimal.ONE);
+          else
+            stack.push(BigDecimal.ZERO);
+        } else if (obj instanceof BigDecimal) {
+          stack.push(((BigDecimal) obj).round(mc));
+        } else {
+          stack.push(obj);
         }
       } else if (story.hasFunction(token)) {
-        Function f = story.functions.get(token);
+        Function f = story.getFunction(token);
         List<Object> p = new ArrayList<>(!f.numParamsVaries() ? f.getNumParams() : 0);
         // pop parameters off the stack until we hit the start of
         // this function's parameter list
@@ -608,8 +605,9 @@ public class Expression {
    * exists, a new one will be created and put to the cache.
    *
    * @return The cached RPN instance.
+   * @param story
    */
-  private List<String> getRPN(Story story) throws InkRunTimeException {
+  private List<String> getRPN(VariableMap story) throws InkRunTimeException {
     if (rpn == null) {
       rpn = shuntingYard(this.expression, story);
       validate(rpn, story);
@@ -622,7 +620,7 @@ public class Expression {
    * requirements of the operators and functions, also check
    * for only 1 result stored at the end of the evaluation.
    */
-  private void validate(List<String> rpn, Story story) {
+  private void validate(List<String> rpn, VariableMap story) {
     /*-
 		* Thanks to Norman Ramsey:
 		* http://http://stackoverflow.com/questions/789847/postfix-notation-validation

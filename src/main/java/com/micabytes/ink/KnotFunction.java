@@ -21,15 +21,15 @@ public class KnotFunction extends ParameterizedContainer implements Function {
     parent = null;
     String fullId = extractId(str);
     fullId = fullId.replaceFirst(FUNCTION, "");
-    if (fullId.contains(BRACE_LEFT)) {
-      String params = fullId.substring(fullId.indexOf(BRACE_LEFT)+1, fullId.indexOf(BRACE_RIGHT));
+    if (fullId.contains(StoryText.BRACE_LEFT)) {
+      String params = fullId.substring(fullId.indexOf(StoryText.BRACE_LEFT)+1, fullId.indexOf(StoryText.BRACE_RIGHT));
       String[] param = params.split(",");
       parameters = new ArrayList<>();
       for (String aParam : param) {
         if (!aParam.trim().isEmpty())
           parameters.add(aParam.trim());
       }
-      fullId = fullId.substring(0, fullId.indexOf(BRACE_LEFT)).trim();
+      fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT)).trim();
     }
     id = fullId;
   }
@@ -61,7 +61,9 @@ public class KnotFunction extends ParameterizedContainer implements Function {
     return false;
   }
 
-  public Object eval(List<Object> params, Story story) throws InkRunTimeException {
+  @Override
+  public Object eval(List<Object> params, VariableMap vas) throws InkRunTimeException {
+    Story story = (Story) vas;
     if (params.size() != parameters.size())
       throw new InkRunTimeException("Parameters passed to function " + id + " do not match the definition of the function. Passed " + params.size() + " parameters and expected " + parameters.size());
     Container callingContainer = story.container;
@@ -74,7 +76,7 @@ public class KnotFunction extends ParameterizedContainer implements Function {
     for (Content c : content) {
       if (c.type == ContentType.TEXT) {
         story.container = callingContainer;
-        return c.getText(story);
+        return StoryText.getText(c.text, c.count, story);
       }
       else if (c.isVariable()) {
         Variable v = (Variable) c;
@@ -93,7 +95,7 @@ public class KnotFunction extends ParameterizedContainer implements Function {
           Content cd = cond.getContent(j);
           if (cd.type == ContentType.TEXT && !cd.text.isEmpty()) {
             story.container = callingContainer;
-            return cd.getText(story);
+            return StoryText.getText(cd.text, cd.count, story);
           }
           if (cd.isVariable()) {
             Variable v = (Variable) cd;

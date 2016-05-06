@@ -11,8 +11,8 @@ public abstract class ParameterizedContainer extends Container {
   public void initialize(Story story, Content content) throws InkRunTimeException {
     super.initialize(story, content);
     String d = content.text.substring(content.text.indexOf(Symbol.DIVERT) + 2).trim();
-    if (d.contains(Content.BRACE_LEFT) && parameters != null) {
-      String params = d.substring(d.indexOf(BRACE_LEFT) + 1, d.indexOf(BRACE_RIGHT));
+    if (d.contains(StoryText.BRACE_LEFT) && parameters != null) {
+      String params = d.substring(d.indexOf(StoryText.BRACE_LEFT) + 1, d.indexOf(StoryText.BRACE_RIGHT));
       String[] param = params.split(",");
       if (param.length != parameters.size())
         throw new InkRunTimeException("LineNumber: " + content.lineNumber + ". Mismatch in the parameter declaration in the call to " + id);

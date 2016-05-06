@@ -80,7 +80,7 @@ class Conditional extends Container {
   }
 
   public static boolean isConditionalHeader(String str) {
-    return str.startsWith(CBRACE_LEFT) && !str.contains(CBRACE_RIGHT);
+    return str.startsWith(StoryText.CBRACE_LEFT) && !str.contains(StoryText.CBRACE_RIGHT);
   }
 
   @Override

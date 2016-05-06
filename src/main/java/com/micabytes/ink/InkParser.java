@@ -21,7 +21,7 @@ public final class InkParser {
   @NonNls private static final char VAR_STAT = '~';
   @NonNls static final char CONDITIONAL_HEADER = '{';
   @NonNls static final String CONDITIONAL_END = "}";
-  @NonNls static final char DOT = '.';
+  @NonNls public static final char DOT = '.';
   @NonNls public static final String DEFAULT_KNOT_NAME = "default";
   private static final Pattern AT_SPLITTER = Pattern.compile("[@]");
 
@@ -29,13 +29,7 @@ public final class InkParser {
     // NOOP
   }
 
-  public static Story parse(InputStream inputStream) throws InkParseException {
-    return parse(inputStream, null);
-  }
-
   public static Story parse(String fileName, StoryProvider provider) throws InkParseException {
-    if (provider == null)
-      throw new InkParseException("The StoryProvider passed to Ink is null.");
     InputStream in = provider.getStream(fileName);
     Story story = parse(in, provider);
     story.fileName = fileName;
@@ -43,9 +37,11 @@ public final class InkParser {
   }
 
   public static Story parse(InputStream inputStream, StoryProvider provider) throws InkParseException {
+    if (provider == null)
+      throw new InkParseException("The StoryProvider passed to Ink is null.");
     InputStreamReader inputStreamReader = null;
     BufferedReader bufferedReader = null;
-    Story story = new Story();
+    Story story = new Story(provider);
     try {
       inputStreamReader = new InputStreamReader(inputStream, UTF_8);
       bufferedReader = new BufferedReader(inputStreamReader);

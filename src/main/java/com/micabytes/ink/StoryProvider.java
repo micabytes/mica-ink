@@ -11,4 +11,10 @@ public interface StoryProvider {
   public Object getStoryObject(String objId);
 
   StoryInterrupt getInterrupt(String s);
+
+  public void logDebug(String m);
+
+  public void logError(String m);
+
+  public void logException(Exception e);
 }

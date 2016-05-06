@@ -107,13 +107,13 @@ class Variable extends Content {
     }
   }
 
-  public static Object evaluate(String str, Story story) throws InkRunTimeException {
+  public static Object evaluate(String str, VariableMap variables) throws InkRunTimeException {
     if (str == null)
       return Boolean.TRUE;
     // TODO: Note that this means that spacing will mess up expressions; needs to be fixed
     String ev = str.replaceAll(AND_WS, " && ").replaceAll(OR_WS, " || ").replaceAll(TRUE_LC, TRUE_UC).replaceAll(FALSE_LC, FALSE_UC);
     Expression ex = new Expression(ev);
-    return ex.eval(story);
+    return ex.eval(variables);
   }
 
   /*

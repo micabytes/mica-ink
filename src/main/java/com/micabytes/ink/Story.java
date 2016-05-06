@@ -18,12 +18,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-public class Story {
+public class Story implements VariableMap {
   // All content in the story
   private final Map<String, Content> storyContent = new HashMap<>();
   // All defined functions with name and implementation.
   Map<String, Function> functions = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   private final List<StoryInterrupt> interrupts = new ArrayList<>();
+  StoryProvider wrapper;
 
   // Story state
   String fileName;
@@ -35,8 +36,9 @@ public class Story {
   private boolean processing;
   private boolean running;
 
-  // Error logging
-  final List<String> errorLog = new ArrayList<>();
+  public Story(StoryProvider provider) {
+    wrapper = provider;
+  }
 
   public ObjectNode saveData() {
     ObjectMapper mapper = new ObjectMapper();
@@ -59,7 +61,7 @@ public class Story {
                 saveObject(var.getValue(), varNode);
                 node.withArray("vars").add(varNode);
               } else {
-                errorLog.add("SaveData: " + var.getKey() + " contains a null value");
+                wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
               }
             }
           }
@@ -81,7 +83,7 @@ public class Story {
         saveObject(var.getValue(), varNode);
         retNode.withArray("vars").add(varNode);
       } else {
-        errorLog.add("SaveData: " + var.getKey() + " contains a null value");
+        wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
       }
     }
     retNode.put("running", running);
@@ -112,7 +114,7 @@ public class Story {
                 saveObject(var.getValue(), g);
                 g.writeEndObject();
               } else {
-                errorLog.add("SaveData: " + var.getKey() + " contains a null value");
+                wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
               }
             }
             g.writeEndArray();
@@ -142,7 +144,7 @@ public class Story {
         saveObject(var.getValue(), g);
         g.writeEndObject();
       } else {
-        errorLog.add("SaveData: " + var.getKey() + " contains a null value");
+        wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
       }
     }
     g.writeEndArray();
@@ -197,11 +199,11 @@ public class Story {
     }
     Class valClass = val.getClass();
     try {
-      Method m = valClass.getMethod("getSaveId", null);
+      Method m = valClass.getMethod("getId", null);
       Object id = m.invoke(val, null);
       g.writeStringField("val", (String) id);
     } catch (Exception ignored) {
-      errorLog.add("SaveObject: Could not save " + val.toString() + ". Not Boolean, Number or String.");
+      wrapper.logError("SaveObject: Could not save " + val.toString() + ". Not Boolean, Number or String.");
     }
   }
 
@@ -210,12 +212,20 @@ public class Story {
     for (JsonNode node : sNode.withArray("content")) {
       String id = node.get("id").asText();
       Content content = storyContent.get(id);
-      content.count = node.get("#n").asInt();
-      if (node.has("vars")) {
-        ParameterizedContainer container = (ParameterizedContainer) content;
-        for (JsonNode v : node.withArray("vars")) {
-          container.variables.put(v.get("id").asText(), loadObject(v, provider));
+      if (content != null) {
+        if (node.has("#n"))
+          content.count = node.get("#n").asInt();
+        if (node.has("vars")) {
+          ParameterizedContainer container = (ParameterizedContainer) content;
+          for (JsonNode v : node.withArray("vars")) {
+            Object val = loadObject(v, provider);
+            if (val != null)
+              container.variables.put(v.get("id").asText(), val);
+          }
         }
+      }
+      else {
+        wrapper.logException(new InkParseException("Could not identify content ID " + id + " while loading data for " + fileName));
       }
     }
     container = (Container) storyContent.get(sNode.get("currentContainer").asText());
@@ -229,7 +239,7 @@ public class Story {
       for (JsonNode v : sNode.withArray("vars")) {
         Object val = loadObject(v, provider);
         if (val != null)
-        variables.put(v.get("id").asText(), val);
+          variables.put(v.get("id").asText(), val);
       }
     }
     /*
@@ -278,16 +288,16 @@ public class Story {
         choice.setId(intr.getId());
         storyContent.put(choice.getId(), choice);
       } catch (InkParseException e) {
-        errorLog.add(e.getMessage());
+        wrapper.logException(e);
       }
     }
     String fileId = intr.getInterruptFile();
     if (fileId != null) {
       try {
-        Story st = InkParser.parse(provider.getStream(fileId));
+        Story st = InkParser.parse(wrapper.getStream(fileId), wrapper);
         addAll(st);
       } catch (InkParseException e) {
-        errorLog.add(e.getMessage());
+        wrapper.logException(e);
         return;
       }
     }
@@ -308,11 +318,6 @@ public class Story {
     } catch (InkRunTimeException e) {
       e.printStackTrace();
     }
-    /*Container def = storyContent.get(InkParser.DEFAULT_KNOT_NAME);
-    if (def != currentContainer) {
-      storyContent.remove(def);
-    }
-    */
     functions.put("isNull", new Function() {
       @Override
       public String getId() {
@@ -330,7 +335,7 @@ public class Story {
       }
 
       @Override
-      public Object eval(List<Object> parameters, Story story) throws InkRunTimeException {
+      public Object eval(List<Object> parameters, VariableMap variables) throws InkRunTimeException {
         Object param = parameters.get(0);
         return param != null;
       }
@@ -352,7 +357,7 @@ public class Story {
       }
 
       @Override
-      public Object eval(List<Object> parameters, Story story) throws InkRunTimeException {
+      public Object eval(List<Object> parameters, VariableMap variables) throws InkRunTimeException {
         Object param = parameters.get(0);
         if (param instanceof Boolean)
           return !((Boolean) param);
@@ -378,7 +383,7 @@ public class Story {
       }
 
       @Override
-      public Object eval(List<Object> parameters, Story story) throws InkRunTimeException {
+      public Object eval(List<Object> parameters, VariableMap variables) throws InkRunTimeException {
         Object param = parameters.get(0);
         if (param instanceof BigDecimal) {
           int val = ((BigDecimal) param).intValue();
@@ -405,11 +410,11 @@ public class Story {
       }
 
       @Override
-      public Object eval(List<Object> parameters, Story story) throws InkRunTimeException {
+      public Object eval(List<Object> parameters, VariableMap variables) throws InkRunTimeException {
         Object param = parameters.get(0);
-        if (param instanceof String && story.container != null) {
+        if (param instanceof String && variables.getValue("this") != null) {
           String str = (String) param;
-          return str.equals(story.container.getId());
+          return str.equals(variables.getValue("this"));
         }
         return Boolean.FALSE;
       }
@@ -488,7 +493,7 @@ public class Story {
             }
           }
         } catch (InkRunTimeException e) {
-          errorLog.add(e.getMessage());
+          wrapper.logException(e);
         }
       }
     }
@@ -580,7 +585,7 @@ public class Story {
 
   private String resolveContent(Content content) throws InkRunTimeException {
     if (content.type == ContentType.TEXT) {
-      String ret = content.isDivert() ? resolveDivert(content) : content.getText(this);
+      String ret = content.isDivert() ? resolveDivert(content) : StoryText.getText(content.text, content.count, this);
       content.increment();
       return ret;
     }
@@ -593,7 +598,7 @@ public class Story {
   }
 
   private String resolveDivert(Content content) throws InkRunTimeException {
-    String ret = content.getText(this);
+    String ret = StoryText.getText(content.text, content.count, this);
     ret = ret.substring(0, ret.indexOf(Symbol.DIVERT)).trim();
     ret += Symbol.GLUE;
     return ret;
@@ -601,8 +606,8 @@ public class Story {
 
   private Container getDivertTarget(Content content) throws InkRunTimeException {
     String d = content.text.substring(content.text.indexOf(Symbol.DIVERT) + 2).trim();
-    if (d.contains(Content.BRACE_LEFT))
-      d = d.substring(0, d.indexOf(Content.BRACE_LEFT));
+    if (d.contains(StoryText.BRACE_LEFT))
+      d = d.substring(0, d.indexOf(StoryText.BRACE_LEFT));
     if (d.equals(Symbol.DIVERT_END))
       return null;
     d = resolveInterrupt(d);
@@ -646,7 +651,7 @@ public class Story {
             }
           }
         } catch (InkRunTimeException e) {
-          errorLog.add(e.getMessage());
+          wrapper.logException(e);
           return ret;
         }
       }
@@ -692,6 +697,8 @@ public class Story {
   public void choose(int i) throws InkRunTimeException {
     if (i < choices.size()) {
       container = choices.get(i);
+      if (container == null)
+        throw new InkRunTimeException("Selected choice " + i + " is null");
       container.increment();
       completeExtras(container);
       contentIdx = 0;
@@ -723,7 +730,10 @@ public class Story {
         .trim();
   }
 
-  public Object getValue(String key) throws InkRunTimeException {
+  @Override
+  public Object getValue(String key) {
+    if (key.equals("this"))
+      return container.getId();
     Container c = container;
     while (c != null) {
       if (c.isKnot() || c.isFunction() || c.isStitch()) {
@@ -736,7 +746,8 @@ public class Story {
       String k = key.substring(2).trim();
       if (storyContent.containsKey(k))
         return storyContent.get(k);
-      throw new InkRunTimeException("Could not identify container id: " + k);
+      wrapper.logException(new InkRunTimeException("Could not identify container id: " + k));
+      return BigDecimal.ZERO;
     }
     if (storyContent.containsKey(key)) {
       Container container = (Container) storyContent.get(key);
@@ -750,7 +761,8 @@ public class Story {
     if (variables.containsKey(key)) {
       return variables.get(key);
     }
-    throw new InkRunTimeException("Could not identify the variable " + key + " or " + pathId);
+    wrapper.logException(new InkRunTimeException("Could not identify the variable " + key + " or " + pathId));
+    return BigDecimal.ZERO;
   }
 
   private String getValueId(String id) {
@@ -830,11 +842,18 @@ public class Story {
     return (Container) storyContent.get(key);
   }
 
-  boolean hasFunction(String fct) {
+  @Override
+  public boolean hasFunction(String fct) {
     return functions.containsKey(fct);
   }
 
-  boolean checkObject(String fct) {
+  @Override
+  public Function getFunction(String token) {
+    return functions.get(token);
+  }
+
+  @Override
+  public boolean checkObject(String fct) {
     if (fct.contains(".")) {
       return hasVariable(fct.substring(0, fct.indexOf(InkParser.DOT)));
     }
@@ -849,5 +868,10 @@ public class Story {
     Container c = (Container) storyContent.get(s);
     if (c != null)
       container = c;
+  }
+
+  @Override
+  public void logException(Exception e) {
+
   }
 }
