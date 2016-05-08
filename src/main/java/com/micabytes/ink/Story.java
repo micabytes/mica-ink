@@ -732,8 +732,14 @@ public class Story implements VariableMap {
 
   @Override
   public Object getValue(String key) {
-    if (key.equals("this"))
-      return container.getId();
+    if (key.equals("this")) {
+      if (container != null)
+        return container.getId();
+      else {
+        wrapper.logError("Attempting to invoke this with null container in " + fileName);
+        return "";
+      }
+    }
     Container c = container;
     while (c != null) {
       if (c.isKnot() || c.isFunction() || c.isStitch()) {
