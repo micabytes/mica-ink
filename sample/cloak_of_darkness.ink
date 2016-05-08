@@ -72,8 +72,8 @@ You walk to the bar, but it's so dark here you can't really make anything out. T
 -> bar_dark_options
 
 == bar_dark_options
-* [Feel around for a light switch.] -> not_in_the_dark
-* [Sit on a bar stool.] -> not_in_the_dark
+* [Feel around for a light switch.]
+* [Sit on a bar stool.]
 + [Go north.] -> foyer
 - In the dark? You could easily disturb something.
   ~ scuffled = scuffled + 1
