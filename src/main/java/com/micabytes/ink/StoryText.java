@@ -88,7 +88,7 @@ public final class StoryText {
 
   private static String evaluateConditionalText(String str, int count, VariableMap variables) {
     if (str.startsWith("#")) {
-      String condition = str.substring(0, str.indexOf(":")).trim();
+      String condition = str.substring(1, str.indexOf(":")).trim();
       String text = str.substring(str.indexOf(":")+1);
       String[] options = text.split("[|]");
       int val = 0;

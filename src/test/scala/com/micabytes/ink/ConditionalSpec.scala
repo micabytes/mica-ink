@@ -22,7 +22,7 @@ class ConditionalSpec extends Specification {
 
     "- evaluate the statements if the condition evaluates to true" in {
       val inputStream = IOUtils.toInputStream(ifTrue, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The value is 1.")
@@ -40,7 +40,7 @@ class ConditionalSpec extends Specification {
 
     "- not evaluate the statement if the condition evaluates to false" in {
       val inputStream = IOUtils.toInputStream(ifFalse, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The value is 3.")
@@ -60,7 +60,7 @@ class ConditionalSpec extends Specification {
 
     "- evaluate an else statement if it exists and no other condition evaluates to true" in {
       val inputStream = IOUtils.toInputStream(ifElse, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The value is 1.")
@@ -83,7 +83,7 @@ class ConditionalSpec extends Specification {
 
     "- evaluate an extended else statement if it exists and no other condition evaluates to true" in {
       val inputStream = IOUtils.toInputStream(ifElseExt, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The value is -1.")
@@ -110,7 +110,7 @@ class ConditionalSpec extends Specification {
 
     "- work with conditional content which is not only logic (example 1)" in {
       val inputStream = IOUtils.toInputStream(condText, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll()
       story.choose(0)
       val text = story.nextAll()
@@ -120,7 +120,7 @@ class ConditionalSpec extends Specification {
 
     "- work with conditional content which is not only logic (example 2)" in {
       val inputStream = IOUtils.toInputStream(condText, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll()
       story.choose(1)
       val text = story.nextAll()
@@ -151,7 +151,7 @@ class ConditionalSpec extends Specification {
 
     "- work with options as conditional content (example 1)" in {
       val inputStream = IOUtils.toInputStream(condOpt, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll()
       story.choose(0)
       story.nextAll()
@@ -160,7 +160,7 @@ class ConditionalSpec extends Specification {
 
     "- work with options as conditional content (example 2)" in {
       val inputStream = IOUtils.toInputStream(condOpt, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll()
       story.choose(1)
       story.nextAll()
@@ -182,7 +182,7 @@ class ConditionalSpec extends Specification {
 
     "- go through the alternatives and stick on last when the keyword is stopping" in {
       val inputStream = IOUtils.toInputStream(stopping, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("I entered the casino.")
@@ -212,7 +212,7 @@ class ConditionalSpec extends Specification {
 
     "- show each in turn and then cycle when the keyword is cycle" in {
       val inputStream = IOUtils.toInputStream(cycle, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("I held my breath.")
@@ -241,7 +241,7 @@ class ConditionalSpec extends Specification {
 
     "- show each, once, in turn, until all have been shown when the keyword is once" in {
       val inputStream = IOUtils.toInputStream(once, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("Would my luck hold?")
@@ -269,7 +269,7 @@ class ConditionalSpec extends Specification {
 
     "- show one at random when the keyword is shuffle" in {
       val inputStream = IOUtils.toInputStream(shuffle, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       story.choose(0)
@@ -298,7 +298,7 @@ class ConditionalSpec extends Specification {
 
     "- show multiple lines of texts from multiline list blocks" in {
       val inputStream = IOUtils.toInputStream(multiline, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("At the table, I drew a card. Ace of Hearts.")
@@ -331,7 +331,7 @@ class ConditionalSpec extends Specification {
 
     "- allow for embedded diverts" in {
       val inputStream = IOUtils.toInputStream(multilineDivert, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("At the table, I drew a card. Ace of Hearts.")
@@ -363,7 +363,7 @@ class ConditionalSpec extends Specification {
 
     "- allow for embedded choices" in {
       val inputStream = IOUtils.toInputStream(multilineChoice, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("At the table, I drew a card. Ace of Hearts.")

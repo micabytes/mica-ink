@@ -22,7 +22,7 @@ dependencies {
   compile 'com.fasterxml.jackson.core:jackson-databind:2.7.2'
   //noinspection GradleDynamicVersion
   compile 'com.intellij:annotations:+@jar'
-  testCompile 'org.scala-lang:scala-library:2.11.7'
+  testCompile 'org.scala-lang:scala-library:2.11.8'
   testCompile 'junit:junit:4.5'
   testCompile 'org.specs2:specs2-core_2.11:3.7.2'
   testCompile 'org.specs2:specs2-junit_2.11:3.7.2'

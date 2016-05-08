@@ -65,7 +65,7 @@ import com.micabytes.ink.Story;
 
 Loading a story file:
 ```
-  Story story = InkParser.parse(inputstream);
+  Story story = InkParser.parse(inputStream, new StoryContainer());
 ```
 
 Working through content line by line:
