@@ -69,15 +69,15 @@ The walls of this small room were clearly once lined with hooks, though now only
 
 === bar_dark
 You walk to the bar, but it's so dark here you can't really make anything out. The foyer is back to the north.
+-> bar_dark_options
+
+== bar_dark_options
 * [Feel around for a light switch.] -> not_in_the_dark
 * [Sit on a bar stool.] -> not_in_the_dark
 + [Go north.] -> foyer
-
-
-== not_in_the_dark
-~ scuffled = scuffled + 1
-In the dark? You could easily disturb something.
--> bar_dark
+- In the dark? You could easily disturb something.
+  ~ scuffled = scuffled + 1
+  -> bar_dark_options
 
 
 === bar_light
@@ -97,5 +97,5 @@ The bar, much rougher than you'd have guessed after the opulence of the foyer to
     You have lost.
 }
 
-* The End
+* The End.
   -> END
