@@ -88,7 +88,7 @@ public final class StoryText {
 
   private static String evaluateConditionalText(String str, int count, VariableMap variables) {
     if (str.startsWith("#")) {
-      String condition = str.substring(1, str.indexOf(":")).trim();
+      String condition = str.substring(0, str.indexOf(":")).trim();
       String text = str.substring(str.indexOf(":")+1);
       String[] options = text.split("[|]");
       int val = 0;
@@ -114,13 +114,13 @@ public final class StoryText {
       return options[val];
     }
     // Regular conditional
-    String condition = str.substring(1, str.indexOf(":")).trim();
+    String condition = str.substring(0, str.indexOf(":")).trim();
     String text = str.substring(str.indexOf(":")+1);
     String[] options = text.split("[|]");
     if (options.length > 2)
       variables.logException(new InkRunTimeException("Too many options in a conditional text."));
-    String ifText = options.length == 1 ? options[0] : options[1];
-    String elseText = options.length == 1 ? "" : options[0];
+    String ifText = options[0];
+    String elseText = options.length == 1 ? "" : options[1];
     try {
       Object obj = Variable.evaluate(condition, variables);
       if (obj instanceof BigDecimal)
