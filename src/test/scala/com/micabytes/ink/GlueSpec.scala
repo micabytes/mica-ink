@@ -30,7 +30,7 @@ class GlueSpec extends Specification {
 
     "- bind text together across multiple lines of text" in {
       val inputStream = IOUtils.toInputStream(simpleGlue, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("Some content with glue.")
@@ -38,7 +38,7 @@ class GlueSpec extends Specification {
 
     "- bind text together across multiple knots/stitches" in {
       val inputStream = IOUtils.toInputStream(glueWithDivert, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("We hurried home to Savile Row as fast as we could.")

@@ -48,7 +48,7 @@ class GatherSpec extends Specification {
 
     "- gather the flow back together again" in {
       val inputStream = IOUtils.toInputStream(gatherBasic, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll
       story.choose(1)
       val text = story.nextAll
@@ -72,7 +72,7 @@ class GatherSpec extends Specification {
 
     "- form chains of content with multiple gathers" in {
       val inputStream = IOUtils.toInputStream(gatherChain, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll
       story.getChoiceSize must beEqualTo(3)
       story.choose(1)
@@ -89,7 +89,7 @@ class GatherSpec extends Specification {
 
     "- allow nested options to pop out to a higher level gather" in {
       val inputStream = IOUtils.toInputStream(nestedFlow, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll
       story.choose(0)
       story.nextAll
@@ -102,7 +102,7 @@ class GatherSpec extends Specification {
 
     "- allow nested gathers within the flow" in {
       val inputStream = IOUtils.toInputStream(nestedGather, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll
       story.choose(0)
       story.nextAll
@@ -131,7 +131,7 @@ class GatherSpec extends Specification {
 
     "- gather the flow back together again from arbitrarily deep options" in {
       val inputStream = IOUtils.toInputStream(deepNesting, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll
       story.choose(0)
       story.nextAll
@@ -173,7 +173,7 @@ class GatherSpec extends Specification {
 
     "- offer a compact way to weave and blend text and options (Example 1)" in {
       val inputStream = IOUtils.toInputStream(complexFlow, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll
       story.choose(1)
       val text = story.nextAll
@@ -182,7 +182,7 @@ class GatherSpec extends Specification {
 
     "- offer a compact way to weave and blend text and options (Example 2)" in {
       val inputStream = IOUtils.toInputStream(complexFlow, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll
       story.choose(0)
       val text0 = story.nextAll

@@ -21,7 +21,7 @@ class FunctionSpec extends Specification {
 
     "- return a value from a function in a variable expression" in {
       val inputStream = IOUtils.toInputStream(funcBasic, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The value of x is 3.8.")
@@ -38,7 +38,7 @@ class FunctionSpec extends Specification {
 
     "- return a value from a function with no parameters" in {
       val inputStream = IOUtils.toInputStream(funcNone, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The value of x is 3.8.")
@@ -56,7 +56,7 @@ class FunctionSpec extends Specification {
 
     "- handle conditionals in the function" in {
       val inputStream = IOUtils.toInputStream(funcInline, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The value of x is 3.8.")
@@ -73,7 +73,7 @@ class FunctionSpec extends Specification {
 
     "- be able to set a variable as a command" in {
       val inputStream = IOUtils.toInputStream(setVarFunc, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The value is 6.")
@@ -95,7 +95,7 @@ class FunctionSpec extends Specification {
 
     "- handle conditionals and setting of variables (test 1)" in {
       val inputStream = IOUtils.toInputStream(complexFunc1, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The values are 6 and 10.")
@@ -122,7 +122,7 @@ class FunctionSpec extends Specification {
 
     "- handle conditionals and setting of variables (test 2)" in {
       val inputStream = IOUtils.toInputStream(complexFunc2, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("The values are -1 and 0 and 1.")
@@ -154,7 +154,7 @@ class FunctionSpec extends Specification {
 
     "- handle conditionals and setting of variables (test 3)" in {
       val inputStream = IOUtils.toInputStream(complexFunc3, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("\"I will pay you 120 reales if you get the goods to their destination. The goods will take up 20 cargo spaces.\"")

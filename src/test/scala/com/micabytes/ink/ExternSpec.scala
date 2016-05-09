@@ -30,7 +30,7 @@ class ExternSpec extends Specification {
 
     "- be possible to call on an object without any parameters" in {
       val inputStream = IOUtils.toInputStream(helloWorld, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.putVariable("x", new testClass())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
@@ -44,7 +44,7 @@ class ExternSpec extends Specification {
 
     "- be possible to call on an object without any parameters and no function brace" in {
       val inputStream = IOUtils.toInputStream(helloNoBrace, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.putVariable("x", new testClass())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
@@ -59,7 +59,7 @@ class ExternSpec extends Specification {
 
     "- be possible to call on an object with a parameter defined" in {
       val inputStream = IOUtils.toInputStream(mambo, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.putVariable("x", new testClass())
       val text = story.nextAll()
       text.size() must beEqualTo(1)
@@ -75,7 +75,7 @@ class ExternSpec extends Specification {
 
     "- resolve external bools correctly in conditional choices" in {
       val inputStream = IOUtils.toInputStream(externChoices, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.putVariable("x", new testClass())
       story.nextAll()
       story.getChoiceSize must beEqualTo(1)

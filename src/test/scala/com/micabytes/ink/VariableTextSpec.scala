@@ -17,7 +17,7 @@ class VariableTextSpec extends Specification {
 
     "- step through each element and repeat the final element" in {
       val inputStream = IOUtils.toInputStream(sequence, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("The radio hissed into life. \"Three!\"")
@@ -49,7 +49,7 @@ class VariableTextSpec extends Specification {
 
     "- cycle through the element repeatedly" in {
       val inputStream = IOUtils.toInputStream(cycle, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("The radio hissed into life. \"Three!\"")
@@ -82,7 +82,7 @@ class VariableTextSpec extends Specification {
 
     "- step through each element and return no text once the list is exhausted" in {
       val inputStream = IOUtils.toInputStream(once, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("The radio hissed into life. \"Three!\"")
@@ -116,7 +116,7 @@ class VariableTextSpec extends Specification {
 
     "- allow for empty text elements in the list" in {
       val inputStream = IOUtils.toInputStream(emptyElements, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("The radio hissed into life.")
@@ -138,7 +138,7 @@ class VariableTextSpec extends Specification {
 
     "- be usable in a choice test" in {
       val inputStream = IOUtils.toInputStream(listInChoice, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       story.nextAll()
       val choice0 = story.getChoice(0)
       choice0.getChoiceText(story) must beEqualTo("\"Hello, Master!\"")
@@ -173,7 +173,7 @@ class VariableTextSpec extends Specification {
 
     "- return the text string in the sequence if the condition is a valid value" in {
       val inputStream = IOUtils.toInputStream(one, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("We needed to find one apple.")
@@ -188,7 +188,7 @@ class VariableTextSpec extends Specification {
 
     "- return the text string in the sequence if the condition is a valid value" in {
       val inputStream = IOUtils.toInputStream(minusOne, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("We needed to find nothing.")
@@ -203,7 +203,7 @@ class VariableTextSpec extends Specification {
 
     "- return the text string in the sequence if the condition is a valid value" in {
       val inputStream = IOUtils.toInputStream(ten, "UTF-8")
-      val story = InkParser.parse(inputStream)
+      val story = InkParser.parse(inputStream, new StoryContainer())
       val text0 = story.nextAll()
       text0.size() must beEqualTo(1)
       text0.get(0) must beEqualTo("We needed to find many oranges.")
