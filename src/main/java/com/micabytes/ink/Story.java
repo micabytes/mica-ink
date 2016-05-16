@@ -2,11 +2,14 @@
 package com.micabytes.ink;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -19,6 +22,7 @@ import java.util.Random;
 import java.util.TreeMap;
 
 public class Story implements VariableMap {
+  public static final String GET_ID = "getId";
   // All content in the story
   private final Map<String, Content> storyContent = new HashMap<>();
   // All defined functions with name and implementation.
@@ -111,7 +115,7 @@ public class Story implements VariableMap {
               if (var.getValue() != null) {
                 g.writeStartObject();
                 g.writeStringField("id", var.getKey());
-                saveObject(var.getValue(), g);
+                //saveObject(var.getValue(), g);
                 g.writeEndObject();
               } else {
                 wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
@@ -141,7 +145,7 @@ public class Story implements VariableMap {
       if (var.getValue() != null) {
         g.writeStartObject();
         g.writeStringField("id", var.getKey());
-        saveObject(var.getValue(), g);
+        //saveObject(var.getValue(), g);
         g.writeEndObject();
       } else {
         wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
@@ -160,6 +164,62 @@ public class Story implements VariableMap {
     g.writeEndObject();
   }
 
+  public void saveStreamed(JsonGenerator g) throws IOException {
+    g.writeStartObject();
+    if (fileName != null)
+      g.writeStringField(StoryJson.FILE, fileName);
+    g.writeFieldName(StoryJson.CONTENT);
+    g.writeStartObject();
+    for (Map.Entry<String, Content> entry : storyContent.entrySet()) {
+      Content content = entry.getValue();
+      if (content.count > 0) {
+        g.writeFieldName(content.id);
+        g.writeStartObject();
+        g.writeNumberField(StoryJson.COUNT, content.count);
+        if (content instanceof ParameterizedContainer) {
+          ParameterizedContainer container = (ParameterizedContainer) content;
+          if (container.variables != null) {
+            g.writeFieldName(StoryJson.VARIABLES);
+            g.writeStartObject();
+            for (Map.Entry<String, Object> var : container.variables.entrySet()) {
+              if (var.getValue() != null) {
+                saveObject(g, var.getKey(), var.getValue());
+              } else {
+                wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
+              }
+            }
+            g.writeEndObject();
+          }
+        }
+        g.writeEndObject();
+      }
+    }
+    g.writeEndObject();
+    if (container != null)
+      g.writeStringField(StoryJson.CONTAINER, container.id);
+    g.writeNumberField(StoryJson.COUNTER, contentIdx);
+    g.writeFieldName(StoryJson.CHOICES);
+    g.writeStartArray();
+    for (Container choice : choices) {
+      g.writeString(choice.getId());
+    }
+    g.writeEndArray();
+    if (image != null)
+      g.writeStringField(StoryJson.IMAGE, image);
+    g.writeFieldName(StoryJson.VARIABLES_GLOBAL);
+    g.writeStartObject();
+    for (Map.Entry<String, Object> var : variables.entrySet()) {
+      if (var.getValue() != null) {
+        saveObject(g, var.getKey(), var.getValue());
+      } else {
+        wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
+      }
+    }
+    g.writeEndObject();
+    g.writeBooleanField(StoryJson.RUNNING, running);
+    g.writeEndObject();
+  }
+
   private void saveObject(Object val, ObjectNode varNode) {
     if (val instanceof Boolean) {
       varNode.put("val", (Boolean) val);
@@ -175,7 +235,7 @@ public class Story implements VariableMap {
     }
     Class valClass = val.getClass();
     try {
-      Method m = valClass.getMethod("getId", null);
+      Method m = valClass.getMethod(GET_ID, null);
       Object id = m.invoke(val, null);
       varNode.put("val", (String) id);
     } catch (Exception ignored) {
@@ -184,29 +244,28 @@ public class Story implements VariableMap {
     }
   }
 
-  private void saveObject(Object val, JsonGenerator g) throws IOException {
+  private void saveObject(JsonGenerator g, String key, Object val) throws IOException {
     if (val instanceof Boolean) {
-      g.writeBooleanField("val", (Boolean) val);
+      g.writeBooleanField(key, (Boolean) val);
       return;
     }
     if (val instanceof BigDecimal) {
-      g.writeNumberField("val", (BigDecimal) val);
+      g.writeNumberField(key, (BigDecimal) val);
       return;
     }
     if (val instanceof String) {
-      g.writeStringField("val", (String) val);
+      g.writeStringField(key, (String) val);
       return;
     }
     Class valClass = val.getClass();
     try {
-      Method m = valClass.getMethod("getId", null);
+      Method m = valClass.getMethod(GET_ID, null);
       Object id = m.invoke(val, null);
-      g.writeStringField("val", (String) id);
+      g.writeStringField(key, (String) id);
     } catch (Exception ignored) {
-      wrapper.logError("SaveObject: Could not save " + val.toString() + ". Not Boolean, Number or String.");
+      wrapper.logError("SaveObject: Could not save " + key + " " + val.toString() + ". Not Boolean, Number, String or Object.");
     }
   }
-
 
   public void loadData(JsonNode sNode, StoryProvider provider) {
     for (JsonNode node : sNode.withArray("content")) {
@@ -223,15 +282,19 @@ public class Story implements VariableMap {
               container.variables.put(v.get("id").asText(), val);
           }
         }
-      }
-      else {
+      } else {
         wrapper.logException(new InkParseException("Could not identify content ID " + id + " while loading data for " + fileName));
       }
     }
     container = (Container) storyContent.get(sNode.get("currentContainer").asText());
     contentIdx = sNode.get("currentCounter").asInt();
     for (JsonNode cNode : sNode.withArray("currentChoices")) {
-      choices.add((Container) storyContent.get(cNode.asText()));
+      Content cont = storyContent.get(cNode.asText());
+      if (cont != null)
+        choices.add((Container) cont);
+      else {
+        wrapper.logError("Could not identify ");
+      }
     }
     if (sNode.has("currentBackground"))
       image = sNode.get("currentBackground").asText();
@@ -271,6 +334,77 @@ public class Story implements VariableMap {
       return obj;
     }
     return null;
+  }
+
+  public void loadStream(JsonParser p) throws IOException {
+    while (p.nextToken() != JsonToken.END_OBJECT) {
+      switch (p.getCurrentName()) {
+        case StoryJson.CONTENT:
+          p.nextToken(); // START_OBJECT
+          while (p.nextToken() != JsonToken.END_OBJECT) {
+            String cid = p.getCurrentName();
+            Content content = storyContent.get(cid);
+            p.nextToken(); // START_OBJECT
+            while (p.nextToken() != JsonToken.END_OBJECT) {
+              switch (p.getCurrentName()) {
+                case StoryJson.COUNT:
+                  content.count = p.nextIntValue(0);
+                  break;
+                case StoryJson.VARIABLES:
+                  p.nextToken(); // START_OBJECT
+                  ParameterizedContainer container = (ParameterizedContainer) content;
+                  while (p.nextToken() != JsonToken.END_OBJECT) {
+                    String varName = p.getCurrentName();
+                    Object obj = loadObjectStream(p);
+                    container.variables.put(varName, obj);
+                  }
+                  break;
+              }
+            }
+          }
+          break;
+        case StoryJson.CONTAINER:
+          container = (Container) storyContent.get(p.nextTextValue());
+          break;
+        case StoryJson.COUNTER:
+          contentIdx = p.nextIntValue(0);
+          break;
+        case StoryJson.CHOICES:
+          p.nextToken(); // START_ARRAY
+          while (p.nextToken() != JsonToken.END_ARRAY) {
+            choices.add((Container) storyContent.get(p.getText()));
+          }
+          break;
+        case StoryJson.IMAGE:
+          image = p.nextTextValue();
+          break;
+        case StoryJson.VARIABLES_GLOBAL:
+          p.nextToken(); // START_OBJECT
+          while (p.nextToken() != JsonToken.END_OBJECT) {
+            String varName = p.getCurrentName();
+            Object obj = loadObjectStream(p);
+            variables.put(varName, obj);
+          }
+          break;
+        case StoryJson.RUNNING:
+          running = p.getBooleanValue();
+          break;
+      }
+    }
+
+  }
+
+  private Object loadObjectStream(JsonParser p) throws IOException {
+    JsonToken token = p.nextToken();
+    if (token.isBoolean())
+      return p.getBooleanValue();
+    if (token.isNumeric())
+      return new BigDecimal(p.getText());
+    String str = p.getText();
+    Object obj = wrapper.getStoryObject(str);
+    if (obj == null)
+      return str;
+    return obj;
   }
 
   void addAll(Story story) {
@@ -678,7 +812,7 @@ public class Story implements VariableMap {
     return p != null ? p.id + InkParser.DOT + id : id;
   }
 
-  private void addChoice(Choice choice) throws InkRunTimeException {
+  private void addChoice(@NotNull Choice choice) throws InkRunTimeException {
     // Check conditions
     if (!choice.evaluateConditions(this))
       return;
@@ -696,9 +830,10 @@ public class Story implements VariableMap {
 
   public void choose(int i) throws InkRunTimeException {
     if (i < choices.size()) {
+      Container old = container;
       container = choices.get(i);
       if (container == null)
-        throw new InkRunTimeException("Selected choice " + i + " is null");
+        throw new InkRunTimeException("Selected choice " + i + " is null in " + old != null ? old.getId() : "null" + " and " + contentIdx);
       container.increment();
       completeExtras(container);
       contentIdx = 0;
@@ -830,7 +965,7 @@ public class Story implements VariableMap {
   }
 
 
-  public void putVariable(String key, Object value) {
+  public void putVariable(@NonNls String key, Object value) {
     Container c = container;
     while (c != null) {
       if (c.isKnot() || c.isFunction() || c.isStitch()) {
@@ -864,6 +999,18 @@ public class Story implements VariableMap {
       return hasVariable(fct.substring(0, fct.indexOf(InkParser.DOT)));
     }
     return false;
+  }
+
+  @Override
+  public String debugInfo() {
+    String ret = new String();
+    ret += "File: " + fileName;
+    ret += container != null ? " Container :" + container.getId() : " Container: null";
+    if (contentIdx < container.getContentSize()) {
+      Content cnt = container.getContent(contentIdx);
+      ret += cnt != null ? " Line# :" + Integer.toString(cnt.lineNumber) : " Line#: ?";
+    }
+    return ret;
   }
 
   public String getImage() {

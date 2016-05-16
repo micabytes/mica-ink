@@ -66,7 +66,7 @@ public final class InkParser {
         else if (conditional != null) {
           Conditional cond = (Conditional) current.getContent(current.getContentSize()-1);
           cond.parseLine(lineNumber, trimmedLine);
-          if (trimmedLine.endsWith(CONDITIONAL_END))
+          if (trimmedLine.endsWith(CONDITIONAL_END)) // This is a bug. Means conditions cannot have text line that ends with CBRACE_RIGHT
             conditional = null;
         }
         else {

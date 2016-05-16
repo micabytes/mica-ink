@@ -520,16 +520,19 @@ public class Expression {
             String errMsg = "Could not identify a method " + function + " on variable " + var + " with the parameters:";
             for (int i = 0; i < paramTypes.length; i++)
               errMsg += " " + paramTypes[i].getName();
+            errMsg += ". " + story.debugInfo();
             throw new InkRunTimeException(errMsg, e);
           } catch (InvocationTargetException e) {
             String errMsg = "Could not invoke a method " + function + " on variable " + var + " with the parameters:";
             for (int i = 0; i < paramTypes.length; i++)
               errMsg += " " + paramTypes[i].getName();
+            errMsg += ". " + story.debugInfo();
             throw new InkRunTimeException(errMsg, e);
           } catch (IllegalAccessException e) {
             String errMsg = "Could not access a method " + function + " on variable " + var + " with the parameters:";
             for (int i = 0; i < paramTypes.length; i++)
               errMsg += " " + paramTypes[i].getName();
+            errMsg += ". " + story.debugInfo();
             throw new InkRunTimeException(errMsg, e);
           }
         }

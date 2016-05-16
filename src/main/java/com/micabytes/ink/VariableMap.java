@@ -12,4 +12,6 @@ public interface VariableMap {
   Function getFunction(String token);
 
   boolean checkObject(String token);
+
+  String debugInfo();
 }
