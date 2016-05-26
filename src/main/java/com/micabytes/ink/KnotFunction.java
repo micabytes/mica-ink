@@ -53,10 +53,12 @@ public class KnotFunction extends ParameterizedContainer implements Function {
     return str.replaceAll(header.toString(), "").trim();
   }
 
+  @Override
   public int getNumParams() {
     return parameters.size();
   }
 
+  @Override
   public boolean numParamsVaries() {
     return false;
   }

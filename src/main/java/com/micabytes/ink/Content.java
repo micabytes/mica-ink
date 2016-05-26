@@ -1,8 +1,5 @@
 package com.micabytes.ink;
 
-import java.math.BigDecimal;
-import java.util.Random;
-
 public class Content {
 
   String id;
@@ -87,4 +84,7 @@ public class Content {
     return isKnot() || isFunction() || isStitch() || isChoice() || isGather();
   }
 
+  public boolean isComment() {
+    return type == ContentType.COMMENT_ONCE || type == ContentType.COMMENT_REPEATABLE;
+  }
 }

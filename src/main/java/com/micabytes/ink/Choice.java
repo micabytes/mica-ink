@@ -1,7 +1,5 @@
 package com.micabytes.ink;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;

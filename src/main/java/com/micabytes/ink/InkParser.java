@@ -55,7 +55,7 @@ public final class InkParser {
         String trimmedLine = line.trim();
         if (trimmedLine.contains("//")) {
           String comment = trimmedLine.substring(trimmedLine.indexOf("//")).trim();
-          parseComment(comment, current);
+          parseComment(lineNumber, comment, current);
           trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf("//")).trim();
         }
         if (trimmedLine.startsWith("INCLUDE")) {
@@ -148,7 +148,7 @@ public final class InkParser {
     return null;
   }
 
-  static private void parseComment(String comment, Container current) {
+  static private void parseComment(int lineNumber, String comment, Container current) {
     String token[] = AT_SPLITTER.split(comment);
     if (token.length < 2) return;
     for (int i=1; i<token.length; i++) {
@@ -157,6 +157,11 @@ public final class InkParser {
         if (current != null) {
           current.setBackground(img);
         }
+      }
+      if (token[i].startsWith("*") || token[i].startsWith("+") ) {
+        Content cont = new Comment(lineNumber, token[i]);
+        if (current != null)
+          current.add(cont);
       }
     }
   }

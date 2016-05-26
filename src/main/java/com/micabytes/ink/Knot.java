@@ -1,7 +1,6 @@
 package com.micabytes.ink;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 // TODO: Functions should check that stitches are not added.
 

@@ -16,10 +16,15 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
+
+
+// TODO: Save Comments
+
 
 public class Story implements VariableMap {
   public static final String GET_ID = "getId";
@@ -34,7 +39,9 @@ public class Story implements VariableMap {
   String fileName;
   Container container;
   private int contentIdx;
+  private List<String> text = new ArrayList<>();
   private final List<Container> choices = new ArrayList<>();
+  private final List<Comment> comments = new ArrayList<>();
   private String image;
   private final Map<String, Object> variables = new HashMap<>();
   private boolean processing;
@@ -94,76 +101,6 @@ public class Story implements VariableMap {
     return retNode;
   }
 
-  public void saveStream(JsonGenerator g) throws IOException {
-    g.writeStartObject();
-    if (fileName != null)
-      g.writeStringField("file", fileName);
-    g.writeFieldName("content");
-    g.writeStartArray();
-    for (Map.Entry<String, Content> entry : storyContent.entrySet()) {
-      Content content = entry.getValue();
-      if (content.count > 0) {
-        g.writeStartObject();
-        g.writeStringField("id", content.id);
-        g.writeNumberField("#n", content.count);
-        if (content instanceof ParameterizedContainer) {
-          ParameterizedContainer container = (ParameterizedContainer) content;
-          if (container.variables != null) {
-            g.writeFieldName("vars");
-            g.writeStartArray();
-            for (Map.Entry<String, Object> var : container.variables.entrySet()) {
-              if (var.getValue() != null) {
-                g.writeStartObject();
-                g.writeStringField("id", var.getKey());
-                //saveObject(var.getValue(), g);
-                g.writeEndObject();
-              } else {
-                wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
-              }
-            }
-            g.writeEndArray();
-          }
-        }
-        g.writeEndObject();
-      }
-    }
-    g.writeEndArray();
-    if (container != null)
-      g.writeStringField("currentContainer", container.id);
-    g.writeNumberField("currentCounter", contentIdx);
-    g.writeFieldName("currentChoices");
-    g.writeStartArray();
-    for (Container choice : choices) {
-      g.writeString(choice.getId());
-    }
-    g.writeEndArray();
-    if (image != null)
-      g.writeStringField("currentBackground", image);
-    g.writeFieldName("vars");
-    g.writeStartArray();
-    for (Map.Entry<String, Object> var : variables.entrySet()) {
-      if (var.getValue() != null) {
-        g.writeStartObject();
-        g.writeStringField("id", var.getKey());
-        //saveObject(var.getValue(), g);
-        g.writeEndObject();
-      } else {
-        wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
-      }
-    }
-    g.writeEndArray();
-    /*
-    g.writeFieldName("ints");
-    g.writeStartArray();
-    for (StoryInterrupt intr : interrupts) {
-      g.writeString(intr.getId());
-    }
-    g.writeEndArray();
-    */
-    g.writeBooleanField("running", running);
-    g.writeEndObject();
-  }
-
   public void saveStreamed(JsonGenerator g) throws IOException {
     g.writeStartObject();
     if (fileName != null)
@@ -198,6 +135,12 @@ public class Story implements VariableMap {
     if (container != null)
       g.writeStringField(StoryJson.CONTAINER, container.id);
     g.writeNumberField(StoryJson.COUNTER, contentIdx);
+    g.writeFieldName(StoryJson.TEXT);
+    g.writeStartArray();
+    for (String s : text) {
+      g.writeString(s);
+    }
+    g.writeEndArray();
     g.writeFieldName(StoryJson.CHOICES);
     g.writeStartArray();
     for (Container choice : choices) {
@@ -369,6 +312,12 @@ public class Story implements VariableMap {
         case StoryJson.COUNTER:
           contentIdx = p.nextIntValue(0);
           break;
+        case StoryJson.TEXT:
+          p.nextToken(); // START_ARRAY
+          while (p.nextToken() != JsonToken.END_ARRAY) {
+            text.add(p.getText());
+          }
+          break;
         case StoryJson.CHOICES:
           p.nextToken(); // START_ARRAY
           while (p.nextToken() != JsonToken.END_ARRAY) {
@@ -387,7 +336,7 @@ public class Story implements VariableMap {
           }
           break;
         case StoryJson.RUNNING:
-          running = p.getBooleanValue();
+          running = p.nextBooleanValue();
           break;
       }
     }
@@ -557,12 +506,14 @@ public class Story implements VariableMap {
   }
 
   public List<String> nextAll() throws InkRunTimeException {
+    text.clear();
     ArrayList<String> ret = new ArrayList<>();
     while (hasNext()) {
       String text = next();
       if (!text.isEmpty())
         ret.add(text);
     }
+    text.addAll(ret);
     return ret;
   }
 
@@ -726,6 +677,9 @@ public class Story implements VariableMap {
     if (content.isChoice()) {
       addChoice((Choice) content);
     }
+    if (content.isComment()) {
+      comments.add((Comment) content);
+    }
     if (content.isVariable())
       ((Variable) content).evaluate(this);
     return "";
@@ -757,9 +711,9 @@ public class Story implements VariableMap {
       }
     }
     // TODO: This needs to be rewritten for proper functioning of parameters (parameters on a knot with a base stitch)
-    if (divertTo.type == ContentType.KNOT && (divertTo.getContent(0).isStitch()))
+    if (divertTo.type == ContentType.KNOT && divertTo.getContent(0).isStitch())
       divertTo = (Container) divertTo.getContent(0);
-    if ((divertTo.type == ContentType.KNOT || divertTo.type == ContentType.STITCH) && (divertTo.getContent(0).isConditional()))
+    if ((divertTo.type == ContentType.KNOT || divertTo.type == ContentType.STITCH) && divertTo.getContent(0).isConditional())
       divertTo = (Container) divertTo.getContent(0);
     // TODO: Should increment for each run through?
     return divertTo;
@@ -928,7 +882,7 @@ public class Story implements VariableMap {
       throw new InkParseException("No ID for content. This should not be possible.");
     }
     // Set starting knot
-    if ((content.isKnot()) && (container == null || (container != null && container.getContentSize() == 0)))
+    if (content.isKnot() && (container == null || (container != null && container.getContentSize() == 0)))
       container = (Container) content;
   }
 
@@ -937,6 +891,7 @@ public class Story implements VariableMap {
   }
 
 
+  @Override
   public boolean hasVariable(String variable) {
     if (Character.isDigit(variable.charAt(0)))
       return false;
@@ -1026,5 +981,28 @@ public class Story implements VariableMap {
   @Override
   public void logException(Exception e) {
 
+  }
+
+  // Legacy function used to set text
+  public void setText(ArrayList<String> storyText) {
+    text = storyText;
+  }
+
+  public List<String> getText() {
+    return text;
+  }
+
+  public String getComment() throws InkRunTimeException {
+    Iterator<Comment> cIt = comments.iterator();
+    while (cIt.hasNext()) {
+      Comment c = cIt.next();
+      if (c.evaluateConditions(this)) {
+        String ret = c.getCommentText(this);
+        if (c.type == ContentType.COMMENT_ONCE)
+          cIt.remove();
+        return ret;
+      }
+    }
+    return null;
   }
 }

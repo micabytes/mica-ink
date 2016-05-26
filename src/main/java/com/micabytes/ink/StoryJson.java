@@ -5,17 +5,18 @@ import org.jetbrains.annotations.NonNls;
 @SuppressWarnings("UtilityClass")
 public final class StoryJson
 {
-  @NonNls public static final String FILE = "fl";
-  public static final String CONTENT = "c$";
+  @NonNls public static final String FILE = "file";
+  public static final String CONTENT = "content";
   public static final String ID = "id";
-  public static final String COUNT = "n#";
-  public static final String VARIABLES = "v$";
-  public static final String CONTAINER = "h$";
-  public static final String COUNTER = "h#";
-  public static final String CHOICES = "hc";
-  public static final String IMAGE = "hp";
-  public static final String VARIABLES_GLOBAL = "hv";
-  public static final String RUNNING = "hr";
+  public static final String COUNT = "count";
+  public static final String VARIABLES = "variables";
+  public static final String CONTAINER = "container";
+  public static final String COUNTER = "counter";
+  public static final String TEXT = "text";
+  public static final String CHOICES = "choices";
+  public static final String IMAGE = "image";
+  public static final String VARIABLES_GLOBAL = "variables";
+  public static final String RUNNING = "running";
 
   private StoryJson() {
     throw new AssertionError("StoryJson should never be initialized.");
