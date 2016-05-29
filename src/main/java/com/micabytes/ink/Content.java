@@ -57,7 +57,7 @@ public class Content {
   }
 
   public boolean isDivert() {
-    return text.contains(Symbol.DIVERT) && !isVariable();
+    return text.contains(Symbol.DIVERT) && !isVariable() && !isChoice();
   }
 
   public boolean isConditional() {

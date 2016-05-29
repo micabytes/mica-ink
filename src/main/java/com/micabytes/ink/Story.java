@@ -291,7 +291,10 @@ public class Story implements VariableMap {
             while (p.nextToken() != JsonToken.END_OBJECT) {
               switch (p.getCurrentName()) {
                 case StoryJson.COUNT:
-                  content.count = p.nextIntValue(0);
+                  if (content != null)
+                    content.count = p.nextIntValue(0);
+                  else
+                    wrapper.logException(new InkLoadingException("Attempting to write COUNT " + Integer.toString(p.nextIntValue(0)) + " to content " + cid + "."));
                   break;
                 case StoryJson.VARIABLES:
                   p.nextToken(); // START_OBJECT
@@ -783,7 +786,7 @@ public class Story implements VariableMap {
   }
 
   public void choose(int i) throws InkRunTimeException {
-    if (i < choices.size()) {
+    if (i < choices.size() && i >= 0) {
       Container old = container;
       container = choices.get(i);
       if (container == null)
@@ -793,8 +796,10 @@ public class Story implements VariableMap {
       contentIdx = 0;
       choices.clear();
       processing = true;
-    } else
-      throw new InkRunTimeException("Trying to select a choice that does not exist");
+    } else {
+      String cId = container != null ? container.getId() : "null";
+      throw new InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileName + " container: " + cId + " cIndex: " + contentIdx);
+    }
   }
 
   public int getChoiceSize() {

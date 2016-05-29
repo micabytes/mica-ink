@@ -89,6 +89,93 @@ class ConditionalSpec extends Specification {
       text.get(0) must beEqualTo("The value is -1.")
     }
 
+    val ifElseExtText1 =
+      """=== test
+        |VAR x = 0
+        |{
+        |    - x == 0:
+        |      This is text 1.
+        |    - x > 0:
+        |      This is text 2.
+        |    - else:
+        |      This is text 3.
+        |}
+        |+ [The Choice.] -> to_end
+        |=== to_end
+        |This is the end.
+      """.stripMargin
+
+    "- evaluate an extended else statement with text and divert at the end" in {
+      val inputStream = IOUtils.toInputStream(ifElseExtText1, "UTF-8")
+      val story = InkParser.parse(inputStream, new StoryContainer())
+      val text = story.nextAll()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("This is text 1.")
+      story.getChoiceSize must beEqualTo(1)
+      story.choose(0)
+      val text1 = story.nextAll()
+      text1.size() must beEqualTo(1)
+      text1.get(0) must beEqualTo("This is the end.")
+    }
+
+    val ifElseExtText2 =
+      """=== test
+        |VAR x = 0
+        |{
+        |    - x == 0:
+        |      This is text 1.
+        |    - x > 0:
+        |      This is text 2.
+        |    - else:
+        |      This is text 3.
+        |}
+        |+ [The Choice.] -> to_end
+        |=== to_end
+        |This is the end.
+      """.stripMargin
+
+    "- evaluate an extended else statement with text and divert at the end" in {
+      val inputStream = IOUtils.toInputStream(ifElseExtText2, "UTF-8")
+      val story = InkParser.parse(inputStream, new StoryContainer())
+      val text = story.nextAll()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("This is text 2.")
+      story.getChoiceSize must beEqualTo(1)
+      story.choose(0)
+      val text1 = story.nextAll()
+      text1.size() must beEqualTo(1)
+      text1.get(0) must beEqualTo("This is the end.")
+    }
+
+    val ifElseExtText3 =
+      """=== test
+        |VAR x = -2
+        |{
+        |    - x == 0:
+        |      This is text 1.
+        |    - x > 0:
+        |      This is text 2.
+        |    - else:
+        |      This is text 3.
+        |}
+        |+ [The Choice.] -> to_end
+        |=== to_end
+        |This is the end.
+      """.stripMargin
+
+    "- evaluate an extended else statement with text and divert at the end" in {
+      val inputStream = IOUtils.toInputStream(ifElseExtText3, "UTF-8")
+      val story = InkParser.parse(inputStream, new StoryContainer())
+      val text = story.nextAll()
+      text.size() must beEqualTo(1)
+      text.get(0) must beEqualTo("This is text 3.")
+      story.getChoiceSize must beEqualTo(1)
+      story.choose(0)
+      val text1 = story.nextAll()
+      text1.size() must beEqualTo(1)
+      text1.get(0) must beEqualTo("This is the end.")
+    }
+
     val condText =
       """ "We are going on a trip," said Monsieur Fogg.
         |* [The wager.] -> know_about_wager

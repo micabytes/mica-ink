@@ -124,10 +124,19 @@ class Conditional extends Container {
             return;
           }
           else {
-            BigDecimal val = (BigDecimal)Variable.evaluate(opt.condition, story);
-            if (val.intValue() > 0) {
-              selection = content.indexOf(c);
-              return;
+            Object eval = Variable.evaluate(opt.condition, story);
+            if (eval instanceof Boolean) {
+              if (eval == true) {
+                selection = content.indexOf(c);
+                return;
+              }
+            }
+            else {
+              BigDecimal val = (BigDecimal) eval;
+              if (val.intValue() > 0) {
+                selection = content.indexOf(c);
+                return;
+              }
             }
           }
         }
