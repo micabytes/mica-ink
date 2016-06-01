@@ -120,7 +120,7 @@ class ConditionalSpec extends Specification {
 
     val ifElseExtText2 =
       """=== test
-        |VAR x = 0
+        |VAR x = 2
         |{
         |    - x == 0:
         |      This is text 1.

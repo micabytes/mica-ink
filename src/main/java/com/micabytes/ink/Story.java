@@ -567,7 +567,6 @@ public class Story implements VariableMap {
     return cleanUpText(ret);
   }
 
-
   private void resolveExtras() {
     for (StoryInterrupt intr : interrupts) {
       if (intr.isActive() && intr.isChoice()) {
