@@ -44,4 +44,19 @@ public abstract class ParameterizedContainer extends Container {
     variables.put(key, value);
   }
 
+  ArrayList<String> getParameters() {
+    return parameters;
+  }
+
+  void setParameters(ArrayList<String> parameters) {
+    this.parameters = parameters;
+  }
+
+  HashMap<String, Object> getVariables() {
+    return variables;
+  }
+
+  void setVariables(HashMap<String, Object> variables) {
+    this.variables = variables;
+  }
 }

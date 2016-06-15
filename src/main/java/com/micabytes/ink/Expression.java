@@ -511,9 +511,9 @@ public class Expression {
             Object fResult = m.invoke(val, params);
             if (fResult instanceof Integer)
               fResult = BigDecimal.valueOf((Integer) fResult);
-            if (fResult instanceof Float)
+            else if (fResult instanceof Float)
               fResult = BigDecimal.valueOf((Float) fResult);
-            if (fResult instanceof Double)
+            else if (fResult instanceof Double)
               fResult = BigDecimal.valueOf((Double) fResult);
             stack.push(fResult);
           } catch (NoSuchMethodException e) {

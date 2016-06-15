@@ -1,11 +1,9 @@
-
 package com.micabytes.ink;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.jetbrains.annotations.NonNls;
@@ -23,9 +21,7 @@ import java.util.Random;
 import java.util.TreeMap;
 
 
-// TODO: Save Comments
-
-
+@SuppressWarnings({"ClassWithTooManyMethods", "OverlyComplexClass"})
 public class Story implements VariableMap {
   public static final String GET_ID = "getId";
   // All content in the story
@@ -51,57 +47,7 @@ public class Story implements VariableMap {
     wrapper = provider;
   }
 
-  public ObjectNode saveData() {
-    ObjectMapper mapper = new ObjectMapper();
-    ObjectNode retNode = mapper.createObjectNode();
-    if (fileName != null)
-      retNode.put("file", fileName);
-    for (Map.Entry<String, Content> entry : storyContent.entrySet()) {
-      Content content = entry.getValue();
-      if (content.count > 0) {
-        ObjectNode node = mapper.createObjectNode();
-        node.put("id", content.id);
-        node.put("#n", content.count);
-        if (content instanceof ParameterizedContainer) {
-          ParameterizedContainer container = (ParameterizedContainer) content;
-          if (container.variables != null) {
-            for (Map.Entry<String, Object> var : container.variables.entrySet()) {
-              ObjectNode varNode = mapper.createObjectNode();
-              if (var.getValue() != null) {
-                varNode.put("id", var.getKey());
-                saveObject(var.getValue(), varNode);
-                node.withArray("vars").add(varNode);
-              } else {
-                wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
-              }
-            }
-          }
-        }
-        retNode.withArray("content").add(node);
-      }
-    }
-    retNode.put("currentContainer", container.id);
-    retNode.put("currentCounter", contentIdx);
-    for (Container choice : choices) {
-      retNode.withArray("currentChoices").add(choice.getId());
-    }
-    if (image != null)
-      retNode.put("currentBackground", image);
-    for (Map.Entry<String, Object> var : variables.entrySet()) {
-      if (var.getValue() != null) {
-        ObjectNode varNode = mapper.createObjectNode();
-        varNode.put("id", var.getKey());
-        saveObject(var.getValue(), varNode);
-        retNode.withArray("vars").add(varNode);
-      } else {
-        wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
-      }
-    }
-    retNode.put("running", running);
-    return retNode;
-  }
-
-  public void saveStreamed(JsonGenerator g) throws IOException {
+  public void saveStream(JsonGenerator g) throws IOException {
     g.writeStartObject();
     if (fileName != null)
       g.writeStringField(StoryJson.FILE, fileName);
@@ -114,15 +60,15 @@ public class Story implements VariableMap {
         g.writeStartObject();
         g.writeNumberField(StoryJson.COUNT, content.count);
         if (content instanceof ParameterizedContainer) {
-          ParameterizedContainer container = (ParameterizedContainer) content;
-          if (container.variables != null) {
+          ParameterizedContainer pContainer = (ParameterizedContainer) content;
+          if (pContainer.getVariables() != null) {
             g.writeFieldName(StoryJson.VARIABLES);
             g.writeStartObject();
-            for (Map.Entry<String, Object> var : container.variables.entrySet()) {
-              if (var.getValue() != null) {
-                saveObject(g, var.getKey(), var.getValue());
+            for (Map.Entry<String, Object> vars : pContainer.getVariables().entrySet()) {
+              if (vars.getValue() != null) {
+                saveObject(g, vars.getKey(), vars.getValue());
               } else {
-                wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
+                wrapper.logError("Story variable data " + vars.getKey() + " has a null value");
               }
             }
             g.writeEndObject();
@@ -151,40 +97,16 @@ public class Story implements VariableMap {
       g.writeStringField(StoryJson.IMAGE, image);
     g.writeFieldName(StoryJson.VARIABLES_GLOBAL);
     g.writeStartObject();
-    for (Map.Entry<String, Object> var : variables.entrySet()) {
-      if (var.getValue() != null) {
-        saveObject(g, var.getKey(), var.getValue());
+    for (Map.Entry<String, Object> vars : variables.entrySet()) {
+      if (vars.getValue() != null) {
+        saveObject(g, vars.getKey(), vars.getValue());
       } else {
-        wrapper.logError("SaveData: " + var.getKey() + " contains a null value");
+        wrapper.logError("SaveData: " + vars.getKey() + " contains a null value");
       }
     }
     g.writeEndObject();
     g.writeBooleanField(StoryJson.RUNNING, running);
     g.writeEndObject();
-  }
-
-  private void saveObject(Object val, ObjectNode varNode) {
-    if (val instanceof Boolean) {
-      varNode.put("val", (Boolean) val);
-      return;
-    }
-    if (val instanceof BigDecimal) {
-      varNode.put("val", (BigDecimal) val);
-      return;
-    }
-    if (val instanceof String) {
-      varNode.put("val", (String) val);
-      return;
-    }
-    Class valClass = val.getClass();
-    try {
-      Method m = valClass.getMethod(GET_ID, null);
-      Object id = m.invoke(val, null);
-      varNode.put("val", (String) id);
-    } catch (Exception ignored) {
-      // NOOP
-      // TODO: Loss of data. Handle this different?
-    }
   }
 
   private void saveObject(JsonGenerator g, String key, Object val) throws IOException {
@@ -210,6 +132,7 @@ public class Story implements VariableMap {
     }
   }
 
+  @SuppressWarnings("OverlyComplexMethod")
   public void loadData(JsonNode sNode, StoryProvider provider) {
     for (JsonNode node : sNode.withArray("content")) {
       String id = node.get("id").asText();
@@ -222,7 +145,7 @@ public class Story implements VariableMap {
           for (JsonNode v : node.withArray("vars")) {
             Object val = loadObject(v, provider);
             if (val != null)
-              container.variables.put(v.get("id").asText(), val);
+              container.getVariables().put(v.get("id").asText(), val);
           }
         }
       } else {
@@ -302,7 +225,7 @@ public class Story implements VariableMap {
                   while (p.nextToken() != JsonToken.END_OBJECT) {
                     String varName = p.getCurrentName();
                     Object obj = loadObjectStream(p);
-                    container.variables.put(varName, obj);
+                    container.getVariables().put(varName, obj);
                   }
                   break;
               }
@@ -343,7 +266,6 @@ public class Story implements VariableMap {
           break;
       }
     }
-
   }
 
   private Object loadObjectStream(JsonParser p) throws IOException {
@@ -423,7 +345,7 @@ public class Story implements VariableMap {
       @Override
       public Object eval(List<Object> parameters, VariableMap variables) throws InkRunTimeException {
         Object param = parameters.get(0);
-        return param != null;
+        return param == null;
       }
     });
     functions.put("not", new Function() {
@@ -963,7 +885,7 @@ public class Story implements VariableMap {
   @Override
   public String debugInfo() {
     String ret = new String();
-    ret += "File: " + fileName;
+    ret += "StoryDebugInfo File: " + fileName;
     ret += container != null ? " Container :" + container.getId() : " Container: null";
     if (contentIdx < container.getContentSize()) {
       Content cnt = container.getContent(contentIdx);
@@ -984,7 +906,9 @@ public class Story implements VariableMap {
 
   @Override
   public void logException(Exception e) {
-
+    if (wrapper != null)
+      wrapper.logException(e);
+    e.printStackTrace();
   }
 
   // Legacy function used to set text
@@ -1009,4 +933,13 @@ public class Story implements VariableMap {
     }
     return null;
   }
+
+  @NonNls
+  @SuppressWarnings("NestedConditionalExpression")
+  public String getStoryStatus() {
+    return "Story errors with FileName: " + fileName != null ? fileName : "null"
+        + ". Container: " + container != null ? container.getId() : "null"
+        + ". ContentIdx: " + contentIdx;
+  }
+
 }

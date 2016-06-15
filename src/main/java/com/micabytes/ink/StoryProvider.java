@@ -1,5 +1,7 @@
 package com.micabytes.ink;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.InputStream;
 
 /** Story Provider is the interface to the class used to convert file IDs/file names to and
@@ -14,7 +16,7 @@ public interface StoryProvider {
 
   public void logDebug(String m);
 
-  public void logError(String m);
+  public void logError(@NonNls String m);
 
   public void logException(Exception e);
 }

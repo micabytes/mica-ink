@@ -27,7 +27,7 @@ public class KnotFunction extends ParameterizedContainer implements Function {
       parameters = new ArrayList<>();
       for (String aParam : param) {
         if (!aParam.trim().isEmpty())
-          parameters.add(aParam.trim());
+          getParameters().add(aParam.trim());
       }
       fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT)).trim();
     }
@@ -55,7 +55,7 @@ public class KnotFunction extends ParameterizedContainer implements Function {
 
   @Override
   public int getNumParams() {
-    return parameters.size();
+    return getParameters().size();
   }
 
   @Override
@@ -66,14 +66,14 @@ public class KnotFunction extends ParameterizedContainer implements Function {
   @Override
   public Object eval(List<Object> params, VariableMap vas) throws InkRunTimeException {
     Story story = (Story) vas;
-    if (params.size() != parameters.size())
-      throw new InkRunTimeException("Parameters passed to function " + id + " do not match the definition of the function. Passed " + params.size() + " parameters and expected " + parameters.size());
+    if (params.size() != getParameters().size())
+      throw new InkRunTimeException("Parameters passed to function " + id + " do not match the definition of the function. Passed " + params.size() + " parameters and expected " + getParameters().size());
     Container callingContainer = story.container;
     story.container = this;
-    if (variables == null)
+    if (getVariables() == null)
       variables = new HashMap<>();
-    for (int i=0; i<parameters.size(); i++) {
-      variables.put(parameters.get(i), params.get(i));
+    for (int i = 0; i< getParameters().size(); i++) {
+      getVariables().put(getParameters().get(i), params.get(i));
     }
     for (Content c : content) {
       if (c.type == ContentType.TEXT) {
@@ -83,10 +83,10 @@ public class KnotFunction extends ParameterizedContainer implements Function {
       else if (c.isVariable()) {
         Variable v = (Variable) c;
         if (v.isVariableReturn()) {
-          variables.put("return", "");
+          getVariables().put("return", "");
           v.evaluate(story);
           story.container = callingContainer;
-          return variables.get("return");
+          return getVariables().get("return");
         }
         v.evaluate(story);
       }
@@ -102,10 +102,10 @@ public class KnotFunction extends ParameterizedContainer implements Function {
           if (cd.isVariable()) {
             Variable v = (Variable) cd;
             if (v.isVariableReturn()) {
-              variables.put("return", "");
+              getVariables().put("return", "");
               v.evaluate(story);
               story.container = callingContainer;
-              return variables.get("return");
+              return getVariables().get("return");
             }
             v.evaluate(story);
           }
