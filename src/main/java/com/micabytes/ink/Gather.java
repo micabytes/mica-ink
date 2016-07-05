@@ -2,9 +2,9 @@ package com.micabytes.ink;
 
 import org.jetbrains.annotations.Nullable;
 
-public class Gather extends Container {
+class Gather extends Container {
 
-  protected Gather(int l, String str, @Nullable Container current) throws InkParseException {
+  Gather(int l, String str, @Nullable Container current) throws InkParseException {
     lineNumber = l;
     type = ContentType.GATHER;
     level = 2;
@@ -20,15 +20,16 @@ public class Gather extends Container {
     addLine(s);
   }
 
-  public void addLine(String str) {
+  private void addLine(String str) {
     String s = str;
     if (s.startsWith("(")) {
-      id = s.substring(s.indexOf("(") + 1, s.indexOf(")")).trim();
-      Container p = parent;
-      id = p.id + InkParser.DOT + id;
-      s = s.substring(s.indexOf(")") + 1).trim();
+      id = s.substring(s.indexOf(Symbol.BRACE_LEFT) + 1, s.indexOf(Symbol.BRACE_RIGHT)).trim();
+      id = (parent != null ? parent.id : null) + InkParser.DOT + id;
+      s = s.substring(s.indexOf(Symbol.BRACE_RIGHT) + 1).trim();
+
     }
-    Content res = new Content(lineNumber, s, this);
+    //noinspection ResultOfObjectAllocationIgnored
+    new Content(lineNumber, s, this);
   }
 
   public static boolean isGatherHeader(String str) {

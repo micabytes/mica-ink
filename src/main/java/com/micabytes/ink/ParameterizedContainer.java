@@ -1,21 +1,24 @@
 package com.micabytes.ink;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public abstract class ParameterizedContainer extends Container {
-  protected ArrayList<String> parameters;
-  protected HashMap<String, Object> variables;
+class ParameterizedContainer extends Container {
+  List<String> parameters;
+  Map<String, Object> variables;
 
   @Override
-  public void initialize(Story story, Content content) throws InkRunTimeException {
-    super.initialize(story, content);
-    String d = content.text.substring(content.text.indexOf(Symbol.DIVERT) + 2).trim();
+  public void initialize(Story story, Content c) throws InkRunTimeException {
+    super.initialize(story, c);
+    String d = c.text.substring(c.text.indexOf(Symbol.DIVERT) + 2).trim();
     if (d.contains(StoryText.BRACE_LEFT) && parameters != null) {
       String params = d.substring(d.indexOf(StoryText.BRACE_LEFT) + 1, d.indexOf(StoryText.BRACE_RIGHT));
       String[] param = params.split(",");
       if (param.length != parameters.size())
-        throw new InkRunTimeException("LineNumber: " + content.lineNumber + ". Mismatch in the parameter declaration in the call to " + id);
+        throw new InkRunTimeException("LineNumber: " + c.lineNumber + ". Mismatch in the parameter declaration in the call to " + id);
       HashMap<String, Object> vs = new HashMap<>();
       for (int i=0; i<param.length; i++) {
         String p = param[i].trim();
@@ -44,19 +47,19 @@ public abstract class ParameterizedContainer extends Container {
     variables.put(key, value);
   }
 
-  ArrayList<String> getParameters() {
-    return parameters;
+  List<String> getParameters() {
+    return Collections.unmodifiableList(parameters);
   }
 
-  void setParameters(ArrayList<String> parameters) {
-    this.parameters = parameters;
+  void setParameters(ArrayList<String> params) {
+    parameters = new ArrayList<>(params);
   }
 
-  HashMap<String, Object> getVariables() {
-    return variables;
+  Map<String, Object> getVariables() {
+    return Collections.unmodifiableMap(variables);
   }
 
-  void setVariables(HashMap<String, Object> variables) {
-    this.variables = variables;
+  void setVariables(HashMap<String, Object> vars) {
+    variables = new HashMap<>(vars);
   }
 }

@@ -6,7 +6,8 @@ import java.util.ArrayList;
 
 class Stitch extends ParameterizedContainer {
 
-  public Stitch(int l, String str, @Nullable Container current) throws InkParseException {
+  @SuppressWarnings("StringBufferReplaceableByString")
+  Stitch(int l, String str, @Nullable Container current) throws InkParseException {
     lineNumber = l;
     level = 1;
     if (current == null)
@@ -22,8 +23,7 @@ class Stitch extends ParameterizedContainer {
       String params = fullId.substring(fullId.indexOf(StoryText.BRACE_LEFT)+1, fullId.indexOf(StoryText.BRACE_RIGHT));
       String[] param = params.split(",");
       parameters = new ArrayList<>();
-      for (int i=0; i<param.length; i++)
-        getParameters().add(param[i].trim());
+      for (String aParam : param) getParameters().add(aParam.trim());
       fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT));
     }
     //if (fullId.startsWith(FUNCTION)) {
@@ -34,9 +34,7 @@ class Stitch extends ParameterizedContainer {
 
   public static boolean isStitchHeader(String str) {
     if (str.length() < 2) return false;
-    if (str.charAt(0) == InkParser.HEADER && str.charAt(1) != InkParser.HEADER)
-      return true;
-    return false;
+    return str.charAt(0) == InkParser.HEADER && str.charAt(1) != InkParser.HEADER;
   }
 
 }

@@ -3,10 +3,10 @@ package com.micabytes.ink;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 
-public class Comment extends Content {
-  private ArrayList<String> conditions;
+class Comment extends Content {
+  private ArrayList<String> conditions = null;
 
-  protected Comment(int l, String str) {
+  Comment(int l, String str) {
     lineNumber = l;
     char notation = str.charAt(0);
     type = notation == InkParser.CHOICE_DOT ? ContentType.COMMENT_ONCE : ContentType.COMMENT_REPEATABLE;
@@ -14,7 +14,7 @@ public class Comment extends Content {
     addLine(s);
   }
 
-  public void addLine(String str) {
+  private void addLine(String str) {
     String s = str.trim();
     if (s.startsWith(StoryText.CBRACE_LEFT) && conditions == null)
       conditions = new ArrayList<>();
@@ -40,7 +40,6 @@ public class Comment extends Content {
     }
     return true;
   }
-
 
   public String getCommentText(Story story) throws InkRunTimeException {
     return StoryText.getText(text, count, story);

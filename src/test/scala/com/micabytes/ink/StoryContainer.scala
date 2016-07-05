@@ -4,7 +4,7 @@ import java.io.InputStream
 
 import org.apache.commons.io.IOUtils
 
-class StoryContainer extends StoryProvider {
+class StoryContainer extends StoryWrapper {
 
   override def getStream(fileId: String): InputStream = IOUtils.toInputStream(fileId, "UTF-8")
 

@@ -4,15 +4,17 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -23,17 +25,23 @@ import java.util.TreeMap;
 
 @SuppressWarnings({"ClassWithTooManyMethods", "OverlyComplexClass"})
 public class Story implements VariableMap {
-  public static final String GET_ID = "getId";
+  private static final String GET_ID = "getId";
+  @NonNls private static final String IS_NULL = "isNull";
+  @NonNls private static final String RANDOM = "random";
+  @NonNls private static final String IS_KNOT = "isKnot";
+  @NonNls private static final String CURRENT_BACKGROUND = "currentBackground";
   // All content in the story
   private final Map<String, Content> storyContent = new HashMap<>();
   // All defined functions with name and implementation.
-  Map<String, Function> functions = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  private final Map<String, Function> functions = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  // All story interrupts currently active
   private final List<StoryInterrupt> interrupts = new ArrayList<>();
-  StoryProvider wrapper;
+  // The story wrapper (caller - implements logging and callbacks)
+  private final StoryWrapper wrapper;
 
   // Story state
   String fileName;
-  Container container;
+  @Nullable Container container;
   private int contentIdx;
   private List<String> text = new ArrayList<>();
   private final List<Container> choices = new ArrayList<>();
@@ -43,10 +51,11 @@ public class Story implements VariableMap {
   private boolean processing;
   private boolean running;
 
-  public Story(StoryProvider provider) {
+  public Story(StoryWrapper provider) {
     wrapper = provider;
   }
 
+  @SuppressWarnings({"OverlyComplexMethod", "OverlyNestedMethod"})
   public void saveStream(JsonGenerator g) throws IOException {
     g.writeStartObject();
     if (fileName != null)
@@ -95,7 +104,7 @@ public class Story implements VariableMap {
     g.writeEndArray();
     if (image != null)
       g.writeStringField(StoryJson.IMAGE, image);
-    g.writeFieldName(StoryJson.VARIABLES_GLOBAL);
+    g.writeFieldName(StoryJson.VARIABLES);
     g.writeStartObject();
     for (Map.Entry<String, Object> vars : variables.entrySet()) {
       if (vars.getValue() != null) {
@@ -109,6 +118,7 @@ public class Story implements VariableMap {
     g.writeEndObject();
   }
 
+  @SuppressWarnings({"rawtypes", "unchecked", "NullArgumentToVariableArgMethod"})
   private void saveObject(JsonGenerator g, String key, Object val) throws IOException {
     if (val instanceof Boolean) {
       g.writeBooleanField(key, (Boolean) val);
@@ -127,25 +137,25 @@ public class Story implements VariableMap {
       Method m = valClass.getMethod(GET_ID, null);
       Object id = m.invoke(val, null);
       g.writeStringField(key, (String) id);
-    } catch (Exception ignored) {
-      wrapper.logError("SaveObject: Could not save " + key + " " + val.toString() + ". Not Boolean, Number, String or Object.");
+    } catch (IllegalAccessException | IllegalArgumentException | SecurityException | InvocationTargetException | NoSuchMethodException e) {
+      wrapper.logError("SaveObject: Could not save " + key + ": " + val + ". Not Boolean, Number, String and not an Object. " + e.getMessage());
     }
   }
 
-  @SuppressWarnings("OverlyComplexMethod")
-  public void loadData(JsonNode sNode, StoryProvider provider) {
-    for (JsonNode node : sNode.withArray("content")) {
+  @SuppressWarnings({"OverlyComplexMethod", "HardCodedStringLiteral"})
+  public void loadData(JsonNode sNode, StoryWrapper provider) {
+    for (JsonNode node : sNode.withArray(StoryJson.CONTENT)) {
       String id = node.get("id").asText();
       Content content = storyContent.get(id);
       if (content != null) {
         if (node.has("#n"))
           content.count = node.get("#n").asInt();
         if (node.has("vars")) {
-          ParameterizedContainer container = (ParameterizedContainer) content;
+          ParameterizedContainer pContainer = (ParameterizedContainer) content;
           for (JsonNode v : node.withArray("vars")) {
             Object val = loadObject(v, provider);
             if (val != null)
-              container.getVariables().put(v.get("id").asText(), val);
+              pContainer.getVariables().put(v.get("id").asText(), val);
           }
         }
       } else {
@@ -162,8 +172,8 @@ public class Story implements VariableMap {
         wrapper.logError("Could not identify ");
       }
     }
-    if (sNode.has("currentBackground"))
-      image = sNode.get("currentBackground").asText();
+    if (sNode.has(CURRENT_BACKGROUND))
+      image = sNode.get(CURRENT_BACKGROUND).asText();
     if (sNode.has("vars")) {
       for (JsonNode v : sNode.withArray("vars")) {
         Object val = loadObject(v, provider);
@@ -174,18 +184,18 @@ public class Story implements VariableMap {
     /*
     if (sNode.has("ints")) {
       for (JsonNode v : sNode.withArray("ints")) {
-        StoryInterrupt intr = provider.getInterrupt(v.asText());
-        if (intr != null)
-          interrupts.add(intr);
+        StoryInterrupt interrupt = provider.getInterrupt(v.asText());
+        if (interrupt != null)
+          interrupts.add(interrupt);
         else
           errorLog.add("Could not find interrupt with ID " + v.asText());
       }
     }
     */
-    running = sNode.get("running").asBoolean();
+    running = sNode.get(StoryJson.RUNNING).asBoolean();
   }
 
-  private Object loadObject(JsonNode v, StoryProvider provider) {
+  private static Object loadObject(@NonNls JsonNode v, StoryWrapper provider) {
     JsonNode node = v.get("val");
     if (node != null) {
       if (node.isBoolean())
@@ -202,6 +212,7 @@ public class Story implements VariableMap {
     return null;
   }
 
+  @SuppressWarnings({"OverlyComplexMethod", "OverlyLongMethod", "OverlyNestedMethod", "NestedSwitchStatement"})
   public void loadStream(JsonParser p) throws IOException {
     while (p.nextToken() != JsonToken.END_OBJECT) {
       switch (p.getCurrentName()) {
@@ -216,17 +227,20 @@ public class Story implements VariableMap {
                 case StoryJson.COUNT:
                   if (content != null)
                     content.count = p.nextIntValue(0);
-                  else
-                    wrapper.logException(new InkLoadingException("Attempting to write COUNT " + Integer.toString(p.nextIntValue(0)) + " to content " + cid + "."));
+                  // The way this is used in P&T2, this is not actually an error.
+                  // wrapper.logException(new InkLoadingException("Attempting to write COUNT " + Integer.toString(p.nextIntValue(0)) + " to content " + cid + "."));
                   break;
                 case StoryJson.VARIABLES:
                   p.nextToken(); // START_OBJECT
-                  ParameterizedContainer container = (ParameterizedContainer) content;
+                  ParameterizedContainer pContainer = (ParameterizedContainer) content;
                   while (p.nextToken() != JsonToken.END_OBJECT) {
                     String varName = p.getCurrentName();
                     Object obj = loadObjectStream(p);
-                    container.getVariables().put(varName, obj);
+                    if (pContainer != null)
+                      pContainer.getVariables().put(varName, obj);
                   }
+                  break;
+                default:
                   break;
               }
             }
@@ -247,13 +261,17 @@ public class Story implements VariableMap {
         case StoryJson.CHOICES:
           p.nextToken(); // START_ARRAY
           while (p.nextToken() != JsonToken.END_ARRAY) {
-            choices.add((Container) storyContent.get(p.getText()));
+            Content cnt = storyContent.get(p.getText());
+            if (cnt instanceof Choice)
+              choices.add((Container) cnt);
+            else
+              wrapper.logException(new InkLoadingException(cnt.getId() + " is not a choice"));
           }
           break;
         case StoryJson.IMAGE:
           image = p.nextTextValue();
           break;
-        case StoryJson.VARIABLES_GLOBAL:
+        case StoryJson.VARIABLES:
           p.nextToken(); // START_OBJECT
           while (p.nextToken() != JsonToken.END_OBJECT) {
             String varName = p.getCurrentName();
@@ -263,6 +281,8 @@ public class Story implements VariableMap {
           break;
         case StoryJson.RUNNING:
           running = p.nextBooleanValue();
+          break;
+        default:
           break;
       }
     }
@@ -282,39 +302,34 @@ public class Story implements VariableMap {
   }
 
   void addAll(Story story) {
-    // TODO: Need to handle name collissions
+    // TODO: Need to handle name collisions
     functions.putAll(story.functions);
     storyContent.putAll(story.storyContent);
     variables.putAll(story.variables);
   }
 
-  public void addInterrupt(StoryInterrupt intr, StoryProvider provider) {
-    interrupts.add(intr);
-    if (intr.isChoice()) {
-      try {
-        Choice choice = new Choice(0, intr.getInterrupt(), null);
-        choice.setId(intr.getId());
-        storyContent.put(choice.getId(), choice);
-      } catch (InkParseException e) {
-        wrapper.logException(e);
-      }
+  public void addInterrupt(StoryInterrupt interrupt) {
+    interrupts.add(interrupt);
+    if (interrupt.isChoice()) {
+      Choice choice = new Choice(0, interrupt.getInterrupt(), null);
+      choice.setId(interrupt.getId());
+      storyContent.put(choice.getId(), choice);
     }
-    String fileId = intr.getInterruptFile();
+    String fileId = interrupt.getInterruptFile();
     if (fileId != null) {
       try {
         Story st = InkParser.parse(wrapper.getStream(fileId), wrapper);
         addAll(st);
       } catch (InkParseException e) {
         wrapper.logException(e);
-        return;
       }
     }
   }
 
   void initialize() {
-    variables.put("TRUE", BigDecimal.ONE);
-    variables.put("FALSE", BigDecimal.ZERO);
-    if (container.type == ContentType.KNOT) {
+    variables.put(Variable.TRUE_UC, BigDecimal.ONE);
+    variables.put(Variable.FALSE_UC, BigDecimal.ZERO);
+    if (container != null && container.type == ContentType.KNOT) {
       if (container.getContent(0).isStitch())
         container = (Container) container.getContent(0);
     }
@@ -324,159 +339,62 @@ public class Story implements VariableMap {
     try {
       incrementContent(null);
     } catch (InkRunTimeException e) {
-      e.printStackTrace();
+      logException(e);
     }
-    functions.put("isNull", new Function() {
-      @Override
-      public String getId() {
-        return "isNull";
-      }
-
-      @Override
-      public int getNumParams() {
-        return 1;
-      }
-
-      @Override
-      public boolean numParamsVaries() {
-        return false;
-      }
-
-      @Override
-      public Object eval(List<Object> parameters, VariableMap variables) throws InkRunTimeException {
-        Object param = parameters.get(0);
-        return param == null;
-      }
-    });
-    functions.put("not", new Function() {
-      @Override
-      public String getId() {
-        return "not";
-      }
-
-      @Override
-      public int getNumParams() {
-        return 1;
-      }
-
-      @Override
-      public boolean numParamsVaries() {
-        return false;
-      }
-
-      @Override
-      public Object eval(List<Object> parameters, VariableMap variables) throws InkRunTimeException {
-        Object param = parameters.get(0);
-        if (param instanceof Boolean)
-          return !((Boolean) param);
-        if (param instanceof BigDecimal)
-          return ((BigDecimal) param).intValue() == 0 ? Boolean.TRUE : Boolean.FALSE;
-        return Boolean.FALSE;
-      }
-    });
-    functions.put("random", new Function() {
-      @Override
-      public String getId() {
-        return "random";
-      }
-
-      @Override
-      public int getNumParams() {
-        return 1;
-      }
-
-      @Override
-      public boolean numParamsVaries() {
-        return false;
-      }
-
-      @Override
-      public Object eval(List<Object> parameters, VariableMap variables) throws InkRunTimeException {
-        Object param = parameters.get(0);
-        if (param instanceof BigDecimal) {
-          int val = ((BigDecimal) param).intValue();
-          if (val <= 0) return BigDecimal.ZERO;
-          return new BigDecimal(new Random().nextInt(val));
-        }
-        return BigDecimal.ZERO;
-      }
-    });
-    functions.put("isKnot", new Function() {
-      @Override
-      public String getId() {
-        return "isKnot";
-      }
-
-      @Override
-      public int getNumParams() {
-        return 1;
-      }
-
-      @Override
-      public boolean numParamsVaries() {
-        return false;
-      }
-
-      @Override
-      public Object eval(List<Object> parameters, VariableMap variables) throws InkRunTimeException {
-        Object param = parameters.get(0);
-        if (param instanceof String && variables.getValue("this") != null) {
-          String str = (String) param;
-          return str.equals(variables.getValue("this"));
-        }
-        return Boolean.FALSE;
-      }
-    });
-
+    functions.put(IS_NULL, new NullFunction());
+    functions.put("not", new NotFunction());
+    functions.put(RANDOM, new RandomFunction());
+    functions.put(IS_KNOT, new IsKnotFunction());
   }
 
   public List<String> nextAll() throws InkRunTimeException {
     text.clear();
     ArrayList<String> ret = new ArrayList<>();
     while (hasNext()) {
-      String text = next();
-      if (!text.isEmpty())
-        ret.add(text);
+      String txt = next();
+      if (!txt.isEmpty())
+        ret.add(txt);
     }
     text.addAll(ret);
     return ret;
   }
 
-  public boolean hasNext() {
+  private boolean hasNext() {
     if (!processing) return false;
     if (container == null)
       return false;
     return contentIdx < container.getContentSize();
   }
 
-  public String next() throws InkRunTimeException {
+  @SuppressWarnings({"NonConstantStringShouldBeStringBuffer", "OverlyComplexMethod", "StringConcatenationInLoop"})
+  private String next() throws InkRunTimeException {
     if (!hasNext())
       throw new InkRunTimeException("Did you forget to run canContinue()?");
     processing = true;
     String ret = "";
     Content content = getContent();
-    boolean processing = true;
-    while (processing) {
-      processing = false;
+    boolean inProgress = true;
+    while (inProgress) {
+      inProgress = false;
       ret += resolveContent(content);
       incrementContent(content);
       if (container != null) {
         Content nextContent = getContent();
         if (nextContent != null) {
           if (nextContent.text.startsWith(Symbol.GLUE))
-            processing = true;
+            inProgress = true;
           if (nextContent.isChoice() && !nextContent.isFallbackChoice())
-            processing = true;
+            inProgress = true;
           if (nextContent.isStitch())
-            processing = true;
+            inProgress = true;
           if (nextContent.type == ContentType.TEXT && nextContent.text.startsWith(Symbol.DIVERT)) {
             Container divertTo = getDivertTarget(nextContent);
             if (divertTo != null && divertTo.getContent(0).text.startsWith(Symbol.GLUE))
-              processing = true;
+              inProgress = true;
           }
         }
         if (ret.endsWith(Symbol.GLUE) && nextContent != null)
-          processing = true;
+          inProgress = true;
         content = nextContent;
       }
     }
@@ -490,13 +408,13 @@ public class Story implements VariableMap {
   }
 
   private void resolveExtras() {
-    for (StoryInterrupt intr : interrupts) {
-      if (intr.isActive() && intr.isChoice()) {
-        String cond = intr.getInterruptCondition();
+    for (StoryInterrupt interrupt : interrupts) {
+      if (interrupt.isActive() && interrupt.isChoice()) {
+        String cond = interrupt.getInterruptCondition();
         try {
           Object res = Variable.evaluate(cond, this);
           if (checkResult(res)) {
-            Choice choice = (Choice) storyContent.get(intr.getId());
+            Choice choice = (Choice) storyContent.get(interrupt.getId());
             if (choice.evaluateConditions(this)) {
               choices.add(0, choice);
             }
@@ -508,20 +426,21 @@ public class Story implements VariableMap {
     }
   }
 
+  @SuppressWarnings({"OverlyComplexMethod", "OverlyLongMethod"})
   private void incrementContent(Content content) throws InkRunTimeException {
     if (content != null && content.isDivert()) {
-      Container container = getDivertTarget(content);
-      if (container != null)
-        container.initialize(this, content);
+      Container divertTarget = getDivertTarget(content);
+      if (divertTarget != null)
+        divertTarget.initialize(this, content);
       else
         running = false;
-      this.container = container;
+      container = divertTarget;
       contentIdx = 0;
       choices.clear();
       return;
     }
     contentIdx++;
-    if (contentIdx >= container.getContentSize()) {
+    if (container != null && contentIdx >= container.getContentSize()) {
       if (choices.isEmpty() && (container.isChoice() || container.isGather())) {
         Container c = container;
         Container p = c.parent;
@@ -530,9 +449,9 @@ public class Story implements VariableMap {
           while (i < p.getContentSize()) {
             Content n = p.getContent(i);
             if (n.isGather()) {
-              Container container = (Container) n;
-              container.initialize(this, content);
-              this.container = container;
+              Container newContainer = (Container) n;
+              newContainer.initialize(this, content);
+              container = newContainer;
               contentIdx = 0;
               choices.clear();
               return;
@@ -554,25 +473,24 @@ public class Story implements VariableMap {
         return;
       }
       if (container.isConditional()) {
-        Container c = container;
-        container = container.parent;
-        contentIdx = container.getContentIndex(c) + 1;
-        return;
+        Container oldContainer = container;
+        container = oldContainer.parent;
+        contentIdx = container != null ? container.getContentIndex(oldContainer) + 1 : 0;
       }
     } else {
       Content next = getContent();
       if (next != null && next.isFallbackChoice() && choices.isEmpty()) {
-        Container container = (Container) next;
-        container.initialize(this, content);
-        this.container = container;
+        Container nextContainer = (Container) next;
+        nextContainer.initialize(this, content);
+        container = nextContainer;
         contentIdx = 0;
         choices.clear();
         return;
       }
       if (next != null && next.isConditional()) {
-        Container container = (Container) next;
-        container.initialize(this, content);
-        this.container = container;
+        Container nextContainer = (Container) next;
+        nextContainer.initialize(this, content);
+        container = nextContainer;
         contentIdx = 0;
         return;
       }
@@ -585,13 +503,14 @@ public class Story implements VariableMap {
   private Content getContent() throws InkRunTimeException {
     if (!running)
       return null;
-    if (container == null && running)
+    if (container == null)
       throw new InkRunTimeException("Current text container is NULL.");
     if (contentIdx >= container.getContentSize())
       return null;
     return container.getContent(contentIdx);
   }
 
+  @SuppressWarnings("ChainOfInstanceofChecks")
   private String resolveContent(Content content) throws InkRunTimeException {
     if (content.type == ContentType.TEXT) {
       String ret = content.isDivert() ? resolveDivert(content) : StoryText.getText(content.text, content.count, this);
@@ -601,21 +520,22 @@ public class Story implements VariableMap {
     if (content.isChoice()) {
       addChoice((Choice) content);
     }
-    if (content.isComment()) {
+    if (content instanceof Comment) {
       comments.add((Comment) content);
     }
-    if (content.isVariable())
+    if (content instanceof Variable)
       ((Variable) content).evaluate(this);
     return "";
   }
 
-  private String resolveDivert(Content content) throws InkRunTimeException {
+  private String resolveDivert(Content content) {
     String ret = StoryText.getText(content.text, content.count, this);
     ret = ret.substring(0, ret.indexOf(Symbol.DIVERT)).trim();
     ret += Symbol.GLUE;
     return ret;
   }
 
+  @SuppressWarnings("OverlyComplexMethod")
   private Container getDivertTarget(Content content) throws InkRunTimeException {
     String d = content.text.substring(content.text.indexOf(Symbol.DIVERT) + 2).trim();
     if (d.contains(StoryText.BRACE_LEFT))
@@ -643,42 +563,40 @@ public class Story implements VariableMap {
     return divertTo;
   }
 
+  @SuppressWarnings("OverlyNestedMethod")
   private String resolveInterrupt(String divert) {
-    String ret = divert;
-    for (StoryInterrupt intr : interrupts) {
-      if (intr.isActive() && intr.isDivert()) {
-        String cond = intr.getInterruptCondition();
+    for (StoryInterrupt interrupt : interrupts) {
+      if (interrupt.isActive() && interrupt.isDivert()) {
+        String cond = interrupt.getInterruptCondition();
         try {
           Object res = Variable.evaluate(cond, this);
           if (checkResult(res)) {
-            String interrupt = intr.getInterrupt();
-            if (interrupt.contains(Symbol.DIVERT)) {
-              String from = interrupt.substring(0, interrupt.indexOf(Symbol.DIVERT)).trim();
+            String interruptText = interrupt.getInterrupt();
+            if (interruptText.contains(Symbol.DIVERT)) {
+              @NonNls String from = interruptText.substring(0, interruptText.indexOf(Symbol.DIVERT)).trim();
               if (from.equals(divert)) {
-                String to = interrupt.substring(interrupt.indexOf(Symbol.DIVERT) + 2).trim();
-                intr.done();
-                putVariable("event", intr);
+                String to = interruptText.substring(interruptText.indexOf(Symbol.DIVERT) + 2).trim();
+                interrupt.done();
+                putVariable(Symbol.EVENT, interrupt);
                 return to;
               }
             }
           }
         } catch (InkRunTimeException e) {
           wrapper.logException(e);
-          return ret;
+          return divert;
         }
       }
     }
-    return ret;
+    return divert;
   }
 
-  private boolean checkResult(Object res) {
+  private static boolean checkResult(Object res) {
     if (res == null)
       return false;
-    if (res instanceof Boolean && ((Boolean) res).booleanValue())
+    if (res instanceof Boolean && (Boolean) res)
       return true;
-    if (res instanceof BigDecimal && ((BigDecimal) res).intValue() > 0)
-      return true;
-    return false;
+    return res instanceof BigDecimal && ((BigDecimal) res).intValue() > 0;
   }
 
   private String getFullId(String id) {
@@ -686,7 +604,7 @@ public class Story implements VariableMap {
       return id;
     if (id.contains(String.valueOf(InkParser.DOT)))
       return id;
-    Container p = container.parent;
+    Container p = container != null ? container.parent : null;
     return p != null ? p.id + InkParser.DOT + id : id;
   }
 
@@ -710,8 +628,10 @@ public class Story implements VariableMap {
     if (i < choices.size() && i >= 0) {
       Container old = container;
       container = choices.get(i);
-      if (container == null)
-        throw new InkRunTimeException("Selected choice " + i + " is null in " + old != null ? old.getId() : "null" + " and " + contentIdx);
+      if (container == null) {
+        String oldId = (old != null) ? old.getId() : "null";
+        throw new InkRunTimeException("Selected choice " + i + " is null in " + oldId + " and " + contentIdx);
+      }
       container.increment();
       completeExtras(container);
       contentIdx = 0;
@@ -731,10 +651,10 @@ public class Story implements VariableMap {
     return (Choice) choices.get(i);
   }
 
-  private void completeExtras(Container container) {
-    for (StoryInterrupt intr : interrupts) {
-      if (intr.getId().equals(container.getId())) {
-        intr.done();
+  private void completeExtras(Container extraContainer) {
+    for (StoryInterrupt interrupt : interrupts) {
+      if (interrupt.getId().equals(extraContainer.getId())) {
+        interrupt.done();
       }
     }
   }
@@ -745,9 +665,10 @@ public class Story implements VariableMap {
         .trim();
   }
 
+  @SuppressWarnings("OverlyComplexMethod")
   @Override
-  public Object getValue(String key) {
-    if (key.equals("this")) {
+  public Object getValue(String token) {
+    if (Symbol.THIS.equals(token)) {
       if (container != null)
         return container.getId();
       else {
@@ -758,31 +679,31 @@ public class Story implements VariableMap {
     Container c = container;
     while (c != null) {
       if (c.isKnot() || c.isFunction() || c.isStitch()) {
-        if (((ParameterizedContainer) c).hasValue(key))
-          return ((ParameterizedContainer) c).getValue(key);
+        if (((ParameterizedContainer) c).hasValue(token))
+          return ((ParameterizedContainer) c).getValue(token);
       }
       c = c.parent;
     }
-    if (key.startsWith(Symbol.DIVERT)) {
-      String k = key.substring(2).trim();
+    if (token.startsWith(Symbol.DIVERT)) {
+      String k = token.substring(2).trim();
       if (storyContent.containsKey(k))
         return storyContent.get(k);
       wrapper.logException(new InkRunTimeException("Could not identify container id: " + k));
       return BigDecimal.ZERO;
     }
-    if (storyContent.containsKey(key)) {
-      Container container = (Container) storyContent.get(key);
-      return BigDecimal.valueOf(container.getCount());
+    if (storyContent.containsKey(token)) {
+      Container storyContainer = (Container) storyContent.get(token);
+      return BigDecimal.valueOf(storyContainer.getCount());
     }
-    String pathId = getValueId(key);
+    String pathId = getValueId(token);
     if (storyContent.containsKey(pathId)) {
-      Container container = (Container) storyContent.get(pathId);
-      return BigDecimal.valueOf(container.getCount());
+      Container storyContainer = (Container) storyContent.get(pathId);
+      return BigDecimal.valueOf(storyContainer.getCount());
     }
-    if (variables.containsKey(key)) {
-      return variables.get(key);
+    if (variables.containsKey(token)) {
+      return variables.get(token);
     }
-    wrapper.logException(new InkRunTimeException("Could not identify the variable " + key + " or " + pathId));
+    wrapper.logException(new InkRunTimeException("Could not identify the variable " + token + " or " + pathId));
     return BigDecimal.ZERO;
   }
 
@@ -808,43 +729,36 @@ public class Story implements VariableMap {
       throw new InkParseException("No ID for content. This should not be possible.");
     }
     // Set starting knot
-    if (content.isKnot() && (container == null || (container != null && container.getContentSize() == 0)))
+    if (content.isKnot() && (container == null || isContainerEmpty(container)))
       container = (Container) content;
+  }
+
+  private static boolean isContainerEmpty(@NotNull Container c) {
+    return c.getContentSize() == 0;
   }
 
   public boolean isEnded() {
     return container == null;
   }
 
-
   @Override
-  public boolean hasVariable(String variable) {
-    if (Character.isDigit(variable.charAt(0)))
+  public boolean hasVariable(String token) {
+    if (Character.isDigit(token.charAt(0)))
       return false;
     Container c = container;
     while (c != null) {
       if (c.isKnot() || c.isFunction() || c.isStitch()) {
-        if (((ParameterizedContainer) c).hasValue(variable))
+        if (((ParameterizedContainer) c).hasValue(token))
           return true;
       }
       c = c.parent;
     }
-    if (storyContent.containsKey(variable))
+    if (storyContent.containsKey(token))
       return true;
-    if (storyContent.containsKey(getValueId(variable)))
+    if (storyContent.containsKey(getValueId(token)))
       return true;
-    return variables.containsKey(variable);
+    return variables.containsKey(token);
   }
-
-  private String getPathId(String id) {
-    if (container == null)
-      return id;
-    Container p = container;
-    while (!p.isKnot() || !p.isFunction() || !p.isStitch())
-      p = p.parent;
-    return p != null ? p.id + InkParser.DOT + id : id;
-  }
-
 
   public void putVariable(@NonNls String key, Object value) {
     Container c = container;
@@ -865,8 +779,8 @@ public class Story implements VariableMap {
   }
 
   @Override
-  public boolean hasFunction(String fct) {
-    return functions.containsKey(fct);
+  public boolean hasFunction(String token) {
+    return functions.containsKey(token);
   }
 
   @Override
@@ -875,19 +789,19 @@ public class Story implements VariableMap {
   }
 
   @Override
-  public boolean checkObject(String fct) {
-    if (fct.contains(".")) {
-      return hasVariable(fct.substring(0, fct.indexOf(InkParser.DOT)));
+  public boolean checkObject(String token) {
+    if (token.contains(".")) {
+      return hasVariable(token.substring(0, token.indexOf(InkParser.DOT)));
     }
     return false;
   }
 
   @Override
   public String debugInfo() {
-    String ret = new String();
+    @NonNls String ret = "";
     ret += "StoryDebugInfo File: " + fileName;
     ret += container != null ? " Container :" + container.getId() : " Container: null";
-    if (contentIdx < container.getContentSize()) {
+    if (container != null && contentIdx < container.getContentSize()) {
       Content cnt = container.getContent(contentIdx);
       ret += cnt != null ? " Line# :" + Integer.toString(cnt.lineNumber) : " Line#: ?";
     }
@@ -898,7 +812,7 @@ public class Story implements VariableMap {
     return image;
   }
 
-  public void setContainer(String s) {
+  public void setContainer(@NotNull String s) {
     Container c = (Container) storyContent.get(s);
     if (c != null)
       container = c;
@@ -908,16 +822,16 @@ public class Story implements VariableMap {
   public void logException(Exception e) {
     if (wrapper != null)
       wrapper.logException(e);
-    e.printStackTrace();
   }
 
   // Legacy function used to set text
-  public void setText(ArrayList<String> storyText) {
+  @SuppressWarnings("AssignmentToCollectionOrArrayFieldFromParameter")
+  public void setText(List<String> storyText) {
     text = storyText;
   }
 
   public List<String> getText() {
-    return text;
+    return Collections.unmodifiableList(text);
   }
 
   public String getComment() throws InkRunTimeException {
@@ -931,15 +845,104 @@ public class Story implements VariableMap {
         return ret;
       }
     }
-    return null;
+    return "";
   }
 
   @NonNls
-  @SuppressWarnings("NestedConditionalExpression")
   public String getStoryStatus() {
-    return "Story errors with FileName: " + fileName != null ? fileName : "null"
-        + ". Container: " + container != null ? container.getId() : "null"
+    String fileId = fileName != null ? fileName : "null";
+    String contId = container != null ? container.getId() : "null";
+    return "Story errors with FileName: " + fileId
+        + ". Container: " + contId
         + ". ContentIdx: " + contentIdx;
   }
 
+  private static class NullFunction implements Function {
+
+    @Override
+    public int getNumParams() {
+      return 1;
+    }
+
+    @Override
+    public boolean isFixedNumParams() {
+      return true;
+    }
+
+    @Override
+    public Object eval(List<Object> params, VariableMap vmap) throws InkRunTimeException {
+      Object param = params.get(0);
+      return param == null;
+    }
+  }
+
+  private static class NotFunction implements Function {
+
+    @Override
+    public int getNumParams() {
+      return 1;
+    }
+
+    @Override
+    public boolean isFixedNumParams() {
+      return true;
+    }
+
+    @Override
+    public Object eval(List<Object> params, VariableMap vmap) throws InkRunTimeException {
+      Object param = params.get(0);
+      if (param instanceof Boolean)
+        return !((Boolean) param);
+      if (param instanceof BigDecimal)
+        return ((BigDecimal) param).intValue() == 0 ? Boolean.TRUE : Boolean.FALSE;
+      return Boolean.FALSE;
+    }
+  }
+
+  private static class RandomFunction implements Function {
+
+    @Override
+    public int getNumParams() {
+      return 1;
+    }
+
+    @Override
+    public boolean isFixedNumParams() {
+      return true;
+    }
+
+    @Override
+    public Object eval(List<Object> params, VariableMap vmap) throws InkRunTimeException {
+      Object param = params.get(0);
+      if (param instanceof BigDecimal) {
+        int val = ((BigDecimal) param).intValue();
+        if (val <= 0) return BigDecimal.ZERO;
+        return new BigDecimal(new Random().nextInt(val));
+      }
+      return BigDecimal.ZERO;
+    }
+  }
+
+  private static class IsKnotFunction implements Function {
+
+    @Override
+    public int getNumParams() {
+      return 1;
+    }
+
+    @Override
+    public boolean isFixedNumParams() {
+      return true;
+    }
+
+    @Override
+    public Object eval(List<Object> params, VariableMap vmap) throws InkRunTimeException {
+      Object param = params.get(0);
+      if (param instanceof String && vmap.getValue(Symbol.THIS) != null) {
+        @NonNls String str = (String) param;
+        return str.equals(vmap.getValue(Symbol.THIS));
+      }
+      return Boolean.FALSE;
+    }
+  }
 }

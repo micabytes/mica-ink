@@ -1,5 +1,6 @@
 package com.micabytes.ink;
 
+@SuppressWarnings("ClassReferencesSubclass")
 public class Content {
 
   String id;
@@ -8,7 +9,7 @@ public class Content {
   String text = "";
   int count;
 
-  public Content() {
+  Content() {
     // NOOP
   }
 
@@ -61,7 +62,15 @@ public class Content {
   }
 
   public boolean isConditional() {
-    return type == ContentType.CONDITIONAL || type == ContentType.SEQUENCE_CYCLE || type == ContentType.SEQUENCE_ONCE || type == ContentType.SEQUENCE_SHUFFLE || type == ContentType.SEQUENCE_STOP;
+    return type == ContentType.CONDITIONAL || isSequence();
+  }
+
+  @SuppressWarnings("OverlyComplexBooleanExpression")
+  private boolean isSequence() {
+    return type == ContentType.SEQUENCE_CYCLE ||
+        type == ContentType.SEQUENCE_ONCE ||
+        type == ContentType.SEQUENCE_SHUFFLE ||
+        type == ContentType.SEQUENCE_STOP;
   }
 
   public int getCount() {
@@ -72,11 +81,11 @@ public class Content {
     count ++;
   }
 
-  public boolean isVariable() {
+  boolean isVariable() {
     return type == ContentType.VARIABLE_DECLARATION || type == ContentType.VARIABLE_EXPRESSION || type == ContentType.VARIABLE_RETURN;
   }
 
-  public boolean isVariableReturn() {
+  boolean isVariableReturn() {
     return type == ContentType.VARIABLE_RETURN;
   }
 
@@ -84,7 +93,4 @@ public class Content {
     return isKnot() || isFunction() || isStitch() || isChoice() || isGather();
   }
 
-  public boolean isComment() {
-    return type == ContentType.COMMENT_ONCE || type == ContentType.COMMENT_REPEATABLE;
-  }
 }

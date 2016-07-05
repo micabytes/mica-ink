@@ -1,7 +1,5 @@
 package com.micabytes.ink;
 
-import org.jetbrains.annotations.NonNls;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,8 +9,6 @@ import java.util.List;
  * parameters and the actual processing implementation.
  */
 public class KnotFunction extends ParameterizedContainer implements Function {
-  private static final String FUNCTION_HEADER = "==";
-  @NonNls private static final String FUNCTION = "function";
 
   public KnotFunction(int l, String str) {
     lineNumber = l;
@@ -20,14 +16,14 @@ public class KnotFunction extends ParameterizedContainer implements Function {
     level = 0;
     parent = null;
     String fullId = extractId(str);
-    fullId = fullId.replaceFirst(FUNCTION, "");
+    fullId = fullId.replaceFirst(Symbol.FUNCTION, "");
     if (fullId.contains(StoryText.BRACE_LEFT)) {
       String params = fullId.substring(fullId.indexOf(StoryText.BRACE_LEFT)+1, fullId.indexOf(StoryText.BRACE_RIGHT));
       String[] param = params.split(",");
       parameters = new ArrayList<>();
       for (String aParam : param) {
         if (!aParam.trim().isEmpty())
-          getParameters().add(aParam.trim());
+          parameters.add(aParam.trim());
       }
       fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT)).trim();
     }
@@ -35,11 +31,9 @@ public class KnotFunction extends ParameterizedContainer implements Function {
   }
 
   public static boolean isFunctionHeader(String str) {
-    if (!str.startsWith(FUNCTION_HEADER)) return false;
+    if (!str.startsWith(Symbol.FUNCTION_HEADER)) return false;
     String fullId = extractId(str);
-    if (fullId.startsWith(FUNCTION))
-      return true;
-    return false;
+    return fullId.startsWith(Symbol.FUNCTION);
   }
 
   private static String extractId(String str) {
@@ -55,25 +49,26 @@ public class KnotFunction extends ParameterizedContainer implements Function {
 
   @Override
   public int getNumParams() {
-    return getParameters().size();
+    return parameters.size();
   }
 
   @Override
-  public boolean numParamsVaries() {
+  public boolean isVariableNumParams() {
     return false;
   }
 
+  @SuppressWarnings("OverlyComplexMethod")
   @Override
-  public Object eval(List<Object> params, VariableMap vas) throws InkRunTimeException {
-    Story story = (Story) vas;
-    if (params.size() != getParameters().size())
-      throw new InkRunTimeException("Parameters passed to function " + id + " do not match the definition of the function. Passed " + params.size() + " parameters and expected " + getParameters().size());
+  public Object eval(List<Object> params, VariableMap vmap) throws InkRunTimeException {
+    Story story = (Story) vmap;
+    if (params.size() != parameters.size())
+      throw new InkRunTimeException("Parameters passed to function " + id + " do not match the definition of the function. Passed " + params.size() + " parameters and expected " + parameters.size());
     Container callingContainer = story.container;
     story.container = this;
-    if (getVariables() == null)
+    if (variables == null)
       variables = new HashMap<>();
-    for (int i = 0; i< getParameters().size(); i++) {
-      getVariables().put(getParameters().get(i), params.get(i));
+    for (int i = 0; i< parameters.size(); i++) {
+      variables.put(parameters.get(i), params.get(i));
     }
     for (Content c : content) {
       if (c.type == ContentType.TEXT) {
@@ -83,10 +78,10 @@ public class KnotFunction extends ParameterizedContainer implements Function {
       else if (c.isVariable()) {
         Variable v = (Variable) c;
         if (v.isVariableReturn()) {
-          getVariables().put("return", "");
+          variables.put(Symbol.RETURN, "");
           v.evaluate(story);
           story.container = callingContainer;
-          return getVariables().get("return");
+          return variables.get(Symbol.RETURN);
         }
         v.evaluate(story);
       }
@@ -102,10 +97,10 @@ public class KnotFunction extends ParameterizedContainer implements Function {
           if (cd.isVariable()) {
             Variable v = (Variable) cd;
             if (v.isVariableReturn()) {
-              getVariables().put("return", "");
+              variables.put(Symbol.RETURN, "");
               v.evaluate(story);
               story.container = callingContainer;
-              return getVariables().get("return");
+              return variables.get(Symbol.RETURN);
             }
             v.evaluate(story);
           }

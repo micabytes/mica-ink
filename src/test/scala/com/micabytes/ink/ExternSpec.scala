@@ -13,7 +13,7 @@ class ExternSpec extends Specification {
       "Hello, is it me you're looking for?"
     }
     def number(b: java.math.BigDecimal) = {
-      "Mambo Number " + b.toPlainString()
+      "Mambo Number " + b.toPlainString
     }
     def wrong() = {
       false

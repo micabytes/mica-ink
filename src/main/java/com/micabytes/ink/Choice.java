@@ -6,9 +6,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 
 public class Choice extends Container {
-  private ArrayList<String> conditions;
+  private ArrayList<String> conditions = null;
 
-  protected Choice(int l, String str, @Nullable Container current) throws InkParseException {
+  Choice(int l, String str, @Nullable Container current) {
     lineNumber = l;
     char notation = str.charAt(0);
     type = notation == InkParser.CHOICE_DOT ? ContentType.CHOICE_ONCE : ContentType.CHOICE_REPEATABLE;
@@ -25,7 +25,7 @@ public class Choice extends Container {
     addLine(s);
   }
 
-  public void addLine(String str) {
+  private void addLine(String str) {
     String s = str.trim();
     if (s.startsWith("(")) {
       id = s.substring(s.indexOf(StoryText.BRACE_LEFT) + 1, s.indexOf(StoryText.BRACE_RIGHT)).trim();
@@ -44,7 +44,8 @@ public class Choice extends Container {
     text = getChoiceText(s);
     String result = getResultText(s);
     if (!result.isEmpty()) {
-      Content res = new Content(lineNumber, result, this);
+      //noinspection ResultOfObjectAllocationIgnored
+      new Content(lineNumber, result, this);
     }
   }
 
@@ -80,7 +81,7 @@ public class Choice extends Container {
       Object obj = Variable.evaluate(condition, story);
       if (obj == null)
         return false;
-      if (obj instanceof Boolean && !((Boolean)obj).booleanValue())
+      if (obj instanceof Boolean && !(Boolean) obj)
         return false;
       if (obj instanceof BigDecimal && ((BigDecimal)obj).intValue() <= 0)
         return false;

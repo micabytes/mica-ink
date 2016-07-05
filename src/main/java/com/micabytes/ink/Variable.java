@@ -6,14 +6,16 @@ import java.math.BigDecimal;
 import java.util.regex.Pattern;
 
 class Variable extends Content {
-  @NonNls public static final String VAR_ = "VAR ";
-  @NonNls public static final String TILDE_ = "~ ";
-  @NonNls public static final String AND_WS = " and ";
-  @NonNls public static final String OR_WS = " or ";
-  @NonNls public static final String TRUE_LC = "true";
-  @NonNls public static final String TRUE_UC = "TRUE";
-  @NonNls public static final String FALSE_LC = "false";
-  @NonNls public static final String FALSE_UC = "FALSE";
+  @NonNls private static final String VAR_ = "VAR ";
+  @NonNls private static final String TILDE_ = "~ ";
+  @NonNls private static final String AND_WS = " and ";
+  @NonNls private static final String OR_WS = " or ";
+  @NonNls private static final String TRUE_LC = "true";
+  @NonNls static final String TRUE_UC = "TRUE";
+  @NonNls private static final String FALSE_LC = "false";
+  @NonNls static final String FALSE_UC = "FALSE";
+  @NonNls private static final String RETURN = Symbol.RETURN;
+  @NonNls private static final String RETURNEQ = "return =";
 
   Variable(int l, String str, Container parent) {
     lineNumber = l;
@@ -23,9 +25,9 @@ class Variable extends Content {
     } else if (str.startsWith(TILDE_)) {
       type = ContentType.VARIABLE_EXPRESSION;
       text = str.substring(2).trim();
-      if (text.startsWith("return")) {
+      if (text.startsWith(RETURN)) {
         type = ContentType.VARIABLE_RETURN;
-        text = text.replaceFirst("return", "return =").trim();
+        text = text.replaceFirst(RETURN, RETURNEQ).trim();
       }
     }
     parent.add(this);
@@ -44,6 +46,7 @@ class Variable extends Content {
 
   private static final Pattern EQ_SPLITTER = Pattern.compile("[=]+");
 
+  @SuppressWarnings("OverlyComplexMethod")
   private void declareVariable(Story story) throws InkRunTimeException {
     String[] tokens = EQ_SPLITTER.split(text);
     if (tokens.length != 2)
@@ -54,9 +57,7 @@ class Variable extends Content {
       story.putVariable(variable, Boolean.TRUE);
     else if (value.equals(FALSE_LC))
       story.putVariable(variable, Boolean.FALSE);
-    else if (isInteger(value))
-      story.putVariable(variable, new BigDecimal(value));
-    else if (isFloat(value))
+    else if (isInteger(value) || isFloat(value))
       story.putVariable(variable, new BigDecimal(value));
     else if (value.startsWith("\"") && value.endsWith("\"")) {
       value = value.substring(1, value.length() - 1);
@@ -69,7 +70,7 @@ class Variable extends Content {
       if (directTo != null)
         story.putVariable(variable, directTo);
       else
-        throw new InkRunTimeException("Variable " + variable + " declared to equals invalid address " + address);
+        throw new InkRunTimeException("DeclareVariable " + variable + " declared as equals to an invalid address " + address);
     }
     else {
       story.putVariable(variable, evaluate(value, story));
@@ -87,7 +88,7 @@ class Variable extends Content {
     String variable = tokens[0].trim();
     String value = tokens[1].trim();
     if (!story.hasVariable(variable))
-      throw new InkRunTimeException("Variable " + variable + " is not defined in variable expression on line " + lineNumber);
+      throw new InkRunTimeException("CalculateVariable " + variable + " is not defined in variable expression on line " + lineNumber);
     if (value.equals(TRUE_LC))
       story.putVariable(variable, Boolean.TRUE);
     else if (value.equals(FALSE_LC))
@@ -116,17 +117,7 @@ class Variable extends Content {
     return ex.eval(variables);
   }
 
-  /*
-  else if (Variable.isInteger(p)) {
-    variables.put(parameters.get(i), Integer.valueOf(p));
-  }
-  else if (Variable.isFloat(p)) {
-    variables.put(parameters.get(i), Float.valueOf(p));
-  }
-  else
-  */
-
-  public static boolean isInteger(String str) {
+  private static boolean isInteger(String str) {
     // Slow and dirty solution
     try {
       //noinspection ResultOfMethodCallIgnored
@@ -137,7 +128,7 @@ class Variable extends Content {
     return true;
   }
 
-  static boolean isFloat(String str) {
+  private static boolean isFloat(String str) {
     // Slow and dirty solution
     try {
       //noinspection ResultOfMethodCallIgnored
@@ -146,10 +137,6 @@ class Variable extends Content {
       return false;
     }
     return true;
-  }
-
-  private static boolean isKeyword(@NonNls String s) {
-    return "not".equalsIgnoreCase(s) || s.equalsIgnoreCase(TRUE_UC) || s.equalsIgnoreCase(FALSE_UC);
   }
 
 }

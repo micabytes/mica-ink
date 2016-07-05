@@ -15,7 +15,6 @@ public final class StoryJson
   public static final String TEXT = "text";
   public static final String CHOICES = "choices";
   public static final String IMAGE = "image";
-  public static final String VARIABLES_GLOBAL = "variables";
   public static final String RUNNING = "running";
 
   private StoryJson() {

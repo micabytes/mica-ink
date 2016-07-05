@@ -8,13 +8,18 @@ import java.util.List;
 import java.util.Random;
 
 class Conditional extends Container {
+  @NonNls private static final String STOPPING = "stopping";
+  @NonNls private static final String SHUFFLE = "shuffle";
+  @NonNls private static final String CYCLE = "cycle";
+  @NonNls private static final String ONCE = "once";
   private static final String CONDITIONAL_DASH = "-";
   private static final String CONDITIONAL_COLON = ":";
+  @NonNls private static final String ELSE = "else";
   private int selection;
 
   private static final class ConditionalOptions extends Content {
-    String condition;
-    List<Content> lines = new ArrayList<>();
+    final String condition;
+    final List<Content> lines = new ArrayList<>();
 
     ConditionalOptions(String cond) {
       condition = cond;
@@ -29,11 +34,11 @@ class Conditional extends Container {
     String str = line.substring(1).trim();
     if (!str.isEmpty()) {
       if (!str.endsWith(":"))
-        throw new InkParseException("Line Number " + l + ": Error in conditional block; condition not ended by \':\'.");
+        throw new InkParseException("Error in conditional block; condition not ended by \':\'. Line number: " + lineNumber);
       if (str.startsWith(CONDITIONAL_DASH))
         str = str.substring(1).trim();
       String condition = str.substring(0, str.length()-1).trim();
-      checkSequenceCondition(condition);
+      verifySequenceCondition(condition);
       if (type == ContentType.CONDITIONAL)
         content.add(new ConditionalOptions(condition));
     }
@@ -48,7 +53,7 @@ class Conditional extends Container {
     if (type == ContentType.CONDITIONAL) {
       if (str.startsWith(CONDITIONAL_DASH) && !str.startsWith(Symbol.DIVERT)) {
         if (!str.endsWith(CONDITIONAL_COLON))
-          throw new InkParseException("Line Number " + l + ": Error in conditional block; condition not ended by \':\'.");
+          throw new InkParseException("Error in conditional block; condition not ended by \':\'. LineNumber: " + l);
         String condition = str.substring(1, str.length()-1).trim();
         content.add(new ConditionalOptions(condition));
       }
@@ -68,14 +73,14 @@ class Conditional extends Container {
     }
   }
 
-  private void checkSequenceCondition(@NonNls String str) {
-    if ( "stopping".equalsIgnoreCase(str) )
+  private void verifySequenceCondition(@NonNls String str) {
+    if ( STOPPING.equalsIgnoreCase(str) )
       type = ContentType.SEQUENCE_STOP;
-    if ( "shuffle".equalsIgnoreCase(str) )
+    if ( SHUFFLE.equalsIgnoreCase(str) )
       type = ContentType.SEQUENCE_SHUFFLE;
-    if ( "cycle".equalsIgnoreCase(str) )
+    if ( CYCLE.equalsIgnoreCase(str) )
       type = ContentType.SEQUENCE_CYCLE;
-    if ( "once".equalsIgnoreCase(str) )
+    if ( ONCE.equalsIgnoreCase(str) )
       type = ContentType.SEQUENCE_ONCE;
   }
 
@@ -107,26 +112,33 @@ class Conditional extends Container {
     return opt.lines.indexOf(c);
   }
 
+  @SuppressWarnings("RefusedBequest")
   @Override
   public void add(Content item) {
     ConditionalOptions cond = (ConditionalOptions) content.get(content.size() - 1);
     cond.lines.add(item);
   }
 
+  @Override
+  public void initialize(Story story, Content c) throws InkRunTimeException {
+    evaluate(story);
+    super.initialize(story, c);
+  }
+
   @SuppressWarnings("OverlyComplexMethod")
-  public void evaluate(Story story) throws InkRunTimeException {
+  private void evaluate(Story story) throws InkRunTimeException {
     switch (type) {
       case CONDITIONAL:
         for (Content c : content) {
           ConditionalOptions opt = (ConditionalOptions) c;
-          if (content.indexOf(c) == content.size()-1 && "else".equals(opt.condition)) {
+          if (content.indexOf(c) == content.size()-1 && ELSE.equals(opt.condition)) {
             selection = content.indexOf(c);
             return;
           }
           else {
             Object eval = Variable.evaluate(opt.condition, story);
             if (eval instanceof Boolean) {
-              if (eval == true) {
+              if ((Boolean) eval) {
                 selection = content.indexOf(c);
                 return;
               }
@@ -153,10 +165,7 @@ class Conditional extends Container {
         selection = new Random().nextInt(content.size());
         break;
       case SEQUENCE_STOP:
-        if (count >= content.size())
-          selection = content.size()-1;
-        else
-          selection = count;
+        selection = count >= content.size() ? content.size() - 1 : count;
         break;
       default:
         // TODO: Error

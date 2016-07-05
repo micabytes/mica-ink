@@ -14,31 +14,34 @@ public final class InkParser {
   @NonNls private static final String UTF_8 = "UTF-8";
   @NonNls private static final char WHITESPACE = ' ';
   @NonNls static final char HEADER = '=';
-  @NonNls static final char GATHER_DASH = '-';
+  @NonNls private static final char GATHER_DASH = '-';
   @NonNls static final char CHOICE_DOT = '*';
   @NonNls static final char CHOICE_PLUS = '+';
   @NonNls private static final char VAR_DECL = 'V';
   @NonNls private static final char VAR_STAT = '~';
-  @NonNls static final char CONDITIONAL_HEADER = '{';
+  @NonNls private static final char CONDITIONAL_HEADER = '{';
   @NonNls static final String CONDITIONAL_END = "}";
   @NonNls public static final char DOT = '.';
-  @NonNls public static final String DEFAULT_KNOT_NAME = "default";
+  @NonNls private static final String DEFAULT_KNOT_NAME = "default";
   private static final Pattern AT_SPLITTER = Pattern.compile("[@]");
+  @NonNls private static final String INCLUDE = "INCLUDE";
+  @NonNls private static final String IMG = "img(";
 
   private InkParser() {
     // NOOP
   }
 
-  public static Story parse(String fileName, StoryProvider provider) throws InkParseException {
+  public static Story parse(String fileName, StoryWrapper provider) throws InkParseException {
     InputStream in = provider.getStream(fileName);
     Story story = parse(in, provider);
     story.fileName = fileName;
     return story;
   }
 
-  public static Story parse(InputStream inputStream, StoryProvider provider) throws InkParseException {
+  @SuppressWarnings("OverlyComplexMethod")
+  public static Story parse(InputStream inputStream, StoryWrapper provider) throws InkParseException {
     if (provider == null)
-      throw new InkParseException("The StoryProvider passed to Ink is null.");
+      throw new InkParseException("The StoryWrapper passed to Ink is null.");
     InputStreamReader inputStreamReader = null;
     BufferedReader bufferedReader = null;
     Story story = new Story(provider);
@@ -50,7 +53,6 @@ public final class InkParser {
       Container current = new Knot(lineNumber, "=== " + DEFAULT_KNOT_NAME);
       story.add(current);
       @Nullable Conditional conditional = null;
-      boolean parsingComment = false;
       while (line != null) {
         String trimmedLine = line.trim();
         if (trimmedLine.contains("//")) {
@@ -58,8 +60,8 @@ public final class InkParser {
           parseComment(lineNumber, comment, current);
           trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf("//")).trim();
         }
-        if (trimmedLine.startsWith("INCLUDE")) {
-          String file = trimmedLine.replace("INCLUDE", "").trim();
+        if (trimmedLine.startsWith(INCLUDE)) {
+          String file = trimmedLine.replace(INCLUDE, "").trim();
           Story incl = parse(file, provider);
           story.addAll(incl);
         }
@@ -88,19 +90,19 @@ public final class InkParser {
       }
       story.initialize();
     } catch (IOException e) {
-      e.printStackTrace();
+      provider.logException(e);
     } finally {
       try {
         if (inputStreamReader != null)
           inputStreamReader.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        provider.logException(e);
       }
       try {
         if (bufferedReader != null)
           bufferedReader.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        provider.logException(e);
       }
     }
     return story;
@@ -148,12 +150,12 @@ public final class InkParser {
     return null;
   }
 
-  static private void parseComment(int lineNumber, String comment, Container current) {
-    String token[] = AT_SPLITTER.split(comment);
+  private static void parseComment(int lineNumber, String comment, Container current) {
+    String[] token = AT_SPLITTER.split(comment);
     if (token.length < 2) return;
     for (int i=1; i<token.length; i++) {
-      if (token[i].startsWith("img(")) {
-        String img = token[i].substring(token[i].indexOf("(") + 1, token[i].indexOf(")")).trim();
+      if (token[i].startsWith(IMG)) {
+        String img = token[i].substring(token[i].indexOf(Symbol.BRACE_LEFT) + 1, token[i].indexOf(Symbol.BRACE_RIGHT)).trim();
         if (current != null) {
           current.setBackground(img);
         }

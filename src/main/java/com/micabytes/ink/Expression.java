@@ -460,7 +460,7 @@ public class Expression {
         }
       } else if (story.hasFunction(token)) {
         Function f = story.getFunction(token);
-        List<Object> p = new ArrayList<>(!f.numParamsVaries() ? f.getNumParams() : 0);
+        List<Object> p = new ArrayList<>(f.isFixedNumParams() ? f.getNumParams() : 0);
         // pop parameters off the stack until we hit the start of
         // this function's parameter list
         while (!stack.isEmpty() && stack.peek() != PARAMS_START) {
@@ -473,7 +473,7 @@ public class Expression {
         if (stack.peek() == PARAMS_START) {
           stack.pop();
         }
-        if (!f.numParamsVaries() && p.size() != f.getNumParams()) {
+        if (f.isFixedNumParams() && p.size() != f.getNumParams()) {
           throw new ExpressionException("Function " + token + " expected " + f.getNumParams() + " parameters, got " + p.size());
         }
         Object fResult = f.eval(p, story);

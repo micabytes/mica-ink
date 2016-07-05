@@ -1,20 +1,22 @@
 package com.micabytes.ink;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface StoryInterrupt {
 
-  public String getId();
+  @NonNls String getId();
 
-  public String getInterrupt();
+  @NonNls String getInterrupt();
 
-  public String getInterruptCondition();
+  @NonNls String getInterruptCondition();
 
-  public String getInterruptFile();
+  @NonNls String getInterruptFile();
 
-  public boolean isChoice();
+  boolean isChoice();
 
-  public boolean isDivert();
+  boolean isDivert();
 
-  public boolean isActive();
+  boolean isActive();
 
   void done();
 

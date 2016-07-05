@@ -1,22 +1,19 @@
 package com.micabytes.ink;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.List;
 
 public interface Function {
-
-  public String getId();
-
-  public int getNumParams();
-
-  public boolean numParamsVaries();
-
+  int getNumParams();
+  boolean isFixedNumParams();
   /**
    * Evaluation of the function
    *
-   * @param parameters Parameters will be passed by the expression evaluator as a {@link List} of {@link Object} values.
-   * @param story
+   * @param params Parameters will be passed by the expression evaluator as a {@link List} of {@link Object} values.
+   * @param vmap
    * @return The function must return a new {@link Object} value as a computing result.
    */
-  public Object eval(List<Object> parameters, VariableMap story) throws InkRunTimeException;
+  Object eval(List<Object> params, VariableMap vmap) throws InkRunTimeException;
 
 }

@@ -242,7 +242,7 @@ class ConditionalSpec extends Specification {
       story.nextAll()
       story.choose(0)
       story.nextAll()
-      story.getChoiceSize() must beEqualTo(1)
+      story.getChoiceSize must beEqualTo(1)
     }
 
     "- work with options as conditional content (example 2)" in {
@@ -251,7 +251,7 @@ class ConditionalSpec extends Specification {
       story.nextAll()
       story.choose(1)
       story.nextAll()
-      story.getChoiceSize() must beEqualTo(2)
+      story.getChoiceSize must beEqualTo(2)
     }
 
   }

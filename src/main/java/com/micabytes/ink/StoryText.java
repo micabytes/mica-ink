@@ -1,5 +1,7 @@
 package com.micabytes.ink;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.math.BigDecimal;
 import java.util.Random;
 
@@ -11,6 +13,8 @@ public final class StoryText {
   static final String CBRACE_LEFT = "{";
   static final String SBRACE_LEFT = "[";
   static final String SBRACE_RIGHT = "]";
+  @NonNls private static final String ERROR = "(ERROR:";
+  private static final char COLON = ':';
 
   private StoryText() throws AssertionError {
     throw new AssertionError("StoryText should never be initialized");
@@ -35,19 +39,19 @@ public final class StoryText {
   private static String evaluateText(String str, int count, VariableMap variables) {
     String s = str.replace(CBRACE_LEFT, "").replace(CBRACE_RIGHT, "");
     if (s.contains(":"))
-      return evaluateConditionalText(s, count, variables);
+      return evaluateConditionalText(s, variables);
     if (s.startsWith("&"))
       return evaluateCycleText(s, count);
     if (s.startsWith("!"))
       return evaluateOnceOnlyText(s, count);
     if (s.startsWith("~"))
-      return evaluateShuffleText(s, count);
+      return evaluateShuffleText(s);
     if (s.contains("|"))
       return evaluateSequenceText(s, count);
-    return evaluteTextVariable(s, variables);
+    return evaluateTextVariable(s, variables);
   }
 
-  private static String evaluteTextVariable(String s, VariableMap variables) {
+  private static String evaluateTextVariable(String s, VariableMap variables) {
     try {
       Object obj = Variable.evaluate(s, variables);
       if (obj instanceof BigDecimal) // We don't want BigDecimal canonical form
@@ -56,7 +60,7 @@ public final class StoryText {
     }
     catch (InkRunTimeException e) {
       variables.logException(e);
-      return "(ERROR:" + s + ")";
+      return ERROR + s + BRACE_RIGHT;
     }
   }
 
@@ -66,7 +70,7 @@ public final class StoryText {
     return tokens[i];
   }
 
-  private static String evaluateShuffleText(String str, int count) {
+  private static String evaluateShuffleText(String str) {
     String s = str.substring(1);
     String[] tokens = s.split("[|]");
     int i = new Random().nextInt(tokens.length);
@@ -86,10 +90,11 @@ public final class StoryText {
     return tokens[i];
   }
 
-  private static String evaluateConditionalText(String str, int count, VariableMap variables) {
+  @SuppressWarnings("OverlyComplexMethod")
+  private static String evaluateConditionalText(String str, VariableMap variables) {
     if (str.startsWith("#")) {
-      String condition = str.substring(1, str.indexOf(":")).trim();
-      String text = str.substring(str.indexOf(":")+1);
+      String condition = str.substring(1, str.indexOf(COLON)).trim();
+      String text = str.substring(str.indexOf(COLON)+1);
       String[] options = text.split("[|]");
       int val = 0;
       try {
@@ -114,8 +119,8 @@ public final class StoryText {
       return options[val];
     }
     // Regular conditional
-    String condition = str.substring(0, str.indexOf(":")).trim();
-    String text = str.substring(str.indexOf(":")+1);
+    String condition = str.substring(0, str.indexOf(COLON)).trim();
+    String text = str.substring(str.indexOf(COLON)+1);
     String[] options = text.split("[|]");
     if (options.length > 2)
       variables.logException(new InkRunTimeException("Too many options in a conditional text."));

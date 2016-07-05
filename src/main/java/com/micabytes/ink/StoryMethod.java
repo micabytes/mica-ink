@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 // Used to mark methods used in ink stories
 // Convenience annotation
+@SuppressWarnings({"ClassIndependentOfModule", "ClassUnconnectedToPackage"})
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD) //can use in method only.
 public @interface StoryMethod {

@@ -193,7 +193,7 @@ class ChoiceSpec extends Specification {
       story.nextAll
       story.choose(0)
       story.nextAll
-      story.getChoiceSize() must beEqualTo(2)
+      story.getChoiceSize must beEqualTo(2)
       story.getChoice(0).getChoiceText(story) must beEqualTo("\'Having a nice day?\'")
     }
 
@@ -203,7 +203,7 @@ class ChoiceSpec extends Specification {
       story.nextAll
       story.choose(1)
       story.nextAll
-      story.getChoiceSize() must beEqualTo(2)
+      story.getChoiceSize must beEqualTo(2)
       story.getChoice(1).getChoiceText(story) must beEqualTo("Shove him aside")
     }
 

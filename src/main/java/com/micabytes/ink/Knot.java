@@ -6,9 +6,8 @@ import java.util.ArrayList;
 
 class Knot extends ParameterizedContainer {
   private static final String KNOT_HEADER = "==";
-  private static final String FUNCTION = "function";
 
-  public Knot(int l, String str) {
+  Knot(int l, String str) {
     lineNumber = l;
     int pos = 0;
     while (InkParser.HEADER == str.charAt(pos)) {
@@ -21,16 +20,15 @@ class Knot extends ParameterizedContainer {
     level = 0;
     parent = null;
     String fullId = str.replaceAll(header.toString(), "").trim();
-    if (fullId.startsWith("function")) {
+    if (fullId.startsWith(Symbol.FUNCTION)) {
       type = ContentType.FUNCTION;
-      fullId = fullId.replaceFirst("function", "");
+      fullId = fullId.replaceFirst(Symbol.FUNCTION, "");
     }
     if (fullId.contains(StoryText.BRACE_LEFT)) {
       String params = fullId.substring(fullId.indexOf(StoryText.BRACE_LEFT)+1, fullId.indexOf(StoryText.BRACE_RIGHT));
       String[] param = params.split(",");
       parameters = new ArrayList<>();
-      for (int i=0; i<param.length; i++)
-        getParameters().add(param[i].trim());
+      for (String aParam : param) parameters.add(aParam.trim());
       fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT));
     }
     //if (fullId.startsWith(FUNCTION)) {

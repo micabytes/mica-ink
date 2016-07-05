@@ -15,7 +15,7 @@ public class Container extends Content {
     content.add(item);
   }
 
-  public Container getContainer(int lvl) {
+  Container getContainer(int lvl) {
     Container c = this;
     while (c.level > lvl && c.parent != null) {
       c = c.parent;
@@ -26,8 +26,9 @@ public class Container extends Content {
   @Override
   public String generateId(Container p) {
     if (id != null) return id;
-    int i = parent.getContentIndex(this);
-    id = parent.getId() + InkParser.DOT + Integer.toString(i);
+    id = parent != null
+        ? parent.getId() + InkParser.DOT + Integer.toString(parent.getContentIndex(this))
+        : super.generateId(p);
     return id;
   }
 
@@ -43,17 +44,15 @@ public class Container extends Content {
     return content.indexOf(c);
   }
 
-  public void initialize(Story story, Content content) throws InkRunTimeException {
-    if (isConditional()) {
-      ((Conditional) this).evaluate(story);
-    }
+  public void initialize(Story story, Content c) throws InkRunTimeException {
     increment();
   }
 
-  public void setBackground(String img) {
+  public void setBackground(@Nullable String img) {
     background = img;
   }
 
+  @Nullable
   public String getBackground() {
     return background;
   }
