@@ -13,7 +13,7 @@ public final class Symbol {
   @NonNls public static final String DIVERT = "->";
   @NonNls static final String DIVERT_END = "END";
   @NonNls static final String THIS = "this";
-  @NonNls static final String EVENT = "event";
+  @NonNls public static final String EVENT = "event";
   @NonNls static final String FUNCTION = "function";
   @NonNls static final String RETURN = "return";
 

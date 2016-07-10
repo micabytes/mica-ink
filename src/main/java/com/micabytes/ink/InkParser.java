@@ -160,7 +160,7 @@ public final class InkParser {
           current.setBackground(img);
         }
       }
-      if (token[i].startsWith("*") || token[i].startsWith("+") ) {
+      if (token[i].startsWith(String.valueOf(CHOICE_DOT)) || token[i].startsWith(String.valueOf(CHOICE_PLUS)) ) {
         Content cont = new Comment(lineNumber, token[i]);
         if (current != null)
           current.add(cont);

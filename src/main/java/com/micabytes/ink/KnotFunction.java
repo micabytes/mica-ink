@@ -53,7 +53,7 @@ public class KnotFunction extends ParameterizedContainer implements Function {
   }
 
   @Override
-  public boolean isVariableNumParams() {
+  public boolean isFixedNumParams() {
     return false;
   }
 

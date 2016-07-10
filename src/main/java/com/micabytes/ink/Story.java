@@ -25,7 +25,7 @@ import java.util.TreeMap;
 
 @SuppressWarnings({"ClassWithTooManyMethods", "OverlyComplexClass"})
 public class Story implements VariableMap {
-  private static final String GET_ID = "getId";
+  @NonNls private static final String GET_ID = "getId";
   @NonNls private static final String IS_NULL = "isNull";
   @NonNls private static final String RANDOM = "random";
   @NonNls private static final String IS_KNOT = "isKnot";
