@@ -168,8 +168,7 @@ class Conditional extends Container {
         selection = count >= content.size() ? content.size() - 1 : count;
         break;
       default:
-        // TODO: Error
-        break;
+        story.logException(new InkRunTimeException("Invalid conditional type."));
     }
   }
 

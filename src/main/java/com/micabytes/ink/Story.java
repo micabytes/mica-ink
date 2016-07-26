@@ -29,6 +29,7 @@ public class Story implements VariableMap {
   @NonNls private static final String IS_NULL = "isNull";
   @NonNls private static final String RANDOM = "random";
   @NonNls private static final String IS_KNOT = "isKnot";
+  @NonNls private static final String FLOOR = "floor";
   @NonNls private static final String CURRENT_BACKGROUND = "currentBackground";
   // All content in the story
   private final Map<String, Content> storyContent = new HashMap<>();
@@ -345,6 +346,7 @@ public class Story implements VariableMap {
     functions.put("not", new NotFunction());
     functions.put(RANDOM, new RandomFunction());
     functions.put(IS_KNOT, new IsKnotFunction());
+    functions.put(FLOOR, new FloorFunction());
   }
 
   public List<String> nextAll() throws InkRunTimeException {
@@ -371,7 +373,7 @@ public class Story implements VariableMap {
     if (!hasNext())
       throw new InkRunTimeException("Did you forget to run canContinue()?");
     processing = true;
-    String ret = "";
+    String ret = Symbol.GLUE;
     Content content = getContent();
     boolean inProgress = true;
     while (inProgress) {
@@ -437,6 +439,13 @@ public class Story implements VariableMap {
       container = divertTarget;
       contentIdx = 0;
       choices.clear();
+      return;
+    }
+    if (content != null && content.isConditional()) {
+      Container nextContainer = (Container) content;
+      nextContainer.initialize(this, content);
+      container = nextContainer;
+      contentIdx = 0;
       return;
     }
     contentIdx++;
@@ -876,7 +885,7 @@ public class Story implements VariableMap {
     }
   }
 
-  private static class NotFunction implements Function {
+  public static class NotFunction implements Function {
 
     @Override
     public int getNumParams() {
@@ -945,4 +954,27 @@ public class Story implements VariableMap {
       return Boolean.FALSE;
     }
   }
+
+  private static class FloorFunction implements Function {
+
+    @Override
+    public int getNumParams() {
+      return 1;
+    }
+
+    @Override
+    public boolean isFixedNumParams() {
+      return true;
+    }
+
+    @Override
+    public Object eval(List<Object> params, VariableMap vmap) throws InkRunTimeException {
+      Object param = params.get(0);
+      if (param instanceof BigDecimal) {
+        return ((BigDecimal) param).intValue();
+      }
+      return BigDecimal.ZERO;
+    }
+  }
+
 }

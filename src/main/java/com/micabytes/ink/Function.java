@@ -1,7 +1,5 @@
 package com.micabytes.ink;
 
-import org.jetbrains.annotations.NonNls;
-
 import java.util.List;
 
 public interface Function {

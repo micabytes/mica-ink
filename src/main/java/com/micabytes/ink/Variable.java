@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls;
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
 
-class Variable extends Content {
+public class Variable extends Content {
   @NonNls private static final String VAR_ = "VAR ";
   @NonNls private static final String TILDE_ = "~ ";
   @NonNls private static final String AND_WS = " and ";

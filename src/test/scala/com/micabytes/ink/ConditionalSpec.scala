@@ -465,5 +465,71 @@ class ConditionalSpec extends Specification {
 
   }
 
+  "Conditionals in choices should " should {
+
+    val condChoice1 =
+      """=== knot
+        |VAR choice = 1
+        |This is a knot.
+        |* [I have chosen.]
+        |  { choice > 0:
+        |  	  -> choice_1
+        |  	- else:
+        |  	  -> choice_0
+        |  }
+        |* I have failed.
+        |  -> END
+        |=== choice_0
+        |This is choice 0.
+        |-> END
+        |=== choice_1
+        |This is choice 1.
+        |-> END
+      """.stripMargin
+
+    "- allow for diverts in the conditional that direct to another knot" in {
+      val inputStream = IOUtils.toInputStream(condChoice1, "UTF-8")
+      val story = InkParser.parse(inputStream, new StoryContainer())
+      val text0 = story.nextAll()
+      text0.size() must beEqualTo(1)
+      text0.get(0) must beEqualTo("This is a knot.")
+      story.choose(0)
+      val text1 = story.nextAll()
+      text1.size() must beEqualTo(1)
+      text1.get(0) must beEqualTo("This is choice 1.")
+    }
+
+    val condChoice0 =
+      """=== knot
+        |VAR choice = 0
+        |This is a knot.
+        |* [I have chosen.]
+        |  { choice > 0:
+        |  	  -> choice_1
+        |  	- else:
+        |  	  -> choice_0
+        |  }
+        |* I have failed.
+        |  -> END
+        |=== choice_0
+        |This is choice 0.
+        |-> END
+        |=== choice_1
+        |This is choice 1.
+        |-> END
+      """.stripMargin
+
+    "- allow for diverts in the else clause" in {
+      val inputStream = IOUtils.toInputStream(condChoice0, "UTF-8")
+      val story = InkParser.parse(inputStream, new StoryContainer())
+      val text0 = story.nextAll()
+      text0.size() must beEqualTo(1)
+      text0.get(0) must beEqualTo("This is a knot.")
+      story.choose(0)
+      val text1 = story.nextAll()
+      text1.size() must beEqualTo(1)
+      text1.get(0) must beEqualTo("This is choice 0.")
+    }
+  }
 
 }

@@ -225,8 +225,16 @@ public class Expression {
     addOperator(new Operator("&&", 4, false) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        boolean b1 = !((BigDecimal) v1).equals(BigDecimal.ZERO);
-        boolean b2 = !((BigDecimal) v2).equals(BigDecimal.ZERO);
+        boolean b1;
+        boolean b2;
+        if (v1 instanceof  Boolean)
+          b1 = ((Boolean) v1).booleanValue();
+        else
+          b1 = !((BigDecimal) v1).equals(BigDecimal.ZERO);
+        if (v2 instanceof Boolean)
+          b2 = ((Boolean) v2).booleanValue();
+        else
+          b2 = !((BigDecimal) v2).equals(BigDecimal.ZERO);
         return b1 && b2 ? BigDecimal.ONE : BigDecimal.ZERO;
       }
     });
@@ -234,8 +242,16 @@ public class Expression {
     addOperator(new Operator("||", 2, false) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        boolean b1 = !((BigDecimal) v1).equals(BigDecimal.ZERO);
-        boolean b2 = !((BigDecimal) v2).equals(BigDecimal.ZERO);
+        boolean b1;
+        boolean b2;
+        if (v1 instanceof  Boolean)
+          b1 = ((Boolean) v1).booleanValue();
+        else
+          b1 = !((BigDecimal) v1).equals(BigDecimal.ZERO);
+        if (v2 instanceof Boolean)
+          b2 = ((Boolean) v2).booleanValue();
+        else
+          b2 = !((BigDecimal) v2).equals(BigDecimal.ZERO);
         return b1 || b2 ? BigDecimal.ONE : BigDecimal.ZERO;
       }
     });
