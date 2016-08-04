@@ -35,6 +35,13 @@ I would like to use this implementation in some of my own (Java-based) games, so
 
 Feel free to send in push requests to fix bugs or add features. All help is appreciated.
 
+### Useful contributions
+
+If you would like to contribute, the following would be useful:
+
+- Missing functionality, obviously.
+- [Ink's JSON RunTime format](https://github.com/inkle/ink/blob/master/Documentation/ink_JSON_runtime_format.md)
+
 ## Building
 
 The library is a combined runtime and parser, instead of splitting it up. Neither JSON output or input is supported at present; only plain Ink. Since the JSON format is not really stable yet, I probably won't be spending much time looking at that for now.

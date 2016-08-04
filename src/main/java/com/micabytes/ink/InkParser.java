@@ -33,18 +33,17 @@ public final class InkParser {
 
   public static Story parse(String fileName, StoryWrapper provider) throws InkParseException {
     InputStream in = provider.getStream(fileName);
-    Story story = parse(in, provider);
-    story.fileName = fileName;
+    Story story = parse(in, provider, fileName);
     return story;
   }
 
   @SuppressWarnings("OverlyComplexMethod")
-  public static Story parse(InputStream inputStream, StoryWrapper provider) throws InkParseException {
+  public static Story parse(InputStream inputStream, StoryWrapper provider, @Nullable String fileName) throws InkParseException {
     if (provider == null)
       throw new InkParseException("The StoryWrapper passed to Ink is null.");
     InputStreamReader inputStreamReader = null;
     BufferedReader bufferedReader = null;
-    Story story = new Story(provider);
+    Story story = new Story(provider, fileName);
     try {
       inputStreamReader = new InputStreamReader(inputStream, UTF_8);
       bufferedReader = new BufferedReader(inputStreamReader);

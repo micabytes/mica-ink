@@ -1,5 +1,7 @@
 package com.micabytes.ink;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;

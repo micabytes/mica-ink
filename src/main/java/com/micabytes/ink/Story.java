@@ -41,7 +41,7 @@ public class Story implements VariableMap {
   private final StoryWrapper wrapper;
 
   // Story state
-  String fileName;
+  final List<String> fileNames = new ArrayList<>();
   @Nullable Container container;
   private int contentIdx;
   private List<String> text = new ArrayList<>();
@@ -52,15 +52,28 @@ public class Story implements VariableMap {
   private boolean processing;
   private boolean running;
 
-  public Story(StoryWrapper provider) {
+  public Story(StoryWrapper provider, @Nullable String fileName) {
     wrapper = provider;
+    if (fileName != null)
+      fileNames.add(fileName);
+  }
+
+  public void include(String fileName) throws InkParseException {
+    if (!fileNames.contains(fileName)) {
+      Story st = InkParser.parse(wrapper.getStream(fileName), wrapper, fileName);
+      addAll(st);
+    }
   }
 
   @SuppressWarnings({"OverlyComplexMethod", "OverlyNestedMethod"})
   public void saveStream(JsonGenerator g) throws IOException {
     g.writeStartObject();
-    if (fileName != null)
-      g.writeStringField(StoryJson.FILE, fileName);
+    g.writeFieldName(StoryJson.FILES);
+    g.writeStartArray();
+    for (String s : fileNames) {
+      g.writeString(s);
+    }
+    g.writeEndArray();
     g.writeFieldName(StoryJson.CONTENT);
     g.writeStartObject();
     for (Map.Entry<String, Content> entry : storyContent.entrySet()) {
@@ -153,14 +166,16 @@ public class Story implements VariableMap {
           content.count = node.get("#n").asInt();
         if (node.has("vars")) {
           ParameterizedContainer pContainer = (ParameterizedContainer) content;
+          HashMap<String, Object> vars = new HashMap<>();
           for (JsonNode v : node.withArray("vars")) {
             Object val = loadObject(v, provider);
             if (val != null)
-              pContainer.getVariables().put(v.get("id").asText(), val);
+              vars.put(v.get("id").asText(), val);
           }
+          pContainer.setVariables(vars);
         }
       } else {
-        wrapper.logException(new InkParseException("Could not identify content ID " + id + " while loading data for " + fileName));
+        wrapper.logException(new InkParseException("Could not identify content ID " + id + " while loading data for " + fileNames.get(fileNames.size()-1)));
       }
     }
     container = (Container) storyContent.get(sNode.get("currentContainer").asText());
@@ -265,8 +280,8 @@ public class Story implements VariableMap {
             Content cnt = storyContent.get(p.getText());
             if (cnt instanceof Choice)
               choices.add((Container) cnt);
-            else
-              wrapper.logException(new InkLoadingException(cnt.getId() + " is not a choice"));
+            else if (wrapper != null)
+              wrapper.logException(new InkLoadingException(p.getText() + " is not a choice"));
           }
           break;
         case StoryJson.IMAGE:
@@ -302,11 +317,15 @@ public class Story implements VariableMap {
     return obj;
   }
 
-  void addAll(Story story) {
+  public void addAll(Story story) {
     // TODO: Need to handle name collisions
     functions.putAll(story.functions);
     storyContent.putAll(story.storyContent);
     variables.putAll(story.variables);
+    for (String s : story.fileNames) {
+      if (!fileNames.contains(s))
+        fileNames.add(s);
+    }
   }
 
   public void addInterrupt(StoryInterrupt interrupt) {
@@ -319,7 +338,7 @@ public class Story implements VariableMap {
     String fileId = interrupt.getInterruptFile();
     if (fileId != null) {
       try {
-        Story st = InkParser.parse(wrapper.getStream(fileId), wrapper);
+        Story st = InkParser.parse(wrapper.getStream(fileId), wrapper, fileId);
         addAll(st);
       } catch (InkParseException e) {
         wrapper.logException(e);
@@ -648,7 +667,7 @@ public class Story implements VariableMap {
       processing = true;
     } else {
       String cId = container != null ? container.getId() : "null";
-      throw new InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileName + " container: " + cId + " cIndex: " + contentIdx);
+      throw new InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileNames.get(0) + " container: " + cId + " cIndex: " + contentIdx);
     }
   }
 
@@ -681,7 +700,7 @@ public class Story implements VariableMap {
       if (container != null)
         return container.getId();
       else {
-        wrapper.logError("Attempting to invoke this with null container in " + fileName);
+        wrapper.logError("Attempting to invoke this with null container in " + fileNames.get(0));
         return "";
       }
     }
@@ -808,7 +827,7 @@ public class Story implements VariableMap {
   @Override
   public String debugInfo() {
     @NonNls String ret = "";
-    ret += "StoryDebugInfo File: " + fileName;
+    ret += "StoryDebugInfo File: " + fileNames;
     ret += container != null ? " Container :" + container.getId() : " Container: null";
     if (container != null && contentIdx < container.getContentSize()) {
       Content cnt = container.getContent(contentIdx);
@@ -859,7 +878,7 @@ public class Story implements VariableMap {
 
   @NonNls
   public String getStoryStatus() {
-    String fileId = fileName != null ? fileName : "null";
+    String fileId = fileNames.toString();
     String contId = container != null ? container.getId() : "null";
     return "Story errors with FileName: " + fileId
         + ". Container: " + contId

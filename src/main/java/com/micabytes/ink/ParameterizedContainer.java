@@ -1,5 +1,7 @@
 package com.micabytes.ink;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,7 +57,9 @@ class ParameterizedContainer extends Container {
     parameters = new ArrayList<>(params);
   }
 
+  @Nullable
   Map<String, Object> getVariables() {
+    if (variables == null) return null;
     return Collections.unmodifiableMap(variables);
   }
 
