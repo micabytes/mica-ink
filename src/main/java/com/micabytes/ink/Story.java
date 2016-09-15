@@ -27,6 +27,7 @@ import java.util.TreeMap;
 public class Story implements VariableMap {
   @NonNls private static final String GET_ID = "getId";
   @NonNls private static final String IS_NULL = "isNull";
+  @NonNls private static final String GET_NULL = "getNull";
   @NonNls private static final String RANDOM = "random";
   @NonNls private static final String IS_KNOT = "isKnot";
   @NonNls private static final String FLOOR = "floor";
@@ -252,7 +253,7 @@ public class Story implements VariableMap {
                   while (p.nextToken() != JsonToken.END_OBJECT) {
                     String varName = p.getCurrentName();
                     Object obj = loadObjectStream(p);
-                    if (pContainer != null)
+                    if (pContainer != null && pContainer.getVariables() != null)
                       pContainer.getVariables().put(varName, obj);
                   }
                   break;
@@ -362,6 +363,7 @@ public class Story implements VariableMap {
       logException(e);
     }
     functions.put(IS_NULL, new NullFunction());
+    functions.put(GET_NULL, new GetNullFunction());
     functions.put("not", new NotFunction());
     functions.put(RANDOM, new RandomFunction());
     functions.put(IS_KNOT, new IsKnotFunction());
@@ -903,6 +905,25 @@ public class Story implements VariableMap {
       return param == null;
     }
   }
+
+  private static class GetNullFunction implements Function {
+
+    @Override
+    public int getNumParams() {
+      return 0;
+    }
+
+    @Override
+    public boolean isFixedNumParams() {
+      return true;
+    }
+
+    @Override
+    public Object eval(List<Object> params, VariableMap vmap) throws InkRunTimeException {
+      return null;
+    }
+  }
+
 
   public static class NotFunction implements Function {
 

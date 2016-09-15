@@ -20,8 +20,8 @@ dependencies {
   compile fileTree(include: ['*.jar'], dir: 'libs')
   // JSON Libraries
   // Remember to modify proguard-rules.pro also
-  compile 'com.fasterxml.jackson.core:jackson-core:2.8.1'
-  compile 'com.fasterxml.jackson.core:jackson-databind:2.8.1'
+  compile 'com.fasterxml.jackson.core:jackson-core:2.8.2'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.8.2'
   //noinspection GradleDynamicVersion
   compile 'com.intellij:annotations:+@jar'
   testCompile 'org.scala-lang:scala-library:2.11.8'
