@@ -533,19 +533,19 @@ public class Expression {
               fResult = BigDecimal.valueOf((Double) fResult);
             stack.push(fResult);
           } catch (NoSuchMethodException e) {
-            String errMsg = "Could not identify a method " + function + " on variable " + var + " with the parameters:";
+            String errMsg = "Could not identify a method " + function + " on variable " + var + " (" + var.toString() + ", " + valClass.getName() + ") with the parameters:";
             for (int i = 0; i < paramTypes.length; i++)
               errMsg += " " + paramTypes[i].getName();
             errMsg += ". " + story.debugInfo();
             throw new InkRunTimeException(errMsg, e);
           } catch (InvocationTargetException e) {
-            String errMsg = "Could not invoke a method " + function + " on variable " + var + " with the parameters:";
+            String errMsg = "Could not invoke a method " + function + " on variable " + var + " (" + var.toString() + ", " + valClass.getName() + ") with the parameters:";
             for (int i = 0; i < paramTypes.length; i++)
               errMsg += " " + paramTypes[i].getName();
             errMsg += ". " + story.debugInfo();
             throw new InkRunTimeException(errMsg, e);
           } catch (IllegalAccessException e) {
-            String errMsg = "Could not access a method " + function + " on variable " + var + " with the parameters:";
+            String errMsg = "Could not access a method " + function + " on variable " + var + " (" + var.toString() + ", " + valClass.getName() + ") with the parameters:";
             for (int i = 0; i < paramTypes.length; i++)
               errMsg += " " + paramTypes[i].getName();
             errMsg += ". " + story.debugInfo();
