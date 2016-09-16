@@ -331,12 +331,15 @@ public class Story implements VariableMap {
 
   public void addInterrupt(StoryInterrupt interrupt) {
     interrupts.add(interrupt);
+    String fileId = interrupt.getInterruptFile();
+    for (String f : fileNames) {
+      if (f.equals(fileId)) return; // No need to add the data again.
+    }
     if (interrupt.isChoice()) {
       Choice choice = new Choice(0, interrupt.getInterrupt(), null);
       choice.setId(interrupt.getId());
       storyContent.put(choice.getId(), choice);
     }
-    String fileId = interrupt.getInterruptFile();
     if (fileId != null) {
       try {
         Story st = InkParser.parse(wrapper.getStream(fileId), wrapper, fileId);
