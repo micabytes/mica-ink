@@ -62,7 +62,7 @@ class DivertSpec extends Specification {
 
     "- divert text from one knot/stitch to another" in {
       val inputStream = IOUtils.toInputStream(simpleDivert, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       val text = story.nextAll()
       text.size() must beEqualTo(2)
       text.get(0) must beEqualTo("We arrived into London at 9.45pm exactly.")
@@ -71,7 +71,7 @@ class DivertSpec extends Specification {
 
     "- divert from one line of text to new content invisibly" in {
       val inputStream = IOUtils.toInputStream(invisibleDivert, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("We hurried home to Savile Row as fast as we could.")
@@ -79,7 +79,7 @@ class DivertSpec extends Specification {
 
     "- branch directly from choices" in {
       val inputStream = IOUtils.toInputStream(divertOnChoice, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(0)
       val text = story.nextAll()
@@ -90,7 +90,7 @@ class DivertSpec extends Specification {
     "- be usable to branch and join text seamlessly (example 1)" in {
       // First path through text
       val inputStream = IOUtils.toInputStream(complexBranching, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(0)
       val text = story.nextAll()
@@ -102,7 +102,7 @@ class DivertSpec extends Specification {
     "- be usable to branch and join text seamlessly (example 2)" in {
       // Second path through text
       val inputStream = IOUtils.toInputStream(complexBranching, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(1)
       val text = story.nextAll()
@@ -115,7 +115,7 @@ class DivertSpec extends Specification {
     "- be usable to branch and join text seamlessly (example 3)" in {
       // Third path through text
       val inputStream = IOUtils.toInputStream(complexBranching, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(2)
       val text = story.nextAll()

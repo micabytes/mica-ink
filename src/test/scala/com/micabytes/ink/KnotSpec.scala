@@ -11,7 +11,7 @@ class KnotSpec extends Specification {
   "A single line of plain text in an ink file" should {
     val testData = "Hello, world!"
     val inputStream = IOUtils.toInputStream(testData, "UTF-8")
-    val story = InkParser.parse(inputStream, new StoryContainer())
+    val story = InkParser.parse(inputStream, new StoryContainer(), null)
 
     "- return a single line of text as output" in {
       val text = story.nextAll()
@@ -29,7 +29,7 @@ class KnotSpec extends Specification {
           |Hello?
           |Hello, are you there?""".stripMargin
       val inputStream = IOUtils.toInputStream(testData, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       val text = story.nextAll()
       text.size() must beEqualTo(3)
       text.get(0) must beEqualTo("Hello, world!")
@@ -45,7 +45,7 @@ class KnotSpec extends Specification {
           |Hello, are you there?
         """.stripMargin
       val inputStream = IOUtils.toInputStream(testData, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       val text = story.nextAll()
       text.size() must beEqualTo(3)
       text.get(0) must beEqualTo("Hello, world!")
@@ -69,7 +69,7 @@ class KnotSpec extends Specification {
 
     "- handle string parameters in a divert" in {
       val inputStream = IOUtils.toInputStream(paramStrings, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(2)
       val text = story.nextAll()
@@ -89,7 +89,7 @@ class KnotSpec extends Specification {
 
     "- handle passing integer as parameters in a divert" in {
       val inputStream = IOUtils.toInputStream(paramInts, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(1)
       val text = story.nextAll()
@@ -109,7 +109,7 @@ class KnotSpec extends Specification {
 
     "- handle passing floats as parameters in a divert" in {
       val inputStream = IOUtils.toInputStream(paramFloats, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(1)
       val text = story.nextAll()
@@ -132,7 +132,7 @@ class KnotSpec extends Specification {
 
     "- handle passing variables as parameters in a divert" in {
       val inputStream = IOUtils.toInputStream(paramVars, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(1)
       val text = story.nextAll()
@@ -152,7 +152,7 @@ class KnotSpec extends Specification {
 
     "- handle passing multiple values as parameters in a divert" in {
       val inputStream = IOUtils.toInputStream(paramMulti, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(0)
       val text = story.nextAll()
@@ -179,7 +179,7 @@ class KnotSpec extends Specification {
 
     "- should support recursive calls with parameters on a knot" in {
       val inputStream = IOUtils.toInputStream(paramRecurse, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       val text = story.nextAll()
       text.size() must beEqualTo(2)
       text.get(0) must beEqualTo("\"The result is 120!\" you announce.")

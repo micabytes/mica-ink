@@ -23,7 +23,7 @@ class ParseSpec extends Specification {
 
     "- return an error when two knots/stitches share the same name" in {
       val inputStream = IOUtils.toInputStream(knotNaming, "UTF-8")
-      InkParser.parse(inputStream, new StoryContainer()) must throwA[InkParseException]
+      InkParser.parse(inputStream, new StoryContainer(), null) must throwA[InkParseException]
     }
 
   }

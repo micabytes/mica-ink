@@ -38,7 +38,7 @@ class StitchSpec extends Specification {
 
     "- be automatically started with if there is no content in a knot" in {
       val inputStream = IOUtils.toInputStream(autoStitch, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       val text = story.nextAll()
       text.size() must beEqualTo(1)
       text.get(0) must beEqualTo("I settled my master.")
@@ -46,7 +46,7 @@ class StitchSpec extends Specification {
 
     "- be automatically diverted to if there is no other content in a knot" in {
       val inputStream = IOUtils.toInputStream(autoStitch, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       story.nextAll()
       story.choose(1)
       val text = story.nextAll()
@@ -56,7 +56,7 @@ class StitchSpec extends Specification {
 
       "- not be diverted to if the knot has content" in {
       val inputStream = IOUtils.toInputStream(manualStitch, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       val knotText = story.nextAll()
       knotText.size() must beEqualTo(1)
       knotText.get(0) must beEqualTo("How shall we travel?")
@@ -68,7 +68,7 @@ class StitchSpec extends Specification {
 
     "- be usable locally without the full name" in {
       val inputStream = IOUtils.toInputStream(manualStitch, "UTF-8")
-      val story = InkParser.parse(inputStream, new StoryContainer())
+      val story = InkParser.parse(inputStream, new StoryContainer(), null)
       val knotText = story.nextAll()
       knotText.size() must beEqualTo(1)
       knotText.get(0) must beEqualTo("How shall we travel?")
