@@ -1014,7 +1014,7 @@ public class Story implements VariableMap {
     public Object eval(List<Object> params, VariableMap vmap) throws InkRunTimeException {
       Object param = params.get(0);
       if (param instanceof BigDecimal) {
-        return ((BigDecimal) param).intValue();
+        return BigDecimal.valueOf(((BigDecimal) param).intValue());
       }
       return BigDecimal.ZERO;
     }

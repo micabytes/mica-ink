@@ -1,7 +1,5 @@
 package com.micabytes.ink;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -80,13 +78,19 @@ public class Choice extends Container {
     if (conditions == null)
       return true;
     for (String condition : conditions) {
-      Object obj = Variable.evaluate(condition, story);
-      if (obj == null)
+      try {
+        Object obj = Variable.evaluate(condition, story);
+        if (obj == null)
+          return false;
+        if (obj instanceof Boolean && !(Boolean) obj)
+          return false;
+        if (obj instanceof BigDecimal && ((BigDecimal) obj).intValue() <= 0)
+          return false;
+      }
+      catch (InkRunTimeException e) {
+        story.logException(e);
         return false;
-      if (obj instanceof Boolean && !(Boolean) obj)
-        return false;
-      if (obj instanceof BigDecimal && ((BigDecimal)obj).intValue() <= 0)
-        return false;
+      }
     }
     return true;
   }

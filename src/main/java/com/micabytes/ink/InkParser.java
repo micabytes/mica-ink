@@ -31,10 +31,14 @@ public final class InkParser {
     // NOOP
   }
 
+  @Nullable
   public static Story parse(String fileName, StoryWrapper provider) throws InkParseException {
     InputStream in = provider.getStream(fileName);
-    Story story = parse(in, provider, fileName);
-    return story;
+    if (in == null) {
+      provider.logError("Could not load the storyfile for " + fileName);
+      return null;
+    }
+    return parse(in, provider, fileName);
   }
 
   @SuppressWarnings("OverlyComplexMethod")

@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
 
+import static javax.swing.text.html.HTML.Tag.I;
+
 /* Based on https://github.com/uklimaschewski/EvalEx */
 @SuppressWarnings("ALL")
 public class Expression {
@@ -201,7 +203,16 @@ public class Expression {
     addOperator(new Operator("-", 20, true) {
       @Override
       public BigDecimal eval(Object v1, Object v2) {
-        return ((BigDecimal) v1).subtract((BigDecimal) v2, mc);
+        BigDecimal b1 = null, b2 = null;
+        if (v1 instanceof BigDecimal) b1 = (BigDecimal) v1;
+        if (v2 instanceof BigDecimal) b2 = (BigDecimal) v2;
+        if (v1 instanceof Integer) b1 = BigDecimal.valueOf((Integer)v1);
+        if (v2 instanceof Integer) b2 = BigDecimal.valueOf((Integer)v2);
+        if (b1 == null)
+          throw new ExpressionException("Object v1 " + v1.toString() + " is not a valid number");
+        if (b2 == null)
+          throw new ExpressionException("Object v2 " + v2.toString() + " is not a valid number");
+        return b1.subtract(b2, mc);
       }
     });
     addOperator(new Operator("*", 30, true) {

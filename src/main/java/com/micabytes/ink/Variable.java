@@ -112,9 +112,15 @@ public class Variable extends Content {
     if (str == null)
       return Boolean.TRUE;
     // TODO: Note that this means that spacing will mess up expressions; needs to be fixed
-    String ev = str.replaceAll(AND_WS, " && ").replaceAll(OR_WS, " || ").replaceAll(TRUE_LC, TRUE_UC).replaceAll(FALSE_LC, FALSE_UC);
-    Expression ex = new Expression(ev);
-    return ex.eval(variables);
+    String ev = null;
+    try {
+      ev = str.replaceAll(AND_WS, " && ").replaceAll(OR_WS, " || ").replaceAll(TRUE_LC, TRUE_UC).replaceAll(FALSE_LC, FALSE_UC);
+      Expression ex = new Expression(ev);
+      return ex.eval(variables);
+    }
+    catch (Expression.ExpressionException e) {
+      throw new InkRunTimeException("Error evaluation expression " + ev,  e);
+    }
   }
 
   private static boolean isInteger(String str) {

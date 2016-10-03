@@ -1,9 +1,9 @@
 package com.micabytes.ink
 
 import org.apache.commons.io.IOUtils
+import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
 class KnotSpec extends Specification {

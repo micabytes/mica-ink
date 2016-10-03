@@ -26,7 +26,7 @@ public final class StoryText {
       int start = ret.lastIndexOf(CBRACE_LEFT);
       int end = ret.indexOf(CBRACE_RIGHT, start);
       if (end < 0) {
-        variables.logException(new InkRunTimeException("Mismatched curly braces in text."));
+        variables.logException(new InkRunTimeException("Mismatched curly braces in text: " + text));
         return ret;
       }
       String s = ret.substring(start, end + 1);
