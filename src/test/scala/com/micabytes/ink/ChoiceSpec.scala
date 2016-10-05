@@ -227,6 +227,7 @@ class ChoiceSpec extends Specification {
       story.getChoice(0).getChoiceText(story) must beEqualTo("Found gatherpoint")
     }
 
+    /*
     val labelScopeError =
       """=== knot ===
         |  = stitch_one
