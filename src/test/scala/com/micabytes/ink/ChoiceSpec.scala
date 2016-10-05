@@ -244,6 +244,7 @@ class ChoiceSpec extends Specification {
       story.choose(0)
       story.nextAll must throwA[InkRunTimeException]
     }
+    */
 
     val divertChoice =
       """=== knot
