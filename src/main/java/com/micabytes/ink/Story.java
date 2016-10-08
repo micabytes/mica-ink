@@ -89,10 +89,9 @@ public class Story implements VariableMap {
             g.writeFieldName(StoryJson.VARIABLES);
             g.writeStartObject();
             for (Map.Entry<String, Object> vars : pContainer.getVariables().entrySet()) {
-              if (vars.getValue() != null) {
-                saveObject(g, vars.getKey(), vars.getValue());
-              } else {
-                wrapper.logError("Story variable data " + vars.getKey() + " has a null value");
+              saveObject(g, vars.getKey(), vars.getValue());
+              if (vars.getValue() == null) {
+                wrapper.logDebug("Wrote a null value for " + vars.getKey());
               }
             }
             g.writeEndObject();
@@ -125,7 +124,7 @@ public class Story implements VariableMap {
       if (vars.getValue() != null) {
         saveObject(g, vars.getKey(), vars.getValue());
       } else {
-        wrapper.logError("SaveData: " + vars.getKey() + " contains a null value");
+        saveObject(g, vars.getKey(), null);
       }
     }
     g.writeEndObject();
@@ -135,6 +134,10 @@ public class Story implements VariableMap {
 
   @SuppressWarnings({"rawtypes", "unchecked", "NullArgumentToVariableArgMethod"})
   private void saveObject(JsonGenerator g, String key, Object val) throws IOException {
+    if (val == null) {
+      g.writeNullField(key);
+      return;
+    }
     if (val instanceof Boolean) {
       g.writeBooleanField(key, (Boolean) val);
       return;
@@ -307,6 +310,8 @@ public class Story implements VariableMap {
 
   private Object loadObjectStream(JsonParser p) throws IOException {
     JsonToken token = p.nextToken();
+    if (token == JsonToken.VALUE_NULL)
+      return null;
     if (token.isBoolean())
       return p.getBooleanValue();
     if (token.isNumeric())
