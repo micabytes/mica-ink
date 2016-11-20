@@ -3,9 +3,12 @@ package com.micabytes.ink
 import java.math.BigDecimal
 import java.util.ArrayList
 
-internal class Comment(l: Int, str: String) : Content() {
+internal class Comment(lineNumber: Int,
+                       content: String,
+                       parent: Container?) : Content(lineNumber, content, parent) {
     private var conditions: ArrayList<String>? = null
 
+    /*
     init {
         lineNumber = l
         val notation = str[0]
@@ -44,5 +47,5 @@ internal class Comment(l: Int, str: String) : Content() {
     fun getCommentText(story: Story): String {
         return StoryText.getText(text, count, story)
     }
-
+    */
 }

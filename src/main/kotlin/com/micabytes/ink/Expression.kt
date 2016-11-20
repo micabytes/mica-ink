@@ -24,6 +24,7 @@ class Expression
  * @param defaultMathContext The [MathContext] to use by default.
  */
 @JvmOverloads constructor(expression: String, defaultMathContext: MathContext = MathContext.DECIMAL32) {
+    /*
     /// The {@link MathContext} to use for calculations.
     private var mc: MathContext? = null
     /// The original infix expression.
@@ -644,6 +645,7 @@ class Expression
         /// The BigDecimal representation of the left parenthesis, used for parsing varying numbers of function parameters.
         private val PARAMS_START = BigDecimal(0)
     }
+ */
 
 }
 /**

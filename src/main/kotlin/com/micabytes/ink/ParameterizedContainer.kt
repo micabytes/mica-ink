@@ -4,8 +4,13 @@ import java.util.ArrayList
 import java.util.Collections
 import java.util.HashMap
 
-internal open class ParameterizedContainer : Container() {
-    var parameters: List<String>? = null
+internal open class ParameterizedContainer(lineNumber: Int,
+                                           content: String,
+                                           parent: Container?) : Container(lineNumber, content, parent) {
+
+  internal val parameters: ArrayList<String> = ArrayList<String>()
+
+    /*
     var variables: MutableMap<String, Any>? = null
 
     @Throws(InkRunTimeException::class)
@@ -61,4 +66,6 @@ internal open class ParameterizedContainer : Container() {
     fun setVariables(vars: HashMap<String, Any>) {
         variables = HashMap(vars)
     }
+    */
+
 }

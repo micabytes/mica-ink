@@ -46,21 +46,21 @@ object InkParser {
           val incl = parse(provider, includeFile)
           story.addAll(incl)
         } else if (conditional != null) {
-          val cond = current.getContent(current.contentSize - 1) as Conditional
-          cond.parseLine(lineNumber, trimmedLine)
+          val cond = current.get(current.size - 1) as Conditional
+          //cond.parseLine(lineNumber, trimmedLine)
           if (trimmedLine.endsWith(CONDITIONAL_END))
           // This is a bug. Means conditions cannot have text line that ends with CBRACE_RIGHT
             conditional = null
         } else {
           val cont = parseLine(lineNumber, trimmedLine, current)
           if (cont != null) {
-            cont.generateId(current)
+            //cont.generateId(current)
             story.add(cont)
-            if (cont.isContainer) {
+            if (cont is Container) {
               current = cont as Container
             }
           }
-          if (cont != null && cont.isConditional) {
+          if (cont != null && cont is Conditional) {
             conditional = cont as Conditional?
           }
         }
@@ -78,24 +78,24 @@ object InkParser {
     val firstChar = if (trimmedLine.isEmpty()) WHITESPACE else trimmedLine[0]
     when (firstChar) {
       HEADER -> {
-        if (KnotFunction.isFunctionHeader(trimmedLine)) {
-          return KnotFunction(lineNumber, trimmedLine)
-        }
+        //if (KnotFunction.isFunctionHeader(trimmedLine)) {
+        //  return KnotFunction(lineNumber, trimmedLine)
+        //}
         if (Knot.isKnotHeader(trimmedLine)) {
           return Knot(lineNumber, trimmedLine)
         }
-        if (Stitch.isStitchHeader(trimmedLine)) {
-          return Stitch(lineNumber, trimmedLine, current)
-        }
+        //if (Stitch.isStitchHeader(trimmedLine)) {
+        //  return Stitch(lineNumber, trimmedLine, current)
+        //}
       }
       CHOICE_DOT, CHOICE_PLUS -> if (Choice.isChoiceHeader(trimmedLine))
         return Choice(lineNumber, trimmedLine, current)
-      GATHER_DASH -> if (Gather.isGatherHeader(trimmedLine))
-        return Gather(lineNumber, trimmedLine, current)
-      VAR_DECL, VAR_STAT -> if (Variable.isVariableHeader(trimmedLine))
-        return Variable(lineNumber, trimmedLine, current)
-      CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(trimmedLine))
-        return Conditional(lineNumber, trimmedLine, current)
+      //GATHER_DASH -> if (Gather.isGatherHeader(trimmedLine))
+      //  return Gather(lineNumber, trimmedLine, current)
+      //VAR_DECL, VAR_STAT -> if (Variable.isVariableHeader(trimmedLine))
+      //  return Variable(lineNumber, trimmedLine, current)
+      //CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(trimmedLine))
+      //  return Conditional(lineNumber, trimmedLine, current)
       else -> {
       }
     }
@@ -115,10 +115,10 @@ object InkParser {
           current.background = img
         }
       }
-      if (token[i].startsWith(CHOICE_DOT.toString()) || token[i].startsWith(CHOICE_PLUS.toString())) {
-        val cont = Comment(lineNumber, token[i])
-        current?.add(cont)
-      }
+      //if (token[i].startsWith(CHOICE_DOT.toString()) || token[i].startsWith(CHOICE_PLUS.toString())) {
+      //  val cont = Comment(lineNumber, token[i])
+      //  current?.add(cont)
+      //}
     }
   }
 

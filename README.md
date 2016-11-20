@@ -71,7 +71,7 @@ Loading a story file:
   Story story = InkParser.parse(inputStream, new StoryContainer());
 ```
 
-Working through content line by line:
+Working through children line by line:
 ```
   while (story.hasNext()) {
     String line = story.next();
@@ -79,7 +79,7 @@ Working through content line by line:
   }
 ```
 
-Working through all content content line by line up to the next stop:
+Working through all children children line by line up to the next stop:
 ```
   List<String> lines = story.nextAll();
 ```

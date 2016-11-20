@@ -7,6 +7,7 @@ import java.util.HashMap
  * Definition of a supported expression function. A function is defined by a name, the number of
  * parameters and the actual processing implementation.
  */
+/*
 class KnotFunction(l: Int, str: String) : ParameterizedContainer(), Function {
 
     init {
@@ -48,7 +49,7 @@ class KnotFunction(l: Int, str: String) : ParameterizedContainer(), Function {
         for (i in parameters!!.indices) {
             variables!!.put(parameters!![i], params[i])
         }
-        for (c in content) {
+        for (c in children) {
             if (c.type == ContentType.TEXT) {
                 story.container = callingContainer
                 return StoryText.getText(c.text, c.count, story)
@@ -64,8 +65,8 @@ class KnotFunction(l: Int, str: String) : ParameterizedContainer(), Function {
             } else if (c.isConditional) {
                 val cond = c as Conditional
                 cond.initialize(story, cond)
-                for (j in 0..cond.contentSize - 1) {
-                    val cd = cond.getContent(j)
+                for (j in 0..cond.size - 1) {
+                    val cd = cond.get(j)
                     if (cd.type == ContentType.TEXT && !cd.text.isEmpty()) {
                         story.container = callingContainer
                         return StoryText.getText(cd.text, cd.count, story)
@@ -108,3 +109,4 @@ class KnotFunction(l: Int, str: String) : ParameterizedContainer(), Function {
     }
 
 }
+*/

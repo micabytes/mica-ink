@@ -1,35 +1,13 @@
 package com.micabytes.ink
 
-open class Content(val lineNumber: Int, val content: String, val parent: Container) {
-  val id: String
-  // internal set
-  // internal var lineNumber: Int = 0
-  // internal set
-  internal var type = ContentType.TEXT
-  internal var text = ""
-  var count: Int = 0
-
-  init {
-    id = generateId(parent)
-  }
+open class Content(internal val lineNumber: Int,
+                   internal val content: String,
+                   internal val parent: Container?) {
+  open internal val id: String = if (parent != null) parent.id + InkParser.DOT + parent.indexOf(this) else ""
+  internal val type = ContentType.TEXT
+  internal var count: Int = 0
 
   /*
-  internal constructor() {
-      // NOOP
-  }
-
-  constructor(l: Int, str: String, current: Container) {
-      lineNumber = l
-      text = str
-      current.add(this)
-  }
-  */
-
-  open fun generateId(p: Container): String {
-    val i = p.getContentIndex(this)
-    return p.id + InkParser.DOT + Integer.toString(i)
-  }
-
   val isKnot: Boolean
     get() = type == ContentType.KNOT
 
@@ -61,10 +39,6 @@ open class Content(val lineNumber: Int, val content: String, val parent: Contain
         type == ContentType.SEQUENCE_SHUFFLE ||
         type == ContentType.SEQUENCE_STOP
 
-  fun increment() {
-    count++
-  }
-
   internal val isVariable: Boolean
     get() = type == ContentType.VARIABLE_DECLARATION || type == ContentType.VARIABLE_EXPRESSION || type == ContentType.VARIABLE_RETURN
 
@@ -73,5 +47,6 @@ open class Content(val lineNumber: Int, val content: String, val parent: Contain
 
   val isContainer: Boolean
     get() = isKnot || isFunction || isStitch || isChoice || isGather
+  */
 
 }

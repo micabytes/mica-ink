@@ -11,7 +11,7 @@ class StoryJson private constructor() {
     companion object {
          val FILE = "file"
          val FILES = "files"
-        val CONTENT = "content"
+        val CONTENT = "children"
         val ID = "id"
         val COUNT = "count"
         val VARIABLES = "variables"

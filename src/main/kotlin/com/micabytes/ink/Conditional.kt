@@ -6,7 +6,10 @@ import java.util.ArrayList
 import java.util.Random
 
 internal class Conditional @Throws(InkParseException::class)
-constructor(l: Int, line: String, current: Container) : Container() {
+constructor(lineNumber: Int,
+            content: String,
+            parent: Container?) : Container(lineNumber, content, parent) {
+  /*
   private var selection: Int = 0
 
   private class ConditionalOptions internal constructor(internal val condition: String) : Content() {
@@ -20,7 +23,7 @@ constructor(l: Int, line: String, current: Container) : Container() {
   init {
     lineNumber = l
     type = ContentType.CONDITIONAL
-    content = ArrayList<Content>()
+    children = ArrayList<Content>()
     var str = line.substring(1).trim({ it <= ' ' })
     if (!str.isEmpty()) {
       if (!str.endsWith(":"))
@@ -30,7 +33,7 @@ constructor(l: Int, line: String, current: Container) : Container() {
       val condition = str.substring(0, str.length - 1).trim({ it <= ' ' })
       verifySequenceCondition(condition)
       if (type == ContentType.CONDITIONAL)
-        content.add(ConditionalOptions(condition))
+        children.add(ConditionalOptions(condition))
     }
     parent = current
     parent!!.add(this)
@@ -47,14 +50,14 @@ constructor(l: Int, line: String, current: Container) : Container() {
         if (!str.endsWith(CONDITIONAL_COLON))
           throw InkParseException("Error in conditional block; condition not ended by \':\'. LineNumber: $l")
         val condition = str.substring(1, str.length - 1).trim({ it <= ' ' })
-        content.add(ConditionalOptions(condition))
+        children.add(ConditionalOptions(condition))
       } else {
         InkParser.parseLine(l, str, this)
       }
     } else {
       if (str.startsWith(CONDITIONAL_DASH) && !str.startsWith(Symbol.DIVERT)) {
         val first = str.substring(1).trim({ it <= ' ' })
-        content.add(ConditionalOptions(""))
+        children.add(ConditionalOptions(""))
         InkParser.parseLine(l, first, this)
       } else {
         InkParser.parseLine(l, str, this)
@@ -73,31 +76,31 @@ constructor(l: Int, line: String, current: Container) : Container() {
       type = ContentType.SEQUENCE_ONCE
   }
 
-  override val contentSize: Int
+  override val size: Int
     get() {
-      if (selection >= content.size)
+      if (selection >= children.size)
         return 1
-      val opt = content[selection] as ConditionalOptions
+      val opt = children[selection] as ConditionalOptions
       return opt.lines.size
     }
 
-  override fun getContent(i: Int): Content {
-    if (selection >= content.size)
+  override fun get(i: Int): Content {
+    if (selection >= children.size)
       return Content(lineNumber, "", this)
-    val opt = content[selection] as ConditionalOptions
+    val opt = children[selection] as ConditionalOptions
     return opt.lines[i]
   }
 
-  override fun getContentIndex(c: Content): Int {
-    if (selection >= content.size)
+  override fun indexOf(c: Content): Int {
+    if (selection >= children.size)
       return 0
-    val opt = content[selection] as ConditionalOptions
+    val opt = children[selection] as ConditionalOptions
     return opt.lines.indexOf(c)
   }
 
   @SuppressWarnings("RefusedBequest")
   override fun add(item: Content) {
-    val cond = content[content.size - 1] as ConditionalOptions
+    val cond = children[children.size - 1] as ConditionalOptions
     cond.lines.add(item)
   }
 
@@ -112,34 +115,34 @@ constructor(l: Int, line: String, current: Container) : Container() {
   private fun evaluate(story: Story) {
     when (type) {
       ContentType.CONDITIONAL -> {
-        for (c in content) {
+        for (c in children) {
           val opt = c as ConditionalOptions
-          if (content.indexOf(c) == content.size - 1 && ELSE == opt.condition) {
-            selection = content.indexOf(c)
+          if (children.indexOf(c) == children.size - 1 && ELSE == opt.condition) {
+            selection = children.indexOf(c)
             return
           } else {
             val eval = Variable.evaluate(opt.condition, story)
             if (eval is Boolean) {
               if (eval) {
-                selection = content.indexOf(c)
+                selection = children.indexOf(c)
                 return
               }
             } else {
               val `val` = eval as BigDecimal
               if (`val`.toInt() > 0) {
-                selection = content.indexOf(c)
+                selection = children.indexOf(c)
                 return
               }
             }
           }
         }
         // Failed
-        selection = content.size
+        selection = children.size
       }
-      ContentType.SEQUENCE_CYCLE -> selection = count % content.size
+      ContentType.SEQUENCE_CYCLE -> selection = count % children.size
       ContentType.SEQUENCE_ONCE -> selection = count
-      ContentType.SEQUENCE_SHUFFLE -> selection = Random().nextInt(content.size)
-      ContentType.SEQUENCE_STOP -> selection = if (count >= content.size) content.size - 1 else count
+      ContentType.SEQUENCE_SHUFFLE -> selection = Random().nextInt(children.size)
+      ContentType.SEQUENCE_STOP -> selection = if (count >= children.size) children.size - 1 else count
       else -> story.logException(InkRunTimeException("Invalid conditional type."))
     }
   }
@@ -157,5 +160,6 @@ constructor(l: Int, line: String, current: Container) : Container() {
       return str.startsWith(StoryText.CBRACE_LEFT) && !str.contains(StoryText.CBRACE_RIGHT)
     }
   }
+*/
 
 }

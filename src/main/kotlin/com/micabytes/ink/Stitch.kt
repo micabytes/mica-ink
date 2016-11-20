@@ -3,15 +3,18 @@ package com.micabytes.ink
 import java.util.ArrayList
 
 internal class Stitch
-@SuppressWarnings("StringBufferReplaceableByString")
+
 @Throws(InkParseException::class)
-constructor(l: Int, str: String, current: Container?) : ParameterizedContainer() {
+constructor(lineNumber: Int,
+            content: String,
+            parent: Container?) : Content(lineNumber, content, parent) {
+/*
     init {
         lineNumber = l
         level = 1
         if (current == null)
             throw InkParseException("A stitch cannot be defined without a parent Knot")
-        parent = current.getContainer(0)
+        parent = current.getParent(0)
         parent!!.add(this)
         type = ContentType.STITCH
         var fullId = StringBuilder(parent!!.id).append(InkParser.DOT).append(str.replace(InkParser.HEADER.toString().toRegex(), "").trim({ it <= ' ' })).toString()
@@ -35,5 +38,5 @@ constructor(l: Int, str: String, current: Container?) : ParameterizedContainer()
             return str[0] == InkParser.HEADER && str[1] != InkParser.HEADER
         }
     }
-
+*/
 }

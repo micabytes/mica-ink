@@ -4,8 +4,11 @@ package com.micabytes.ink
 import java.math.BigDecimal
 import java.util.regex.Pattern
 
-class Variable internal constructor(l: Int, str: String, parent: Container) : Content() {
+class Variable internal constructor(lineNumber: Int,
+                                    content: String,
+                                    parent: Container?) : Content(lineNumber, content, parent) {
 
+    /*
     init {
         lineNumber = l
         if (str.startsWith(VAR_)) {
@@ -151,5 +154,5 @@ class Variable internal constructor(l: Int, str: String, parent: Container) : Co
             return true
         }
     }
-
+*/
 }

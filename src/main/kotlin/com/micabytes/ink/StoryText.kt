@@ -40,8 +40,8 @@ private constructor() {
 
         private fun evaluateText(str: String, count: Int, variables: VariableMap): String {
             val s = str.replace(CBRACE_LEFT, "").replace(CBRACE_RIGHT, "")
-            if (s.contains(":"))
-                return evaluateConditionalText(s, variables)
+//            if (s.contains(":"))
+//                return evaluateConditionalText(s, variables)
             if (s.startsWith("&"))
                 return evaluateCycleText(s, count)
             if (s.startsWith("!"))
@@ -93,6 +93,7 @@ private constructor() {
             return tokens[i]
         }
 
+        /*
         @SuppressWarnings("OverlyComplexMethod")
         private fun evaluateConditionalText(str: String, variables: VariableMap): String {
             if (str.startsWith("#")) {
@@ -142,6 +143,7 @@ private constructor() {
             }
 
         }
+    */
     }
 
 }

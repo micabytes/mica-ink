@@ -1,8 +1,10 @@
 package com.micabytes.ink
 
 internal class Gather @Throws(InkParseException::class)
-constructor(l: Int, str: String, current: Container?) : Container() {
-
+constructor(lineNumber: Int,
+            content: String,
+            parent: Container?) : Content(lineNumber, content, parent) {
+/*
     init {
         lineNumber = l
         type = ContentType.GATHER
@@ -14,7 +16,7 @@ constructor(l: Int, str: String, current: Container?) : Container() {
         }
         if (current == null)
             throw InkParseException("A gather must be nested within another knot, parent or choice/gather structure")
-        parent = current.getContainer(level - 1)
+        parent = current.getParent(level - 1)
         parent!!.add(this)
         addLine(s)
     }
@@ -38,5 +40,5 @@ constructor(l: Int, str: String, current: Container?) : Container() {
             return str.startsWith("- ")
         }
     }
-
+*/
 }
