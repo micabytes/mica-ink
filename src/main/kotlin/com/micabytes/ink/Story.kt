@@ -25,6 +25,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
 
   // Story state
   private val fileNames: MutableList<String> = ArrayList()
+  private val storyEnd = Container(0, "", null)
   private var container: Container? = null
   private var contentIdx: Int = 0
   private val text: MutableList<String> = ArrayList()
@@ -34,6 +35,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
   private val variables = HashMap<String, Any>()
   private var processing: Boolean = false
   private var running: Boolean = false
+
 
   init {
     fileNames.add(fileName)
@@ -149,7 +151,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     }
   }
 
-  @SuppressWarnings("OverlyComplexMethod", "OverlyLongMethod", "OverlyNestedMethod", "NestedSwitchStatement")
+  //@SuppressWarnings("OverlyComplexMethod", "OverlyLongMethod", "OverlyNestedMethod", "NestedSwitchStatement")
   @Throws(IOException::class)
   fun loadStream(p: JsonParser) {
     while (p.nextToken() != JsonToken.END_OBJECT) {
@@ -275,7 +277,6 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     } catch (e: InkRunTimeException) {
       logException(e)
     }
-
     functions.put(IS_NULL, NullFunction())
     functions.put(GET_NULL, GetNullFunction())
     functions.put("not", NotFunction())
@@ -312,28 +313,28 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     processing = true
     var ret = Symbol.GLUE
     var content: Content = content
-    var inProgress = true
-    while (inProgress) {
-      inProgress = false
+    var endOfLine = false
+    while (!endOfLine) {
+      endOfLine = true
       ret += resolveContent(content)
       incrementContent(content)
-      if (container != null) {
+      if (container != storyEnd) {
         val nextContent = content
         if (nextContent != null) {
           if (nextContent.text.startsWith(Symbol.GLUE))
-            inProgress = true
+            endOfLine = false
           if (nextContent is Choice && !nextContent.isFallbackChoice)
-            inProgress = true
+            endOfLine = false
           if (nextContent is Stitch)
-            inProgress = true
+            endOfLine = false
           if (nextContent.type == ContentType.TEXT && nextContent.text.startsWith(Symbol.DIVERT)) {
             val divertTo = getDivertTarget(nextContent)
             if (divertTo != null && divertTo.get(0).text.startsWith(Symbol.GLUE))
-              inProgress = true
+              endOfLine = false
           }
         }
         if (ret.endsWith(Symbol.GLUE) && nextContent != null)
-          inProgress = true
+          endOfLine = false
         content = nextContent
       }
     }

@@ -1,56 +1,43 @@
+
+buildscript {
+  ext.kotlin_version = '1.0.5-2'
+  ext.jackson_version = '2.8.4'
+  repositories {
+    //mavenCentral()
+    jcenter()
+  }
+  //noinspection GroovyAssignabilityCheck
+  dependencies {
+    classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.5-2'
+  }
+}
+
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
-//noinspection GroovyUnusedAssignment
-//sourceCompatibility = JavaVersion.VERSION_1_7
-//noinspection GroovyUnusedAssignment
-//targetCompatibility = JavaVersion.VERSION_1_7
-
-repositories {
-    mavenCentral()
+allprojects {
+  repositories {
     jcenter()
-    maven {
-        url "https://oss.sonatype.org/content/repositories/releases"
-    }
-}
+    mavenCentral()
+  }
 
-dependencies {
+//noinspection GroovyAssignabilityCheck
+  dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile 'org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version'
+    //compile "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     // JSON Libraries
     // Remember to modify proguard-rules.pro also
-    compile 'com.fasterxml.jackson.core:jackson-core:2.8.3'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.3'
+    compile 'com.fasterxml.jackson.core:jackson-core:$jackson_version'
+    compile 'com.fasterxml.jackson.core:jackson-databind:$jackson_version'
     //noinspection GradleDynamicVersion
     compile 'com.intellij:annotations:+@jar'
     testCompile 'io.kotlintest:kotlintest:1.3.5'
-//  testCompile 'org.scala-lang:scala-library:2.11.8'
-//  testCompile 'junit:junit:4.5'
-//  testCompile 'org.specs2:specs2-core_2.11:3.7.2'
-//  testCompile 'org.specs2:specs2-junit_2.11:3.7.2'
-//  testCompile 'org.apache.commons:commons-io:1.3.2'
-    //compile "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-}
+  }
 
-//test {
-//    testLogging.showStandardStreams = true
-//}
-
-buildscript {
-    ext.kotlin_version = '1.0.5'
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven {
-            url "https://oss.sonatype.org/content/repositories/releases"
-        }
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
-sourceSets {
+//noinspection GroovyAssignabilityCheck
+  sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
-    main.kotlin.srcDirs += 'src/main/kotlin'
+    test.java.srcDirs += 'src/test/kotlin'
+  }
 }

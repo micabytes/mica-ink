@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/jInk.iml" filepath="$PROJECT_DIR$/.idea/modules/jInk.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/jInk.iml" filepath="$PROJECT_DIR$/.idea/jInk.iml" />
     </modules>
   </component>
 </project>
