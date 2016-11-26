@@ -1,11 +1,15 @@
 package com.micabytes.ink
 
 open class Content(internal val lineNumber: Int,
-                   internal val content: String,
+                   internal val text: String,
                    internal val parent: Container?) {
   open internal val id: String = if (parent != null) parent.id + InkParser.DOT + parent.indexOf(this) else ""
   internal val type = ContentType.TEXT
   internal var count: Int = 0
+
+  fun  getText(story: Story): String {
+    return StoryText.getText(text, count, story)
+  }
 
   /*
   val isKnot: Boolean

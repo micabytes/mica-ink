@@ -94,7 +94,7 @@ class Variable internal constructor(lineNumber: Int,
         } else {
             story.putVariable(variable, evaluate(value, story))
         }
-    }
+    }*/
 
     companion object {
          private val VAR_ = "VAR "
@@ -108,6 +108,7 @@ class Variable internal constructor(lineNumber: Int,
          private val RETURN = Symbol.RETURN
          private val RETURNEQ = "return ="
 
+      /*
         fun isVariableHeader(str: String): Boolean {
             return str.startsWith(VAR_) || str.startsWith(TILDE_)
         }
@@ -153,6 +154,7 @@ class Variable internal constructor(lineNumber: Int,
 
             return true
         }
+        */
     }
-*/
+
 }

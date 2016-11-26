@@ -1,6 +1,7 @@
 package com.micabytes.ink
 
 import java.io.InputStream
+import java.util.*
 import java.util.regex.Pattern
 
 object InkParser {
@@ -28,14 +29,15 @@ object InkParser {
   @Throws(InkParseException::class)
   fun parse(inputStream: InputStream, provider: StoryWrapper, fileName: String): Story {
     val story = Story(provider, fileName)
+    val content = HashMap<String, Content>()
     inputStream.reader(Charsets.UTF_8).buffered(DEFAULT_BUFFER_SIZE).use {
       var line: String? = it.readLine()
       var lineNumber = 1
-      var current: Container = Knot(lineNumber, "=== " + DEFAULT_KNOT_NAME)
-      story.add(current)
-      var conditional: Conditional? = null
+      var currentContainer: Container? = null
+      var current: Content? = null
       while (line != null) {
-        var trimmedLine = line.trim { it <= ' ' }
+        parseLine(lineNumber, line.trim { it <= ' ' })
+        /*
         if (trimmedLine.contains("//")) {
           val comment = trimmedLine.substring(trimmedLine.indexOf("//")).trim({ it <= ' ' })
           parseComment(lineNumber, comment, current)
@@ -45,7 +47,10 @@ object InkParser {
           val includeFile = trimmedLine.replace(INCLUDE, "").trim({ it <= ' ' })
           val incl = parse(provider, includeFile)
           story.addAll(incl)
-        } else if (conditional != null) {
+        }
+        */
+        /*
+        else if (conditional != null) {
           val cond = current.get(current.size - 1) as Conditional
           //cond.parseLine(lineNumber, trimmedLine)
           if (trimmedLine.endsWith(CONDITIONAL_END))
@@ -64,43 +69,47 @@ object InkParser {
             conditional = cont as Conditional?
           }
         }
+        */
         line = it.readLine()
         lineNumber++
       }
-      story.initialize()
     }
     return story
   }
 
+  //var current: Container = Knot(lineNumber, "=== " + DEFAULT_KNOT_NAME)
+  //story.add(current)
+  //var conditional: Conditional? = null
+
   @SuppressWarnings("OverlyComplexMethod")
   @Throws(InkParseException::class)
-  internal fun parseLine(lineNumber: Int, trimmedLine: String, current: Container): Content? {
-    val firstChar = if (trimmedLine.isEmpty()) WHITESPACE else trimmedLine[0]
+  internal fun parseLine(lineNumber: Int, line: String, current: Container): Content? {
+    val firstChar = if (line.isEmpty()) WHITESPACE else line[0]
     when (firstChar) {
       HEADER -> {
-        //if (KnotFunction.isFunctionHeader(trimmedLine)) {
-        //  return KnotFunction(lineNumber, trimmedLine)
+        //if (KnotFunction.isFunctionHeader(line)) {
+        //  return KnotFunction(lineNumber, line)
         //}
-        if (Knot.isKnotHeader(trimmedLine)) {
-          return Knot(lineNumber, trimmedLine)
+        if (Knot.isKnotHeader(line)) {
+          return Knot(lineNumber, line)
         }
-        //if (Stitch.isStitchHeader(trimmedLine)) {
-        //  return Stitch(lineNumber, trimmedLine, current)
+        //if (Stitch.isStitchHeader(line)) {
+        //  return Stitch(lineNumber, line, current)
         //}
       }
-      CHOICE_DOT, CHOICE_PLUS -> if (Choice.isChoiceHeader(trimmedLine))
-        return Choice(lineNumber, trimmedLine, current)
-      //GATHER_DASH -> if (Gather.isGatherHeader(trimmedLine))
-      //  return Gather(lineNumber, trimmedLine, current)
-      //VAR_DECL, VAR_STAT -> if (Variable.isVariableHeader(trimmedLine))
-      //  return Variable(lineNumber, trimmedLine, current)
-      //CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(trimmedLine))
-      //  return Conditional(lineNumber, trimmedLine, current)
+      CHOICE_DOT, CHOICE_PLUS -> if (Choice.isChoiceHeader(line))
+        return Choice(lineNumber, line, current)
+      //GATHER_DASH -> if (Gather.isGatherHeader(line))
+      //  return Gather(lineNumber, line, current)
+      //VAR_DECL, VAR_STAT -> if (Variable.isVariableHeader(line))
+      //  return Variable(lineNumber, line, current)
+      //CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(line))
+      //  return Conditional(lineNumber, line, current)
       else -> {
       }
     }
-    if (!trimmedLine.isEmpty()) {
-      return Content(lineNumber, trimmedLine, current)
+    if (!line.isEmpty()) {
+      return Content(lineNumber, line, current)
     }
     return null
   }
@@ -123,7 +132,6 @@ object InkParser {
   }
 
 }
-
 
 
 /*

@@ -1,14 +1,12 @@
-
 buildscript {
   ext.kotlin_version = '1.0.5-2'
   ext.jackson_version = '2.8.4'
   repositories {
-    //mavenCentral()
     jcenter()
   }
   //noinspection GroovyAssignabilityCheck
   dependencies {
-    classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.0.5-2'
+    classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version'
   }
 }
 
@@ -18,10 +16,9 @@ apply plugin: 'kotlin'
 allprojects {
   repositories {
     jcenter()
-    mavenCentral()
   }
 
-//noinspection GroovyAssignabilityCheck
+  //noinspection GroovyAssignabilityCheck
   dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version'
@@ -35,7 +32,7 @@ allprojects {
     testCompile 'io.kotlintest:kotlintest:1.3.5'
   }
 
-//noinspection GroovyAssignabilityCheck
+  //noinspection GroovyAssignabilityCheck
   sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
     test.java.srcDirs += 'src/test/kotlin'

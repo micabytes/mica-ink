@@ -1,282 +1,30 @@
 package com.micabytes.ink
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
-import com.fasterxml.jackson.databind.JsonNode
-
-import java.io.IOException
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
 import java.math.BigDecimal
-import java.util.ArrayList
-import java.util.Collections
-import java.util.HashMap
-import java.util.Random
-import java.util.TreeMap
+import java.util.*
 
-class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap {
-  // All the children in the story
-  private val storyContent = HashMap<String, Content>()
-  // All defined functions with name and implementation.
-  private val functions = TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER)
-  // All story interrupts currently active
-  private val interrupts = ArrayList<StoryInterrupt>()
-
-  // Story state
+class Story(internal val wrapper: StoryWrapper, fileName: String, internal var container: Container) : VariableMap {
+  // Story Content
   private val fileNames: MutableList<String> = ArrayList()
+  private val content = HashMap<String, Content>()
+  private val functions = TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER)
+  private val interrupts = ArrayList<StoryInterrupt>()
   private val storyEnd = Container(0, "", null)
-  private var container: Container? = null
-  private var contentIdx: Int = 0
+  // Story state
+  //private var container: Container? = null
+  private var containerIdx: Int = 0
   private val text: MutableList<String> = ArrayList()
   private val choices = ArrayList<Container>()
-  private val comments = ArrayList<Comment>()
-  private var image: String? = null
   private val variables = HashMap<String, Any>()
-  private var processing: Boolean = false
-  private var running: Boolean = false
-
+  //private val comments = ArrayList<Comment>()
+  //private var image: String? = null
+  //private var processing: Boolean = false
+  //private var running: Boolean = false
 
   init {
     fileNames.add(fileName)
-  }
-
-  @Throws(InkParseException::class)
-  fun include(fileName: String) {
-    if (!fileNames.contains(fileName)) {
-      val st = InkParser.parse(wrapper.getStream(fileName), wrapper, fileName)
-      addAll(st)
-    }
-  }
-
-  @SuppressWarnings("OverlyComplexMethod", "OverlyNestedMethod")
-  @Throws(IOException::class)
-  fun saveStream(g: JsonGenerator) {
-    g.writeStartObject()
-    g.writeFieldName(StoryJson.FILES)
-    g.writeStartArray()
-    for (s in fileNames) {
-      g.writeString(s)
-    }
-    g.writeEndArray()
-    g.writeFieldName(StoryJson.CONTENT)
-    g.writeStartObject()
-    for ((key1, content1) in storyContent) {
-      if (content.count > 0) {
-        g.writeFieldName(content.id)
-        g.writeStartObject()
-        g.writeNumberField(StoryJson.COUNT, content.count)
-        if (content is ParameterizedContainer) {
-          if (content.getVariables() != null) {
-            g.writeFieldName(StoryJson.VARIABLES)
-            g.writeStartObject()
-            for ((key, value) in content.getVariables()!!) {
-              saveObject(g, key, value)
-              if (value == null) {
-                wrapper.logDebug("Wrote a null value for " + key)
-              }
-            }
-            g.writeEndObject()
-          }
-        }
-        g.writeEndObject()
-      }
-    }
-    g.writeEndObject()
-    if (container != null)
-      g.writeStringField(StoryJson.CONTAINER, container!!.id)
-    g.writeNumberField(StoryJson.COUNTER, contentIdx)
-    g.writeFieldName(StoryJson.TEXT)
-    g.writeStartArray()
-    for (s in text) {
-      g.writeString(s)
-    }
-    g.writeEndArray()
-    g.writeFieldName(StoryJson.CHOICES)
-    g.writeStartArray()
-    for (choice in choices) {
-      g.writeString(choice.id)
-    }
-    g.writeEndArray()
-    if (image != null)
-      g.writeStringField(StoryJson.IMAGE, image)
-    g.writeFieldName(StoryJson.VARIABLES)
-    g.writeStartObject()
-    for ((key, value) in variables) {
-      if (value != null) {
-        saveObject(g, key, value)
-      } else {
-        saveObject(g, key, null)
-      }
-    }
-    g.writeEndObject()
-    g.writeBooleanField(StoryJson.RUNNING, running)
-    g.writeEndObject()
-  }
-
-  @SuppressWarnings("rawtypes", "unchecked", "NullArgumentToVariableArgMethod")
-  @Throws(IOException::class)
-  private fun saveObject(g: JsonGenerator, key: String, `val`: Any?) {
-    if (`val` == null) {
-      g.writeNullField(key)
-      return
-    }
-    if (`val` is Boolean) {
-      g.writeBooleanField(key, (`val` as Boolean?)!!)
-      return
-    }
-    if (`val` is BigDecimal) {
-      g.writeNumberField(key, `val` as BigDecimal?)
-      return
-    }
-    if (`val` is String) {
-      g.writeStringField(key, `val` as String?)
-      return
-    }
-    val valClass = `val`.javaClass
-    try {
-      val m = valClass.getMethod(GET_ID, null)
-      val id = m.invoke(`val`, null)
-      g.writeStringField(key, id as String)
-    } catch (e: IllegalAccessException) {
-      wrapper.logError("SaveObject: Could not save " + key + ": " + `val` + ". Not Boolean, Number, String and not an Object. " + e.message)
-    } catch (e: IllegalArgumentException) {
-      wrapper.logError("SaveObject: Could not save " + key + ": " + `val` + ". Not Boolean, Number, String and not an Object. " + e.message)
-    } catch (e: SecurityException) {
-      wrapper.logError("SaveObject: Could not save " + key + ": " + `val` + ". Not Boolean, Number, String and not an Object. " + e.message)
-    } catch (e: InvocationTargetException) {
-      wrapper.logError("SaveObject: Could not save " + key + ": " + `val` + ". Not Boolean, Number, String and not an Object. " + e.message)
-    } catch (e: NoSuchMethodException) {
-      wrapper.logError("SaveObject: Could not save " + key + ": " + `val` + ". Not Boolean, Number, String and not an Object. " + e.message)
-    }
-  }
-
-  //@SuppressWarnings("OverlyComplexMethod", "OverlyLongMethod", "OverlyNestedMethod", "NestedSwitchStatement")
-  @Throws(IOException::class)
-  fun loadStream(p: JsonParser) {
-    while (p.nextToken() != JsonToken.END_OBJECT) {
-      when (p.currentName) {
-        StoryJson.CONTENT -> {
-          p.nextToken() // START_OBJECT
-          while (p.nextToken() != JsonToken.END_OBJECT) {
-            val cid = p.currentName
-            val content = storyContent[cid]
-            p.nextToken() // START_OBJECT
-            while (p.nextToken() != JsonToken.END_OBJECT) {
-              when (p.currentName) {
-                StoryJson.COUNT -> if (content != null)
-                  content.count = p.nextIntValue(0)
-                StoryJson.VARIABLES -> {
-                  p.nextToken() // START_OBJECT
-                  val pContainer = content as ParameterizedContainer?
-                  while (p.nextToken() != JsonToken.END_OBJECT) {
-                    val varName = p.currentName
-                    val obj = loadObjectStream(p)
-                    if (pContainer != null && pContainer.getVariables() != null)
-                      pContainer.getVariables()!!.put(varName, obj)
-                  }
-                }
-                else -> {
-                }
-              }// The way this is used in P&T2, this is not actually an error.
-              // wrapper.logException(new InkLoadingException("Attempting to write COUNT " + Integer.toString(p.nextIntValue(0)) + " to children " + cid + "."));
-            }
-          }
-        }
-        StoryJson.CONTAINER -> container = storyContent[p.nextTextValue()] as Container
-        StoryJson.COUNTER -> contentIdx = p.nextIntValue(0)
-        StoryJson.TEXT -> {
-          p.nextToken() // START_ARRAY
-          while (p.nextToken() != JsonToken.END_ARRAY) {
-            text.add(p.text)
-          }
-        }
-        StoryJson.CHOICES -> {
-          p.nextToken() // START_ARRAY
-          while (p.nextToken() != JsonToken.END_ARRAY) {
-            val cnt = storyContent[p.text]
-            if (cnt is Choice)
-              choices.add(cnt as Container)
-            else wrapper?.logException(InkLoadingException(p.text + " is not a choice"))
-          }
-        }
-        StoryJson.IMAGE -> image = p.nextTextValue()
-        StoryJson.VARIABLES -> {
-          p.nextToken() // START_OBJECT
-          while (p.nextToken() != JsonToken.END_OBJECT) {
-            val varName = p.currentName
-            val obj = loadObjectStream(p)
-            variables.put(varName, obj)
-          }
-        }
-        StoryJson.RUNNING -> running = p.nextBooleanValue()!!
-        else -> {
-        }
-      }
-    }
-  }
-
-  @Throws(IOException::class)
-  private fun loadObjectStream(p: JsonParser): Any? {
-    val token = p.nextToken()
-    if (token == JsonToken.VALUE_NULL)
-      return null
-    if (token.isBoolean)
-      return p.booleanValue
-    if (token.isNumeric)
-      return BigDecimal(p.text)
-    val str = p.text
-    val obj = wrapper.getStoryObject(str) ?: return str
-    return obj
-  }
-
-  fun addAll(story: Story) {
-    // TODO: Need to handle name collisions
-    storyContent.putAll(story.storyContent)
-    functions.putAll(story.functions)
-    variables.putAll(story.variables)
-    for (s in story.fileNames) {
-      if (!fileNames.contains(s))
-        fileNames.add(s)
-    }
-  }
-
-  fun addInterrupt(interrupt: StoryInterrupt) {
-    interrupts.add(interrupt)
-    val fileId = interrupt.interruptFile
-    for (f in fileNames) {
-      if (f == fileId) return  // No need to add the data again.
-    }
-    if (interrupt.isChoice) {
-      val choice = Choice(interrupt.id, 0, interrupt.interrupt, null)
-      storyContent.put(choice.id, choice)
-    }
-    if (fileId != null) {
-      try {
-        val st = InkParser.parse(wrapper.getStream(fileId), wrapper, fileId)
-        addAll(st)
-      } catch (e: InkParseException) {
-        wrapper.logException(e)
-      }
-
-    }
-  }
-
-  internal fun initialize() {
     variables.put(Variable.TRUE_UC, BigDecimal.ONE)
     variables.put(Variable.FALSE_UC, BigDecimal.ZERO)
-    if (container != null && container!!.type == ContentType.KNOT) {
-      if (container!!.get(0) is Stitch)
-        container = container!!.get(0) as Container
-    }
-    contentIdx = -1
-    running = true
-    processing = true
-    try {
-      incrementContent(null)
-    } catch (e: InkRunTimeException) {
-      logException(e)
-    }
     functions.put(IS_NULL, NullFunction())
     functions.put(GET_NULL, GetNullFunction())
     functions.put("not", NotFunction())
@@ -285,67 +33,101 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     functions.put(FLOOR, FloorFunction())
   }
 
-  @Throws(InkRunTimeException::class)
-  fun nextAll(): List<String> {
-    text.clear()
-    val ret = ArrayList<String>()
-    while (hasNext()) {
-      val txt = next()
-      if (!txt.isEmpty())
-        ret.add(txt)
-    }
-    text.addAll(ret)
-    return ret
+  fun add(story: Story) {
+    // TODO: Need to handle name collisions
+    content.putAll(story.content)
+    functions.putAll(story.functions)
+    variables.putAll(story.variables)
+    story.fileNames
+        .filterNot { fileNames.contains(it) }
+        .forEach { fileNames.add(it) }
   }
 
   private operator fun hasNext(): Boolean {
+    /*
     if (!processing) return false
     if (container == null)
       return false
-    return contentIdx < container!!.size
+    return containerIdx < container!!.size
+    */
+    return true
   }
 
-  @SuppressWarnings("NonConstantStringShouldBeStringBuffer", "OverlyComplexMethod", "StringConcatenationInLoop")
   @Throws(InkRunTimeException::class)
-  private operator fun next(): String {
+  fun next(): List<String> {
     if (!hasNext())
       throw InkRunTimeException("Did you forget to run canContinue()?")
-    processing = true
-    var ret = Symbol.GLUE
-    var content: Content = content
-    var endOfLine = false
-    while (!endOfLine) {
-      endOfLine = true
-      ret += resolveContent(content)
-      incrementContent(content)
-      if (container != storyEnd) {
-        val nextContent = content
-        if (nextContent != null) {
-          if (nextContent.text.startsWith(Symbol.GLUE))
-            endOfLine = false
-          if (nextContent is Choice && !nextContent.isFallbackChoice)
-            endOfLine = false
-          if (nextContent is Stitch)
-            endOfLine = false
-          if (nextContent.type == ContentType.TEXT && nextContent.text.startsWith(Symbol.DIVERT)) {
-            val divertTo = getDivertTarget(nextContent)
-            if (divertTo != null && divertTo.get(0).text.startsWith(Symbol.GLUE))
-              endOfLine = false
-          }
+    var current = container.get(containerIdx)
+    var currentText = Symbol.GLUE
+    while (hasNext()) {
+      when (current) {
+        is Choice -> {
+          choices.add(current)
+          containerIdx++
         }
-        if (ret.endsWith(Symbol.GLUE) && nextContent != null)
-          endOfLine = false
-        content = nextContent
+      //is Comment -> comments.add(current)
+      //is Variable -> content.evaluate(this)
+        is Divert -> {
+          container = current.resolveDivert(this)
+          containerIdx = 0
+        }
+      // is ..
+      // is Tunnel
+        else -> {
+          val nextText = current.getText(this)
+          if (currentText.endsWith(Symbol.GLUE) || nextText.startsWith(Symbol.GLUE))
+            currentText += nextText
+          else {
+            text.add(currentText)
+            currentText = nextText
+          }
+          containerIdx++
+        }
       }
+      current = container.get(containerIdx)
     }
+    return text
+  }
+
+    /*
+    incrementContent()
+    if (content.type == ContentType.TEXT) {
+      val ret = if (content is Divert) resolveDivert(content) else
+      content.increment()
+      return ret
+    }
+    //ret += resolveContent(current)
+    //incrementContent(content)
+    if (container != storyEnd) {
+      val nextContent = content
+      if (nextContent != null) {
+        if (nextContent.text.startsWith(Symbol.GLUE))
+          endOfLine = false
+        if (nextContent is Choice && !nextContent.isFallbackChoice)
+          endOfLine = false
+        if (nextContent is Stitch)
+          endOfLine = false
+        if (nextContent.type == ContentType.TEXT && nextContent.text.startsWith(Symbol.DIVERT)) {
+          val divertTo = getDivertTarget(nextContent)
+          if (divertTo != null && divertTo.get(0).text.startsWith(Symbol.GLUE))
+            endOfLine = false
+        }
+      }
+      if (ret.endsWith(Symbol.GLUE) && nextContent != null)
+        endOfLine = false
+      content = nextContent
+    }
+    */
+       /*
     if (container != null && container!!.background != null) {
       image = container!!.background
     }
     if (!hasNext()) {
       resolveExtras()
     }
-    return cleanUpText(ret)
-  }
+    //return cleanUpText(ret)
+  //var cntent: Content = content
+  //var endOfLine = false
 
   private fun resolveExtras() {
     for (interrupt in interrupts) {
@@ -362,7 +144,6 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
         } catch (e: InkRunTimeException) {
           wrapper.logException(e)
         }
-
       }
     }
   }
@@ -377,7 +158,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
       else
         running = false
       container = divertTarget
-      contentIdx = 0
+      containerIdx = 0
       choices.clear()
       return
     }
@@ -385,11 +166,11 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
       val nextContainer = content as Container?
       nextContainer!!.initialize(this, content)
       container = nextContainer
-      contentIdx = 0
+      containerIdx = 0
       return
     }
-    contentIdx++
-    if (container != null && contentIdx >= container!!.size) {
+    containerIdx++
+    if (container != null && containerIdx >= container!!.size) {
       if (choices.isEmpty() && (container is Choice || container is Gather)) {
         var c: Container = container
         var p = c.parent
@@ -401,13 +182,13 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
               val newContainer = n as Container
               newContainer.initialize(this, content)
               container = newContainer
-              contentIdx = 0
+              containerIdx = 0
               choices.clear()
               return
             }
             if (n is Choice && container !is Gather) {
               container = p
-              contentIdx = i
+              containerIdx = i
               choices.clear()
               return
             }
@@ -417,14 +198,14 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
           p = c.parent
         }
         container = null
-        contentIdx = 0
+        containerIdx = 0
         choices.clear()
         return
       }
       if (container is Conditional) {
         val oldContainer = container
         container = oldContainer!!.parent
-        contentIdx = if (container != null) container!!.indexOf(oldContainer) + 1 else 0
+        containerIdx = if (container != null) container!!.indexOf(oldContainer) + 1 else 0
       }
     } else {
       val next = content
@@ -432,7 +213,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
         val nextContainer = next as Container?
         nextContainer!!.initialize(this, content)
         container = nextContainer
-        contentIdx = 0
+        containerIdx = 0
         choices.clear()
         return
       }
@@ -440,7 +221,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
         val nextContainer = next as Container?
         nextContainer!!.initialize(this, content)
         container = nextContainer
-        contentIdx = 0
+        containerIdx = 0
         return
       }
       if (next != null && next is Gather) {
@@ -449,16 +230,16 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     }
   }
 
-  private val content: Content?
+  private val nxtcontent: Content?
     @Throws(InkRunTimeException::class)
     get() {
       if (!running)
         return null
       if (container == null)
         throw InkRunTimeException("Current text container is NULL.")
-      if (contentIdx >= container!!.size)
+      if (containerIdx >= container!!.size)
         return null
-      return container!!.get(contentIdx)
+      return container!!.get(containerIdx)
     }
 
   @SuppressWarnings("ChainOfInstanceofChecks")
@@ -479,6 +260,8 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
       content.evaluate(this)
     return ""
   }
+  */
+  /*
 
   private fun resolveDivert(content: Content): String {
     var ret = StoryText.getText(content.text, content.count, this)
@@ -563,7 +346,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     if (choice.getChoiceText(this).isEmpty()) {
       if (choices.isEmpty()) {
         container = choice
-        contentIdx = 0
+        containerIdx = 0
       }
       // else nothing - this is a fallback choice and we ignore it
     } else {
@@ -578,16 +361,16 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
       container = choices[i]
       if (container == null) {
         val oldId = if (old != null) old.id else "null"
-        throw InkRunTimeException("Selected choice $i is null in $oldId and $contentIdx")
+        throw InkRunTimeException("Selected choice $i is null in $oldId and $containerIdx")
       }
       container!!.count++
       completeExtras(container)
-      contentIdx = 0
+      containerIdx = 0
       choices.clear()
       processing = true
     } else {
       val cId = if (container != null) container!!.id else "null"
-      throw InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + cId + " cIndex: " + contentIdx)
+      throw InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + cId + " cIndex: " + containerIdx)
     }
   }
 
@@ -606,46 +389,6 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     }
   }
 
-  @SuppressWarnings("OverlyComplexMethod")
-  override fun getValue(token: String): Any {
-    if (Symbol.THIS == token) {
-      if (container != null)
-        return container!!.id
-      else {
-        wrapper.logError("Attempting to invoke this with null container in " + fileNames[0])
-        return ""
-      }
-    }
-    var c = container
-    while (c != null) {
-      if (c is Knot || c is Function || c is Stitch) {
-        if ((c as ParameterizedContainer).hasValue(token))
-          return c.getValue(token)
-      }
-      c = c.parent
-    }
-    if (token.startsWith(Symbol.DIVERT)) {
-      val k = token.substring(2).trim({ it <= ' ' })
-      if (storyContent.containsKey(k))
-        return storyContent[k]
-      wrapper.logException(InkRunTimeException("Could not identify container id: " + k))
-      return BigDecimal.ZERO
-    }
-    if (storyContent.containsKey(token)) {
-      val storyContainer = storyContent[token] as Container
-      return BigDecimal.valueOf(storyContainer.count.toLong())
-    }
-    val pathId = getValueId(token)
-    if (storyContent.containsKey(pathId)) {
-      val storyContainer = storyContent[pathId] as Container
-      return BigDecimal.valueOf(storyContainer.count.toLong())
-    }
-    if (variables.containsKey(token)) {
-      return variables[token]
-    }
-    wrapper.logException(InkRunTimeException("Could not identify the variable $token or $pathId"))
-    return BigDecimal.ZERO
-  }
 
   private fun getValueId(id: String): String {
     if (id == Symbol.DIVERT_END)
@@ -677,23 +420,6 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
   val isEnded: Boolean
     get() = container == null
 
-  override fun hasVariable(token: String): Boolean {
-    if (Character.isDigit(token[0]))
-      return false
-    var c = container
-    while (c != null) {
-      if (c is Knot || c is Function || c is Stitch) {
-        if ((c as ParameterizedContainer).hasValue(token))
-          return true
-      }
-      c = c.parent
-    }
-    if (storyContent.containsKey(token))
-      return true
-    if (storyContent.containsKey(getValueId(token)))
-      return true
-    return variables.containsKey(token)
-  }
 
   fun putVariable(key: String, value: Any) {
     var c = container
@@ -713,40 +439,10 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     return storyContent[key] as Container
   }
 
-  override fun hasFunction(token: String): Boolean {
-    return functions.containsKey(token)
-  }
-
-  override fun getFunction(token: String): Function {
-    return functions.get(token)
-  }
-
-  override fun checkObject(token: String): Boolean {
-    if (token.contains(".")) {
-      return hasVariable(token.substring(0, token.indexOf(InkParser.DOT.toInt())))
-    }
-    return false
-  }
-
-  override fun debugInfo(): String {
-    var ret = ""
-    ret += "StoryDebugInfo File: " + fileNames
-    ret += if (container != null) " Container :" + container!!.id else " Container: null"
-    if (container != null && contentIdx < container!!.size) {
-      val cnt = container!!.get(contentIdx)
-      ret += if (cnt != null) " Line# :" + Integer.toString(cnt.lineNumber) else " Line#: ?"
-    }
-    return ret
-  }
-
   fun setContainer(s: String) {
     val c = storyContent[s] as Container
     if (c != null)
       container = c
-  }
-
-  override fun logException(e: Exception) {
-    wrapper?.logException(e)
   }
 
   // Legacy function used to set text
@@ -781,8 +477,100 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
       val contId = if (container != null) container!!.id else "null"
       return "Story errors with FileName: " + fileId
       +". Container: " + contId
-      +". ContentIdx: " + contentIdx
+      +". ContentIdx: " + containerIdx
     }
+
+  */
+
+  override fun logException(e: Exception) {
+    wrapper.logException(e)
+  }
+
+  override fun getValue(token: String): Any {
+    if (Symbol.THIS == token)
+        return container.id
+    //var c : Container? = container
+    /*
+    while (c != null) {
+      if (c is Knot || c is Function || c is Stitch) {
+        if ((c as ParameterizedContainer).hasValue(token))
+          return c.getValue(token)
+      }
+      c = c.parent
+    }
+    if (token.startsWith(Symbol.DIVERT)) {
+      val k = token.substring(2).trim({ it <= ' ' })
+      if (storyContent.containsKey(k))
+        return storyContent[k]
+      wrapper.logException(InkRunTimeException("Could not identify container id: " + k))
+      return BigDecimal.ZERO
+    }
+    if (storyContent.containsKey(token)) {
+      val storyContainer = storyContent[token] as Container
+      return BigDecimal.valueOf(storyContainer.count.toLong())
+    }
+    val pathId = getValueId(token)
+    if (storyContent.containsKey(pathId)) {
+      val storyContainer = storyContent[pathId] as Container
+      return BigDecimal.valueOf(storyContainer.count.toLong())
+    }
+    if (variables.containsKey(token)) {
+      return variables[token]
+    }
+    wrapper.logException(InkRunTimeException("Could not identify the variable $token or $pathId"))
+    */
+    return BigDecimal.ZERO
+  }
+
+  override fun hasVariable(token: String): Boolean {
+    /*
+    if (Character.isDigit(token[0]))
+      return false
+    var c = container
+    while (c != null) {
+      if (c is Knot || c is Function || c is Stitch) {
+        if ((c as ParameterizedContainer).hasValue(token))
+          return true
+      }
+      c = c.parent
+    }
+    if (storyContent.containsKey(token))
+      return true
+    if (storyContent.containsKey(getValueId(token)))
+      return true
+      */
+    return variables.containsKey(token)
+  }
+
+  override fun hasFunction(token: String): Boolean {
+    return functions.containsKey(token)
+  }
+
+  override fun getFunction(token: String): Function {
+    if (hasFunction(token))
+      return functions.get(token)!!
+    return NullFunction()
+    // TODO: Empty Function
+  }
+
+  override fun checkObject(token: String): Boolean {
+    /*
+    if (token.contains(".")) {
+      return hasVariable(token.substring(0, token.indexOf(InkParser.DOT.toInt())))
+    }*/
+    return false
+  }
+
+  override fun debugInfo(): String {
+    var ret = ""
+    ret += "StoryDebugInfo File: " + fileNames
+    ret += if (true) " Container :" + container.id else " Container: null"
+    if (containerIdx < container.size) {
+      val cnt = container.get(containerIdx)
+      ret += if (true) " Line# :" + Integer.toString(cnt.lineNumber) else " Line#: ?"
+    }
+    return ret
+  }
 
   private class NullFunction : Function {
 
@@ -794,8 +582,9 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
 
     @Throws(InkRunTimeException::class)
     override fun eval(params: List<Any>, vmap: VariableMap): Any {
-      val param = params[0]
-      return param == null
+      //val param = params[0]
+      //return param == null
+      return false
     }
   }
 
@@ -808,8 +597,8 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
       get() = true
 
     @Throws(InkRunTimeException::class)
-    override fun eval(params: List<Any>, vmap: VariableMap): Any? {
-      return null
+    override fun eval(params: List<Any>, vmap: VariableMap): Any {
+      return false
     }
   }
 
@@ -863,10 +652,10 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
 
     @Throws(InkRunTimeException::class)
     override fun eval(params: List<Any>, vmap: VariableMap): Any {
-      val param = params[0]
-      if (param is String && vmap.getValue(Symbol.THIS) != null) {
-        return param == vmap.getValue(Symbol.THIS)
-      }
+      //val param = params[0]
+      //if (param is String && vmap.getValue(Symbol.THIS) != null) {
+      //  return param == vmap.getValue(Symbol.THIS)
+      //}
       return java.lang.Boolean.FALSE
     }
   }
@@ -889,15 +678,16 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     }
   }
 
+
   companion object {
-    private val GET_ID = "getId"
     private val IS_NULL = "isNull"
     private val GET_NULL = "getNull"
     private val RANDOM = "random"
     private val IS_KNOT = "isKnot"
     private val FLOOR = "floor"
-    private val CURRENT_BACKGROUND = "currentBackground"
+    //private val CURRENT_BACKGROUND = "currentBackground"
 
+    /*
     private fun loadObject(v: JsonNode, provider: StoryWrapper): Any? {
       val node = v.get("val")
       if (node != null) {
@@ -930,6 +720,23 @@ class Story(internal val wrapper: StoryWrapper, fileName: String) : VariableMap 
     private fun isContainerEmpty(c: Container): Boolean {
       return c.size == 0
     }
+    */
   }
 
 }
+
+
+/*
+@Throws(InkRunTimeException::class)
+fun nextAll(): List<String> {
+  text.clear()
+  val ret = ArrayList<String>()
+  while (hasNext()) {
+    val txt = next()
+    if (!txt.isEmpty())
+      ret.add(txt)
+  }
+  text.addAll(ret)
+  return ret
+}
+*/
