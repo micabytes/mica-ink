@@ -3,10 +3,10 @@ package com.micabytes.ink
 import java.math.BigDecimal
 import java.util.*
 
-class Story(internal val wrapper: StoryWrapper, fileName: String, internal var container: Container) : VariableMap {
+class Story(internal val wrapper: StoryWrapper, fileName: String, internal var container: Container, internal val content: HashMap<String, Content>) : VariableMap {
   // Story Content
   private val fileNames: MutableList<String> = ArrayList()
-  private val content = HashMap<String, Content>()
+  //private val content = HashMap<String, Content>()
   private val functions = TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER)
   private val interrupts = ArrayList<StoryInterrupt>()
   private val storyEnd = Container(0, "", null)

@@ -108,6 +108,10 @@ class Variable internal constructor(lineNumber: Int,
          private val RETURN = Symbol.RETURN
          private val RETURNEQ = "return ="
 
+      fun evaluate(condition: String, story: VariableMap): Any {
+        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+      }
+
       /*
         fun isVariableHeader(str: String): Boolean {
             return str.startsWith(VAR_) || str.startsWith(TILDE_)

@@ -28,15 +28,18 @@ object InkParser {
 
   @Throws(InkParseException::class)
   fun parse(inputStream: InputStream, provider: StoryWrapper, fileName: String): Story {
-    val story = Story(provider, fileName)
     val content = HashMap<String, Content>()
+    var topContainer: Container? = null
     inputStream.reader(Charsets.UTF_8).buffered(DEFAULT_BUFFER_SIZE).use {
       var line: String? = it.readLine()
       var lineNumber = 1
       var currentContainer: Container? = null
       var current: Content? = null
       while (line != null) {
-        parseLine(lineNumber, line.trim { it <= ' ' })
+        println(line)
+        current = parseLine(lineNumber, line.trim { it <= ' ' }, currentContainer)
+        if (current is Container)
+          currentContainer = current
         /*
         if (trimmedLine.contains("//")) {
           val comment = trimmedLine.substring(trimmedLine.indexOf("//")).trim({ it <= ' ' })
@@ -70,11 +73,16 @@ object InkParser {
           }
         }
         */
+        if (current != null)
+          content.put(current.id, current)
+        if (currentContainer != null && topContainer == null)
+          topContainer = currentContainer
         line = it.readLine()
         lineNumber++
       }
     }
-    return story
+    if (topContainer == null) throw InkParseException("Could not detect a root knot node in " + fileName)
+    return Story(provider, fileName, topContainer!!, content)
   }
 
   //var current: Container = Knot(lineNumber, "=== " + DEFAULT_KNOT_NAME)
@@ -83,34 +91,35 @@ object InkParser {
 
   @SuppressWarnings("OverlyComplexMethod")
   @Throws(InkParseException::class)
-  internal fun parseLine(lineNumber: Int, line: String, current: Container): Content? {
+  internal fun parseLine(lineNumber: Int, line: String, currentContainer: Container?): Content? {
     val firstChar = if (line.isEmpty()) WHITESPACE else line[0]
     when (firstChar) {
       HEADER -> {
-        //if (KnotFunction.isFunctionHeader(line)) {
-        //  return KnotFunction(lineNumber, line)
-        //}
         if (Knot.isKnotHeader(line)) {
           return Knot(lineNumber, line)
         }
+        //if (KnotFunction.isFunctionHeader(line)) {
+        //  return KnotFunction(lineNumber, line)
+        //}
         //if (Stitch.isStitchHeader(line)) {
-        //  return Stitch(lineNumber, line, current)
+        //  return Stitch(lineNumber, line, currentContainer)
         //}
       }
-      CHOICE_DOT, CHOICE_PLUS -> if (Choice.isChoiceHeader(line))
-        return Choice(lineNumber, line, current)
+      CHOICE_DOT, CHOICE_PLUS -> if (Choice.isChoiceHeader(line) && currentContainer != null)
+        return Choice(lineNumber, line, currentContainer)
       //GATHER_DASH -> if (Gather.isGatherHeader(line))
-      //  return Gather(lineNumber, line, current)
+      //  return Gather(lineNumber, line, currentContainer)
       //VAR_DECL, VAR_STAT -> if (Variable.isVariableHeader(line))
-      //  return Variable(lineNumber, line, current)
+      //  return Variable(lineNumber, line, currentContainer)
       //CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(line))
-      //  return Conditional(lineNumber, line, current)
+      //  return Conditional(lineNumber, line, currentContainer)
       else -> {
       }
     }
-    if (!line.isEmpty()) {
-      return Content(lineNumber, line, current)
+    if (!line.isEmpty() && currentContainer != null) {
+      return Content(lineNumber, line, currentContainer)
     }
+    // Should throw error.
     return null
   }
 

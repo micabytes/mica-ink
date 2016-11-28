@@ -5,7 +5,7 @@ import java.util.ArrayList
 
 internal class Choice(lineNumber: Int,
                       content: String,
-                      parent: Container?) : Container(lineNumber, content, parent) {
+                      parent: Container) : Container(lineNumber, content, parent) {
   override val level: Int
   private var conditions: ArrayList<String> = ArrayList()
   private val repeatable = (content[0] == InkParser.CHOICE_PLUS)
@@ -19,7 +19,7 @@ internal class Choice(lineNumber: Int,
       s = s.substring(1).trim({ it <= ' ' })
     }
     level = lvl
-    parent?.let { add(this) }
+    parent.let { add(this) }
     addLine(s)
   }
 
@@ -51,7 +51,7 @@ internal class Choice(lineNumber: Int,
 
   @Throws(InkRunTimeException::class)
   fun getChoiceText(story: Story): String {
-    return StoryText.getText(content, count, story)
+    return StoryText.getText(text, count, story)
   }
 
   @Throws(InkRunTimeException::class)
