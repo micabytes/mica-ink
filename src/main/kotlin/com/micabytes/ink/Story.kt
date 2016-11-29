@@ -57,9 +57,9 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
   fun next(): List<String> {
     if (!hasNext())
       throw InkRunTimeException("Did you forget to run canContinue()?")
-    var current = container.get(containerIdx)
     var currentText = Symbol.GLUE
-    while (hasNext()) {
+    while (hasNext() && container.size > containerIdx) {
+      val current = container.get(containerIdx)
       when (current) {
         is Choice -> {
           choices.add(current)
@@ -78,13 +78,15 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
           if (currentText.endsWith(Symbol.GLUE) || nextText.startsWith(Symbol.GLUE))
             currentText += nextText
           else {
-            text.add(currentText)
+            text.add(cleanUpText(currentText))
             currentText = nextText
           }
           containerIdx++
         }
       }
-      current = container.get(containerIdx)
+    }
+    if (!currentText.isEmpty()) {
+      text.add(cleanUpText(currentText))
     }
     return text
   }
@@ -685,6 +687,13 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     private val RANDOM = "random"
     private val IS_KNOT = "isKnot"
     private val FLOOR = "floor"
+
+    private fun cleanUpText(str: String): String {
+      return str.replace(Symbol.GLUE.toRegex(), " ") // clean up glue
+          .replace("\\s+".toRegex(), " ") // clean up white space
+          .trim({ it <= ' ' })
+    }
+
     //private val CURRENT_BACKGROUND = "currentBackground"
 
     /*
@@ -711,11 +720,6 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
       return res is BigDecimal && res.toInt() > 0
     }
 
-    private fun cleanUpText(str: String): String {
-      return str.replace(Symbol.GLUE.toRegex(), " ") // clean up glue
-          .replace("\\s+".toRegex(), " ") // clean up white space
-          .trim({ it <= ' ' })
-    }
 
     private fun isContainerEmpty(c: Container): Boolean {
       return c.size == 0

@@ -36,7 +36,6 @@ object InkParser {
       var currentContainer: Container? = null
       var current: Content? = null
       while (line != null) {
-        println(line)
         current = parseLine(lineNumber, line.trim { it <= ' ' }, currentContainer)
         if (current is Container)
           currentContainer = current

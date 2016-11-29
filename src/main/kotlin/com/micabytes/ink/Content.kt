@@ -7,6 +7,10 @@ open class Content(internal val lineNumber: Int,
   internal val type = ContentType.TEXT
   internal var count: Int = 0
 
+  init {
+    parent?.add(this)
+  }
+
   fun  getText(story: Story): String {
     return StoryText.getText(text, count, story)
   }
