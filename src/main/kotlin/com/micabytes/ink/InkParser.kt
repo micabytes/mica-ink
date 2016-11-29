@@ -10,6 +10,7 @@ object InkParser {
   private val GATHER_DASH = '-'
   internal val CHOICE_DOT = '*'
   internal val CHOICE_PLUS = '+'
+  internal val DIVERT = "->"
   private val VAR_DECL = 'V'
   private val VAR_STAT = '~'
   private val CONDITIONAL_HEADER = '{'
@@ -114,6 +115,15 @@ object InkParser {
       //  return Conditional(lineNumber, line, currentContainer)
       else -> {
       }
+    }
+    if (line.contains(DIVERT)) {
+      val div = line.split(DIVERT)
+      for (div.)
+
+      if (current != null)
+        content.put(current.id, current)
+
+      return Divert(lineNumber, line, currentContainer)
     }
     if (!line.isEmpty() && currentContainer != null) {
       return Content(lineNumber, line, currentContainer)

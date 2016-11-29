@@ -13,6 +13,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
   // Story state
   //private var container: Container? = null
   private var containerIdx: Int = 0
+  private var currentText = Symbol.GLUE
   private val text: MutableList<String> = ArrayList()
   private val choices = ArrayList<Container>()
   private val variables = HashMap<String, Any>()
@@ -74,13 +75,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
       // is ..
       // is Tunnel
         else -> {
-          val nextText = current.getText(this)
-          if (currentText.endsWith(Symbol.GLUE) || nextText.startsWith(Symbol.GLUE))
-            currentText += nextText
-          else {
-            text.add(cleanUpText(currentText))
-            currentText = nextText
-          }
+          addText(current)
           containerIdx++
         }
       }
@@ -89,6 +84,16 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
       text.add(cleanUpText(currentText))
     }
     return text
+  }
+
+  fun addText(current: Content) {
+    val nextText = current.getText(this)
+    if (currentText.endsWith(Symbol.GLUE) || nextText.startsWith(Symbol.GLUE))
+      currentText += nextText
+    else {
+      text.add(cleanUpText(currentText))
+      currentText = nextText
+    }
   }
 
     /*
