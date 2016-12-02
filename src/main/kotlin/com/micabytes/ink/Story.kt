@@ -58,12 +58,13 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
   fun next(): List<String> {
     if (!hasNext())
       throw InkRunTimeException("Did you forget to run canContinue()?")
-    var currentText = Symbol.GLUE
+    currentText = Symbol.GLUE
     while (hasNext() && container.size > containerIdx) {
       val current = container.get(containerIdx)
       when (current) {
         is Choice -> {
-          choices.add(current)
+          if (current.evaluateConditions(this))
+            choices.add(current)
           containerIdx++
         }
       //is Comment -> comments.add(current)
@@ -96,6 +97,33 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     }
   }
 
+  @Throws(InkRunTimeException::class)
+  fun choose(i: Int) {
+    if (i < choices.size && i >= 0) {
+      container = choices[i]
+      container.count++
+      //completeExtras(container)
+      containerIdx = 0
+      choices.clear()
+    } else {
+      val cId = if (container != null) container!!.id else "null"
+      throw InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + cId + " cIndex: " + containerIdx)
+    }
+  }
+
+  val choiceSize: Int
+    get() = choices.size
+
+  @Throws(InkRunTimeException::class)
+  fun choiceText(i: Int): String {
+    if (i >= choices.size || i < 0)
+      throw InkRunTimeException("Trying to retrieve a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + container.id + " cIndex: " + containerIdx)
+    return (choices[i] as Choice).getText(this)
+  }
+
+  //fun getChoice(i: Int): Choice {
+  //  return choices[i] as Choice
+  //}
     /*
     incrementContent()
     if (content.type == ContentType.TEXT) {
@@ -361,32 +389,6 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     }
   }
 
-  @Throws(InkRunTimeException::class)
-  fun choose(i: Int) {
-    if (i < choices.size && i >= 0) {
-      val old = container
-      container = choices[i]
-      if (container == null) {
-        val oldId = if (old != null) old.id else "null"
-        throw InkRunTimeException("Selected choice $i is null in $oldId and $containerIdx")
-      }
-      container!!.count++
-      completeExtras(container)
-      containerIdx = 0
-      choices.clear()
-      processing = true
-    } else {
-      val cId = if (container != null) container!!.id else "null"
-      throw InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + cId + " cIndex: " + containerIdx)
-    }
-  }
-
-  val choiceSize: Int
-    get() = choices.size
-
-  fun getChoice(i: Int): Choice {
-    return choices[i] as Choice
-  }
 
   private fun completeExtras(extraContainer: Container) {
     for (interrupt in interrupts) {

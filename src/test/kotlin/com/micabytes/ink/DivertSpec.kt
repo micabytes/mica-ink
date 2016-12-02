@@ -18,7 +18,7 @@ class DivertSpec : WordSpec() {
         |We hurried home to Savile Row as fast as we could.
       """.trimMargin()
 
-      "- divert text from one knot/stitch to another" {
+      "divert text from one knot/stitch to another" {
         val inputStream = IOUtils.toInputStream(simpleDivert, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -35,7 +35,7 @@ class DivertSpec : WordSpec() {
         |as fast as we could.
       """.trimMargin()
 
-      "- divert from one line of text to new content invisibly" {
+      "divert from one line of text to new content invisibly" {
         val inputStream = IOUtils.toInputStream(invisibleDivert, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()

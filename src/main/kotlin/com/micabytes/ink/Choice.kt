@@ -1,24 +1,21 @@
 package com.micabytes.ink
 
+import com.micabytes.ink.InkParser.parseDivert
 import java.math.BigDecimal
 import java.util.ArrayList
 
 internal class Choice(lineNumber: Int,
-                      content: String,
-                      parent: Container) : Container(lineNumber, content, parent) {
-  override val level: Int
+                      text: String,
+                      parent: Container,
+                      val level : Int) : Container(lineNumber, text, parent) {
   private var conditions: ArrayList<String> = ArrayList()
-  private val repeatable = (content[0] == InkParser.CHOICE_PLUS)
+  private val repeatable = (text[0] == InkParser.CHOICE_PLUS)
 
   init {
-    val notation = content[0]
-    var lvl = 2
-    var s = content.substring(1).trim({ it <= ' ' })
-    while (s.get(0) == notation) {
-      lvl++
+    val notation = text[0]
+    var s = text.substring(1).trim({ it <= ' ' })
+    while (s.get(0) == notation)
       s = s.substring(1).trim({ it <= ' ' })
-    }
-    level = lvl
     parent.let { add(this) }
     addLine(s)
   }
@@ -42,16 +39,27 @@ internal class Choice(lineNumber: Int,
       s = s.substring(s.indexOf(StoryText.CBRACE_RIGHT) + 1).trim({ it <= ' ' })
     }
     // TODO: text = getChoiceText(s)
-    val result = getResultText(s)
+    val result = (if (text.contains("]"))
+          text.replace("\\[.*\\]".toRegex(), "").trim({ it <= ' ' })
+        else
+          text.trim({ it <= ' ' })).trimStart(InkParser.CHOICE_DOT, InkParser.CHOICE_PLUS, ' ')
     if (!result.isEmpty()) {
-      //noinspection ResultOfObjectAllocationIgnored
-      Content(lineNumber, result, this)
+      if (result.contains(InkParser.DIVERT))
+        parseDivert(lineNumber, result, this)
+      else
+        Content(lineNumber, result, this)
     }
   }
 
   @Throws(InkRunTimeException::class)
-  fun getChoiceText(story: Story): String {
-    return StoryText.getText(text, count, story)
+  override fun getText(story: Story): String {
+    return StoryText.getText(
+        if (text.contains("]"))
+          text.substring(0, text.indexOf(StoryText.SBRACE_RIGHT)).replace(StoryText.SBRACE_LEFT, "").trim({ it <= ' ' })
+        else
+          text,
+        count,
+        story).trimStart(InkParser.CHOICE_DOT, InkParser.CHOICE_PLUS, ' ')
   }
 
   @Throws(InkRunTimeException::class)
@@ -83,18 +91,21 @@ internal class Choice(lineNumber: Int,
       return str[0] == InkParser.CHOICE_DOT || str[0] == InkParser.CHOICE_PLUS
     }
 
-    private fun getChoiceText(str: String): String {
-      if (str.contains("]")) {
-        return str.substring(0, str.indexOf(StoryText.SBRACE_RIGHT)).replace(StoryText.SBRACE_LEFT, "").trim({ it <= ' ' })
+    fun getChoiceDepth(line: String) : Int {
+      val notation = line[0]
+      var lvl = 0
+      var s = line.substring(1).trim({ it <= ' ' })
+      while (s.get(0) == notation) {
+        lvl++
+        s = s.substring(1).trim({ it <= ' ' })
       }
-      return str.trim { it <= ' ' }
+      return lvl
     }
 
-    private fun getResultText(str: String): String {
-      if (str.contains("]")) {
-        return str.replace("\\[.*\\]".toRegex(), "").trim({ it <= ' ' })
-      }
-      return str.trim { it <= ' ' }
+    fun getParent(currentContainer: Container, lvl: Int) : Container {
+      if (currentContainer is Choice && lvl <= currentContainer.level)
+        return currentContainer.parent!!
+      return currentContainer
     }
   }
 

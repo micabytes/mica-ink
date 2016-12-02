@@ -11,7 +11,7 @@ open class Content(internal val lineNumber: Int,
     parent?.add(this)
   }
 
-  fun  getText(story: Story): String {
+  open fun  getText(story: Story): String {
     return StoryText.getText(text, count, story)
   }
 

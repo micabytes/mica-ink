@@ -5,7 +5,7 @@ import java.util.ArrayList
 open class Container(lineNumber: Int,
                      content: String,
                      parent: Container?) : Content(lineNumber, content, parent) {
-  open internal val level: Int = 0
+  //open internal val level: Int = 0
   internal var children: MutableList<Content> = ArrayList()
   internal var background: String? = null
 
@@ -24,6 +24,7 @@ open class Container(lineNumber: Int,
     return children.indexOf(c)
   }
 
+  /*
   internal fun getParent(lvl: Int): Container {
     var c: Container = this
     while (c.level > lvl && c.parent != null) {
@@ -31,6 +32,7 @@ open class Container(lineNumber: Int,
     }
     return c
   }
+  */
 
   @Throws(InkRunTimeException::class)
   open fun initialize(story: Story, c: Content) {

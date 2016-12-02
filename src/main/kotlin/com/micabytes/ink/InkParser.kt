@@ -35,12 +35,12 @@ object InkParser {
       var line: String? = it.readLine()
       var lineNumber = 1
       var currentContainer: Container? = null
-      var current: Content? = null
       while (line != null) {
-        current = parseLine(lineNumber, line.trim { it <= ' ' }, currentContainer)
-        if (current is Container)
-          currentContainer = current
-        /*
+        val tokens = parseLine(lineNumber, line.trim { it <= ' ' }, currentContainer)
+        for (current in tokens) {
+          if (current is Container)
+            currentContainer = current
+          /*
         if (trimmedLine.contains("//")) {
           val comment = trimmedLine.substring(trimmedLine.indexOf("//")).trim({ it <= ' ' })
           parseComment(lineNumber, comment, current)
@@ -52,7 +52,7 @@ object InkParser {
           story.addAll(incl)
         }
         */
-        /*
+          /*
         else if (conditional != null) {
           val cond = current.get(current.size - 1) as Conditional
           //cond.parseLine(lineNumber, trimmedLine)
@@ -73,10 +73,10 @@ object InkParser {
           }
         }
         */
-        if (current != null)
           content.put(current.id, current)
-        if (currentContainer != null && topContainer == null)
-          topContainer = currentContainer
+          if (currentContainer != null && topContainer == null)
+            topContainer = currentContainer
+        }
         line = it.readLine()
         lineNumber++
       }
@@ -91,12 +91,12 @@ object InkParser {
 
   @SuppressWarnings("OverlyComplexMethod")
   @Throws(InkParseException::class)
-  internal fun parseLine(lineNumber: Int, line: String, currentContainer: Container?): Content? {
+  internal fun parseLine(lineNumber: Int, line: String, currentContainer: Container?): List<Content> {
     val firstChar = if (line.isEmpty()) WHITESPACE else line[0]
     when (firstChar) {
       HEADER -> {
         if (Knot.isKnotHeader(line)) {
-          return Knot(lineNumber, line)
+          return mutableListOf(Knot(lineNumber, line))
         }
         //if (KnotFunction.isFunctionHeader(line)) {
         //  return KnotFunction(lineNumber, line)
@@ -105,8 +105,12 @@ object InkParser {
         //  return Stitch(lineNumber, line, currentContainer)
         //}
       }
-      CHOICE_DOT, CHOICE_PLUS -> if (Choice.isChoiceHeader(line) && currentContainer != null)
-        return Choice(lineNumber, line, currentContainer)
+      CHOICE_DOT, CHOICE_PLUS -> {
+        if (currentContainer == null)
+          throw InkParseException("Choice without an anchor at line " + lineNumber) // add fileName
+        val level = Choice.getChoiceDepth(line)
+        return mutableListOf(Choice(lineNumber, line, Choice.getParent(currentContainer, level), level))
+      }
       //GATHER_DASH -> if (Gather.isGatherHeader(line))
       //  return Gather(lineNumber, line, currentContainer)
       //VAR_DECL, VAR_STAT -> if (Variable.isVariableHeader(line))
@@ -116,20 +120,27 @@ object InkParser {
       else -> {
       }
     }
-    if (line.contains(DIVERT)) {
-      val div = line.split(DIVERT)
-      for (div.)
-
-      if (current != null)
-        content.put(current.id, current)
-
-      return Divert(lineNumber, line, currentContainer)
-    }
+    if (line.contains(DIVERT))
+      return parseDivert(lineNumber, line, currentContainer)
     if (!line.isEmpty() && currentContainer != null) {
-      return Content(lineNumber, line, currentContainer)
+      return  mutableListOf(Content(lineNumber, line, currentContainer))
     }
     // Should throw error.
-    return null
+    return ArrayList<Content>()
+  }
+
+  internal fun parseDivert(lineNumber: Int, line: String, currentContainer: Container?): List<Content> {
+    val ret = ArrayList<Content>()
+    val div = line.split(DIVERT)
+    if (!div[0].isEmpty()) {
+      ret.add(Content(lineNumber, div[0] + Symbol.GLUE, currentContainer))
+    }
+    for (i in 1 until div.size) {
+      if (div[i].isNotEmpty()) {
+        ret.add(Divert(lineNumber, div[i], currentContainer))
+      }
+    }
+    return ret;
   }
 
   private fun parseComment(lineNumber: Int, comment: String, current: Container?) {

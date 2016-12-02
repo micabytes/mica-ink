@@ -5,7 +5,7 @@ package com.micabytes.ink
 internal class Knot(lineNumber: Int,
                     text: String) : ParameterizedContainer(lineNumber, text, null) {
   override var id: String = ""
-  override val level: Int = 0
+  val level: Int = 0
   internal var isFunction: Boolean = false
 
   init {
