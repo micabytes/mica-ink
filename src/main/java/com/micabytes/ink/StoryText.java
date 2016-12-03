@@ -56,6 +56,8 @@ public final class StoryText {
       Object obj = Variable.evaluate(s, variables);
       if (obj instanceof BigDecimal) // We don't want BigDecimal canonical form
         return ((BigDecimal) obj).toPlainString();
+      if (obj instanceof String)
+        return (String) obj;
       return obj.toString();
     }
     catch (InkRunTimeException e) {

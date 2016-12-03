@@ -7,7 +7,7 @@ sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
 
 repositories {
-  mavenCentral()
+  jcenter()
   maven {
     url "https://oss.sonatype.org/content/repositories/releases"
   }
@@ -20,8 +20,8 @@ dependencies {
   compile fileTree(include: ['*.jar'], dir: 'libs')
   // JSON Libraries
   // Remember to modify proguard-rules.pro also
-  compile 'com.fasterxml.jackson.core:jackson-core:2.8.3'
-  compile 'com.fasterxml.jackson.core:jackson-databind:2.8.3'
+  compile 'com.fasterxml.jackson.core:jackson-core:2.8.4'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.8.4'
   //noinspection GradleDynamicVersion
   compile 'com.intellij:annotations:+@jar'
   testCompile 'org.scala-lang:scala-library:2.11.8'
