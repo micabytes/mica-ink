@@ -14,7 +14,7 @@ object InkParser {
   private val VAR_DECL = 'V'
   private val VAR_STAT = '~'
   private val CONDITIONAL_HEADER = '{'
-  internal val CONDITIONAL_END = "}"
+  internal val CONDITIONAL_END = '}'
   val DOT = '.'
   private val DEFAULT_KNOT_NAME = "default"
   private val AT_SPLITTER = Pattern.compile("[@]")
@@ -73,7 +73,8 @@ object InkParser {
           }
         }
         */
-          content.put(current.id, current)
+          if (!content.containsKey(current.id))
+           content.put(current.id, current)
           if (currentContainer != null && topContainer == null)
             topContainer = currentContainer
         }
@@ -115,8 +116,55 @@ object InkParser {
       //  return Gather(lineNumber, line, currentContainer)
       //VAR_DECL, VAR_STAT -> if (Variable.isVariableHeader(line))
       //  return Variable(lineNumber, line, currentContainer)
-      //CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(line))
-      //  return Conditional(lineNumber, line, currentContainer)
+      CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(line))
+        return mutableListOf(Conditional(lineNumber, line, currentContainer))
+      CONDITIONAL_END -> {
+        if (currentContainer is Conditional)
+          return mutableListOf(currentContainer.parent as Content)
+      }
+      else -> {
+      }
+    }
+    if (line.contains(DIVERT))
+      return parseDivert(lineNumber, line, currentContainer)
+    if (!line.isEmpty() && currentContainer != null) {
+      return  mutableListOf(Content(lineNumber, line, currentContainer))
+    }
+    // Should throw error.
+    return ArrayList<Content>()
+  }
+
+  @Throws(InkParseException::class)
+  internal fun parseConditional(lineNumber: Int, line: String, currentContainer: Container): List<Content> {
+    val firstChar = if (line.isEmpty()) WHITESPACE else line[0]
+    when (firstChar) {
+      HEADER -> {
+        if (Knot.isKnotHeader(line)) {
+          return mutableListOf(Knot(lineNumber, line))
+        }
+        //if (KnotFunction.isFunctionHeader(line)) {
+        //  return KnotFunction(lineNumber, line)
+        //}
+        //if (Stitch.isStitchHeader(line)) {
+        //  return Stitch(lineNumber, line, currentContainer)
+        //}
+      }
+      CHOICE_DOT, CHOICE_PLUS -> {
+        if (currentContainer == null)
+          throw InkParseException("Choice without an anchor at line " + lineNumber) // add fileName
+        val level = Choice.getChoiceDepth(line)
+        return mutableListOf(Choice(lineNumber, line, Choice.getParent(currentContainer, level), level))
+      }
+    //GATHER_DASH -> if (Gather.isGatherHeader(line))
+    //  return Gather(lineNumber, line, currentContainer)
+    //VAR_DECL, VAR_STAT -> if (Variable.isVariableHeader(line))
+    //  return Variable(lineNumber, line, currentContainer)
+      CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(line))
+        return mutableListOf(Conditional(lineNumber, line, currentContainer))
+      CONDITIONAL_END -> {
+        if (currentContainer is Conditional)
+          return mutableListOf(currentContainer.parent as Content)
+      }
       else -> {
       }
     }
@@ -159,6 +207,7 @@ object InkParser {
       //}
     }
   }
+
 
 }
 

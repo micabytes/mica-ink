@@ -121,6 +121,21 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     return (choices[i] as Choice).getText(this)
   }
 
+  fun putVariable(key: String, value: Any) {
+    var c = container
+    while (c != null) {
+      if (c is Knot || c is Function || c is Stitch) {
+        if ((c as ParameterizedContainer).hasValue(key)) {
+          c.setValue(key, value)
+          return
+        }
+      }
+      c = c.parent
+    }
+    variables.put(key, value)
+  }
+
+
   //fun getChoice(i: Int): Choice {
   //  return choices[i] as Choice
   //}
@@ -429,20 +444,6 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
   val isEnded: Boolean
     get() = container == null
 
-
-  fun putVariable(key: String, value: Any) {
-    var c = container
-    while (c != null) {
-      if (c is Knot || c is Function || c is Stitch) {
-        if ((c as ParameterizedContainer).hasValue(key)) {
-          c.setValue(key, value)
-          return
-        }
-      }
-      c = c.parent
-    }
-    variables.put(key, value)
-  }
 
   fun getContainer(key: String): Container {
     return storyContent[key] as Container

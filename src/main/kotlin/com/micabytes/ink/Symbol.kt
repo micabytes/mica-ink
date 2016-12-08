@@ -6,20 +6,20 @@ package com.micabytes.ink
 @SuppressWarnings("UtilityClass")
 class Symbol private constructor() {
 
-    init {
-        throw AssertionError("Symbol should never be initialized.")
-    }
+  init {
+    throw AssertionError("Symbol should never be initialized.")
+  }
 
-    companion object {
-        internal val BRACE_LEFT = '('
-        internal val BRACE_RIGHT = ')'
-        internal val FUNCTION_HEADER = "=="
-         internal val GLUE = "<>"
-         val DIVERT = "->"
-         internal val DIVERT_END = "END"
-         internal val THIS = "this"
-         val EVENT = "event"
-         internal val FUNCTION = "function"
-         internal val RETURN = "return"
-    }
+  companion object {
+    internal val BRACE_LEFT = '('
+    internal val BRACE_RIGHT = ')'
+    internal val FUNCTION_HEADER = "=="
+    internal val GLUE = "<>"
+    val DIVERT = "->"
+    internal val DIVERT_END = "END"
+    internal val THIS = "this"
+    val EVENT = "event"
+    internal val FUNCTION = "function"
+    internal val RETURN = "return"
+  }
 }

@@ -1,15 +1,14 @@
 package com.micabytes.ink
 
-
 import java.math.BigDecimal
 import java.util.ArrayList
 import java.util.Random
 
 internal class Conditional @Throws(InkParseException::class)
 constructor(lineNumber: Int,
-            content: String,
-            parent: Container?) : Container(lineNumber, content, parent) {
-  /*
+            text: String,
+            parent: Container?) : Container(lineNumber, text, parent) {
+
   private var selection: Int = 0
 
   private class ConditionalOptions internal constructor(internal val condition: String) : Content() {
@@ -21,10 +20,7 @@ constructor(lineNumber: Int,
   }
 
   init {
-    lineNumber = l
-    type = ContentType.CONDITIONAL
-    children = ArrayList<Content>()
-    var str = line.substring(1).trim({ it <= ' ' })
+    var str = text.substring(1).trim({ it <= ' ' })
     if (!str.isEmpty()) {
       if (!str.endsWith(":"))
         throw InkParseException("Error in conditional block; condition not ended by \':\'. Line number: $lineNumber")
@@ -35,10 +31,9 @@ constructor(lineNumber: Int,
       if (type == ContentType.CONDITIONAL)
         children.add(ConditionalOptions(condition))
     }
-    parent = current
-    parent!!.add(this)
   }
 
+  /*
   @Throws(InkParseException::class)
   fun parseLine(l: Int, line: String) {
     val str = if (line.endsWith(InkParser.CONDITIONAL_END))
@@ -64,6 +59,7 @@ constructor(lineNumber: Int,
       }
     }
   }
+  */
 
   private fun verifySequenceCondition(str: String) {
     if (STOPPING.equals(str, ignoreCase = true))
@@ -76,6 +72,7 @@ constructor(lineNumber: Int,
       type = ContentType.SEQUENCE_ONCE
   }
 
+  /*
   override val size: Int
     get() {
       if (selection >= children.size)
@@ -103,6 +100,7 @@ constructor(lineNumber: Int,
     val cond = children[children.size - 1] as ConditionalOptions
     cond.lines.add(item)
   }
+  */
 
   @Throws(InkRunTimeException::class)
   override fun initialize(story: Story, c: Content) {
@@ -160,6 +158,5 @@ constructor(lineNumber: Int,
       return str.startsWith(StoryText.CBRACE_LEFT) && !str.contains(StoryText.CBRACE_RIGHT)
     }
   }
-*/
 
 }
