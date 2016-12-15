@@ -2,6 +2,8 @@
 
 [![CI Status](http://img.shields.io/travis/micabytes/jink.svg?style=flat)](https://travis-ci.org/micabytes/jink)
 
+Note: Currently experimenting with rewriting this in Kotlin, which may/will lead to the travis build occasionally breaking.
+
 jInk is - or rather - may become a Java implementation of Inkle Studios (@inkle) scripting language ink for writing interactive narrative. It remains in-development, in that it is being used for my Android game Pirates and Traders 2, which is still in early access. This means I will likely still make some major changes to the code base and possibly the interface, so use at your own risk.
 
 Currently, this reimplements Part 1 to Part 3 of the [Ink documentation](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md), with the following omissions (that I know of - other things may be missing that I've simply forgotten to get implemented):
