@@ -1,2 +1,7 @@
-*.iml
-build/
+# IntelliJ user specific files
+.idea/tasks.xml
+.idea/workspace.xml
+# Gradle files
+.idea/gradle.xml
+.idea/libraries
+
