@@ -1,22 +1,26 @@
 package com.micabytes.ink
 
 import java.math.BigDecimal
+import java.nio.channels.GatheringByteChannel
 import java.util.*
 
 class Story(internal val wrapper: StoryWrapper, fileName: String, internal var container: Container, internal val content: HashMap<String, Content>) : VariableMap {
   // Story Content
   private val fileNames: MutableList<String> = ArrayList()
-  //private val content = HashMap<String, Content>()
   private val functions = TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER)
   private val interrupts = ArrayList<StoryInterrupt>()
-  private val storyEnd = Container(0, "", null)
-  // Story state
-  //private var container: Container? = null
-  private var containerIdx: Int = 0
+  private val storyEnd = Knot(0, "== END ==")
+  private var endProcessing = false
   private var currentText = Symbol.GLUE
   private val text: MutableList<String> = ArrayList()
   private val choices = ArrayList<Container>()
   private val variables = HashMap<String, Any>()
+  /// All defined functions with name and implementation.
+  //private val functions = TreeMap<String, LazyFunction>(String.CASE_INSENSITIVE_ORDER)
+  /// All defined variables with name and value.
+  //private val variables = TreeMap<String, BigDecimal>(String.CASE_INSENSITIVE_ORDER)
+  // Story state
+  //private var container: Container? = null
   //private val comments = ArrayList<Comment>()
   //private var image: String? = null
   //private var processing: Boolean = false
@@ -24,14 +28,17 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
 
   init {
     fileNames.add(fileName)
-    variables.put(Variable.TRUE_UC, BigDecimal.ONE)
-    variables.put(Variable.FALSE_UC, BigDecimal.ZERO)
+    content.put(storyEnd.id, storyEnd)
+    variables.put(Declaration.TRUE_UC, BigDecimal.ONE)
+    variables.put(Declaration.FALSE_UC, BigDecimal.ZERO)
+    /*
     functions.put(IS_NULL, NullFunction())
     functions.put(GET_NULL, GetNullFunction())
-    functions.put("not", NotFunction())
+    functions.put(NOT, NotFunction())
     functions.put(RANDOM, RandomFunction())
     functions.put(IS_KNOT, IsKnotFunction())
     functions.put(FLOOR, FloorFunction())
+    */
   }
 
   fun add(story: Story) {
@@ -44,47 +51,100 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
         .forEach { fileNames.add(it) }
   }
 
-  private operator fun hasNext(): Boolean {
-    /*
-    if (!processing) return false
-    if (container == null)
-      return false
-    return containerIdx < container!!.size
-    */
-    return true
-  }
-
   @Throws(InkRunTimeException::class)
   fun next(): List<String> {
-    if (!hasNext())
-      throw InkRunTimeException("Did you forget to run canContinue()?")
+    choices.clear()
     currentText = Symbol.GLUE
-    while (hasNext() && container.size > containerIdx) {
-      val current = container.get(containerIdx)
+    endProcessing = false
+    while (!endProcessing) {
+      val current = container.get(container.index)
       when (current) {
         is Choice -> {
-          if (current.evaluateConditions(this))
-            choices.add(current)
-          containerIdx++
+          if (current.isFallBack()) {
+            if (choices.isEmpty()) {
+              // Note: This assumes that the fallback choice is the last in the choice list.
+              container.index ++
+              container = current
+              container.index = 0
+            } else
+              increment()
+          } else {
+            if (current.evaluateConditions(this))
+              choices.add(current)
+            increment()
+          }
         }
-      //is Comment -> comments.add(current)
-      //is Variable -> content.evaluate(this)
+        is Gather -> {
+          if (choices.size > 0)
+            endProcessing = true
+          else {
+            container.index ++
+            container = current
+            container.index = 0
+          }
+        }
+        //is Comment -> comments.add(current)
+        is Declaration -> {
+          current.evaluate(this)
+          increment()
+        }
         is Divert -> {
+          container.index ++
           container = current.resolveDivert(this)
-          containerIdx = 0
+          container.index = 0
         }
-      // is ..
-      // is Tunnel
+        // is ..
+        // is Tunnel
         else -> {
           addText(current)
-          containerIdx++
+          increment()
         }
       }
+      if (container == storyEnd)
+        endProcessing = true
     }
     if (!currentText.isEmpty()) {
       text.add(cleanUpText(currentText))
     }
     return text
+  }
+
+  private fun increment() {
+    container.index++
+    while (container.index >= container.size && !endProcessing) {
+      when (container) {
+        is Choice -> {
+          container = container.parent!!
+          /*
+          var p = container.parent!!
+          var pIdx = p.indexOf(container) + 1
+          var gatherFound = false
+          while (!gatherFound) {
+            while (pIdx < p.size && !gatherFound) {
+              val nextContainer = p.get(pIdx)
+              if (nextContainer is Gather) {
+                container = p
+                containerIdx = pIdx
+                gatherFound = true
+              } else
+                pIdx++
+            }
+            if (!gatherFound) {
+              pIdx = p.parent!!.indexOf(p) + 1
+              p = p.parent!!
+            }
+          }
+          */
+        }
+        is Gather -> {
+          container = container.parent!!
+        }
+        else -> {
+          endProcessing = true
+        }
+      }
+    }
+
   }
 
   fun addText(current: Content) {
@@ -103,11 +163,11 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
       container = choices[i]
       container.count++
       //completeExtras(container)
-      containerIdx = 0
+      container.index = 0
       choices.clear()
     } else {
       val cId = if (container != null) container!!.id else "null"
-      throw InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + cId + " cIndex: " + containerIdx)
+      throw InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + cId + " cIndex: " + container.index)
     }
   }
 
@@ -117,12 +177,12 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
   @Throws(InkRunTimeException::class)
   fun choiceText(i: Int): String {
     if (i >= choices.size || i < 0)
-      throw InkRunTimeException("Trying to retrieve a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + container.id + " cIndex: " + containerIdx)
+      throw InkRunTimeException("Trying to retrieve a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + container.id + " cIndex: " + container.index)
     return (choices[i] as Choice).getText(this)
   }
 
   fun putVariable(key: String, value: Any) {
-    var c = container
+    var c  : Container? = container
     while (c != null) {
       if (c is Knot || c is Function || c is Stitch) {
         if ((c as ParameterizedContainer).hasValue(key)) {
@@ -135,182 +195,185 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     variables.put(key, value)
   }
 
+  val isEnded: Boolean
+    get() = container == storyEnd
+
 
   //fun getChoice(i: Int): Choice {
   //  return choices[i] as Choice
   //}
-    /*
-    incrementContent()
-    if (content.type == ContentType.TEXT) {
-      val ret = if (content is Divert) resolveDivert(content) else
-      content.increment()
-      return ret
-    }
-    //ret += resolveContent(current)
-    //incrementContent(content)
-    if (container != storyEnd) {
-      val nextContent = content
-      if (nextContent != null) {
-        if (nextContent.text.startsWith(Symbol.GLUE))
-          endOfLine = false
-        if (nextContent is Choice && !nextContent.isFallbackChoice)
-          endOfLine = false
-        if (nextContent is Stitch)
-          endOfLine = false
-        if (nextContent.type == ContentType.TEXT && nextContent.text.startsWith(Symbol.DIVERT)) {
-          val divertTo = getDivertTarget(nextContent)
-          if (divertTo != null && divertTo.get(0).text.startsWith(Symbol.GLUE))
-            endOfLine = false
-        }
-      }
-      if (ret.endsWith(Symbol.GLUE) && nextContent != null)
+  /*
+  incrementContent()
+  if (content.type == ContentType.TEXT) {
+    val ret = if (content is Divert) resolveDivert(content) else
+    content.increment()
+    return ret
+  }
+  //ret += resolveContent(current)
+  //incrementContent(content)
+  if (container != storyEnd) {
+    val nextContent = content
+    if (nextContent != null) {
+      if (nextContent.text.startsWith(Symbol.GLUE))
         endOfLine = false
-      content = nextContent
-    }
-    */
-       /*
-    if (container != null && container!!.background != null) {
-      image = container!!.background
-    }
-    if (!hasNext()) {
-      resolveExtras()
-    }
-    //return cleanUpText(ret)
-  //var cntent: Content = content
-  //var endOfLine = false
-
-  private fun resolveExtras() {
-    for (interrupt in interrupts) {
-      if (interrupt.isActive && interrupt.isChoice) {
-        val cond = interrupt.interruptCondition
-        try {
-          val res = Variable.evaluate(cond, this)
-          if (checkResult(res)) {
-            val choice = storyContent[interrupt.id] as Choice
-            if (choice.evaluateConditions(this)) {
-              choices.add(0, choice)
-            }
-          }
-        } catch (e: InkRunTimeException) {
-          wrapper.logException(e)
-        }
+      if (nextContent is Choice && !nextContent.isFallbackChoice)
+        endOfLine = false
+      if (nextContent is Stitch)
+        endOfLine = false
+      if (nextContent.type == ContentType.TEXT && nextContent.text.startsWith(Symbol.DIVERT)) {
+        val divertTo = getDivertTarget(nextContent)
+        if (divertTo != null && divertTo.get(0).text.startsWith(Symbol.GLUE))
+          endOfLine = false
       }
     }
-  }
-
-  @SuppressWarnings("OverlyComplexMethod", "OverlyLongMethod")
-  @Throws(InkRunTimeException::class)
-  private fun incrementContent(content: Content?) {
-    if (content != null && content.isDivert) {
-      val divertTarget = getDivertTarget(content)
-      if (divertTarget != null)
-        divertTarget.initialize(this, content)
-      else
-        running = false
-      container = divertTarget
-      containerIdx = 0
-      choices.clear()
-      return
-    }
-    if (content != null && content is Conditional) {
-      val nextContainer = content as Container?
-      nextContainer!!.initialize(this, content)
-      container = nextContainer
-      containerIdx = 0
-      return
-    }
-    containerIdx++
-    if (container != null && containerIdx >= container!!.size) {
-      if (choices.isEmpty() && (container is Choice || container is Gather)) {
-        var c: Container = container
-        var p = c.parent
-        while (p != null) {
-          var i = p.indexOf(c) + 1
-          while (i < p.size) {
-            val n = p.get(i)
-            if (n is Gather) {
-              val newContainer = n as Container
-              newContainer.initialize(this, content)
-              container = newContainer
-              containerIdx = 0
-              choices.clear()
-              return
-            }
-            if (n is Choice && container !is Gather) {
-              container = p
-              containerIdx = i
-              choices.clear()
-              return
-            }
-            i++
-          }
-          c = p
-          p = c.parent
-        }
-        container = null
-        containerIdx = 0
-        choices.clear()
-        return
-      }
-      if (container is Conditional) {
-        val oldContainer = container
-        container = oldContainer!!.parent
-        containerIdx = if (container != null) container!!.indexOf(oldContainer) + 1 else 0
-      }
-    } else {
-      val next = content
-      if (next != null && next is FallbackChoice && choices.isEmpty()) {
-        val nextContainer = next as Container?
-        nextContainer!!.initialize(this, content)
-        container = nextContainer
-        containerIdx = 0
-        choices.clear()
-        return
-      }
-      if (next != null && next is Conditional) {
-        val nextContainer = next as Container?
-        nextContainer!!.initialize(this, content)
-        container = nextContainer
-        containerIdx = 0
-        return
-      }
-      if (next != null && next is Gather) {
-        processing = false
-      }
-    }
-  }
-
-  private val nxtcontent: Content?
-    @Throws(InkRunTimeException::class)
-    get() {
-      if (!running)
-        return null
-      if (container == null)
-        throw InkRunTimeException("Current text container is NULL.")
-      if (containerIdx >= container!!.size)
-        return null
-      return container!!.get(containerIdx)
-    }
-
-  @SuppressWarnings("ChainOfInstanceofChecks")
-  @Throws(InkRunTimeException::class)
-  private fun resolveContent(content: Content): String {
-    if (content.type == ContentType.TEXT) {
-      val ret = if (content is Divert) resolveDivert(content) else StoryText.getText(content.text, content.count, this)
-      content.increment()
-      return ret
-    }
-    if (content is Choice) {
-      addChoice(content as Choice)
-    }
-    if (content is Comment) {
-      comments.add(content)
-    }
-    if (content is Variable)
-      content.evaluate(this)
-    return ""
+    if (ret.endsWith(Symbol.GLUE) && nextContent != null)
+      endOfLine = false
+    content = nextContent
   }
   */
+  /*
+if (container != null && container!!.background != null) {
+ image = container!!.background
+}
+if (!hasNext()) {
+ resolveExtras()
+}
+//return cleanUpText(ret)
+//var cntent: Content = content
+//var endOfLine = false
+
+private fun resolveExtras() {
+for (interrupt in interrupts) {
+ if (interrupt.isActive && interrupt.isChoice) {
+   val cond = interrupt.interruptCondition
+   try {
+     val res = Declaration.evaluate(cond, this)
+     if (checkResult(res)) {
+       val choice = storyContent[interrupt.id] as Choice
+       if (choice.evaluateConditions(this)) {
+         choices.add(0, choice)
+       }
+     }
+   } catch (e: InkRunTimeException) {
+     wrapper.logException(e)
+   }
+ }
+}
+}
+
+@SuppressWarnings("OverlyComplexMethod", "OverlyLongMethod")
+@Throws(InkRunTimeException::class)
+private fun incrementContent(content: Content?) {
+if (content != null && content.isDivert) {
+ val divertTarget = getDivertTarget(content)
+ if (divertTarget != null)
+   divertTarget.initialize(this, content)
+ else
+   running = false
+ container = divertTarget
+ containerIdx = 0
+ choices.clear()
+ return
+}
+if (content != null && content is Conditional) {
+ val nextContainer = content as Container?
+ nextContainer!!.initialize(this, content)
+ container = nextContainer
+ containerIdx = 0
+ return
+}
+containerIdx++
+if (container != null && containerIdx >= container!!.size) {
+ if (choices.isEmpty() && (container is Choice || container is Gather)) {
+   var c: Container = container
+   var p = c.parent
+   while (p != null) {
+     var i = p.indexOf(c) + 1
+     while (i < p.size) {
+       val n = p.get(i)
+       if (n is Gather) {
+         val newContainer = n as Container
+         newContainer.initialize(this, content)
+         container = newContainer
+         containerIdx = 0
+         choices.clear()
+         return
+       }
+       if (n is Choice && container !is Gather) {
+         container = p
+         containerIdx = i
+         choices.clear()
+         return
+       }
+       i++
+     }
+     c = p
+     p = c.parent
+   }
+   container = null
+   containerIdx = 0
+   choices.clear()
+   return
+ }
+ if (container is Conditional) {
+   val oldContainer = container
+   container = oldContainer!!.parent
+   containerIdx = if (container != null) container!!.indexOf(oldContainer) + 1 else 0
+ }
+} else {
+ val next = content
+ if (next != null && next is FallbackChoice && choices.isEmpty()) {
+   val nextContainer = next as Container?
+   nextContainer!!.initialize(this, content)
+   container = nextContainer
+   containerIdx = 0
+   choices.clear()
+   return
+ }
+ if (next != null && next is Conditional) {
+   val nextContainer = next as Container?
+   nextContainer!!.initialize(this, content)
+   container = nextContainer
+   containerIdx = 0
+   return
+ }
+ if (next != null && next is Gather) {
+   processing = false
+ }
+}
+}
+
+private val nxtcontent: Content?
+@Throws(InkRunTimeException::class)
+get() {
+ if (!running)
+   return null
+ if (container == null)
+   throw InkRunTimeException("Current text container is NULL.")
+ if (containerIdx >= container!!.size)
+   return null
+ return container!!.get(containerIdx)
+}
+
+@SuppressWarnings("ChainOfInstanceofChecks")
+@Throws(InkRunTimeException::class)
+private fun resolveContent(content: Content): String {
+if (content.type == ContentType.TEXT) {
+ val ret = if (content is Divert) resolveDivert(content) else StoryText.getText(content.text, content.count, this)
+ content.increment()
+ return ret
+}
+if (content is Choice) {
+ addChoice(content as Choice)
+}
+if (content is Comment) {
+ comments.add(content)
+}
+if (content is Declaration)
+ content.evaluate(this)
+return ""
+}
+*/
   /*
 
   private fun resolveDivert(content: Content): String {
@@ -355,7 +418,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
       if (interrupt.isActive && interrupt.isDivert) {
         val cond = interrupt.interruptCondition
         try {
-          val res = Variable.evaluate(cond, this)
+          val res = Declaration.evaluate(cond, this)
           if (checkResult(res)) {
             val interruptText = interrupt.interrupt
             if (interruptText.contains(Symbol.DIVERT)) {
@@ -414,13 +477,6 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
   }
 
 
-  private fun getValueId(id: String): String {
-    if (id == Symbol.DIVERT_END)
-      return id
-    if (id.contains(InkParser.DOT.toString()))
-      return id
-    return if (container != null) container!!.id + InkParser.DOT + id else id
-  }
 
   @Throws(InkParseException::class)
   internal fun add(content: Content) {
@@ -498,38 +554,44 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
 
   override fun getValue(token: String): Any {
     if (Symbol.THIS == token)
-        return container.id
-    //var c : Container? = container
-    /*
+      return container.id
+    var c: Container? = container
     while (c != null) {
-      if (c is Knot || c is Function || c is Stitch) {
-        if ((c as ParameterizedContainer).hasValue(token))
+      if (c is ParameterizedContainer) {
+        if (c.hasValue(token))
           return c.getValue(token)
       }
       c = c.parent
     }
     if (token.startsWith(Symbol.DIVERT)) {
       val k = token.substring(2).trim({ it <= ' ' })
-      if (storyContent.containsKey(k))
-        return storyContent[k]
+      if (content.containsKey(k))
+        return content.get(k)!!
       wrapper.logException(InkRunTimeException("Could not identify container id: " + k))
       return BigDecimal.ZERO
     }
-    if (storyContent.containsKey(token)) {
-      val storyContainer = storyContent[token] as Container
+    if (content.containsKey(token)) {
+      val storyContainer = content[token] as Container
       return BigDecimal.valueOf(storyContainer.count.toLong())
     }
     val pathId = getValueId(token)
-    if (storyContent.containsKey(pathId)) {
-      val storyContainer = storyContent[pathId] as Container
+    if (content.containsKey(pathId)) {
+      val storyContainer = content[pathId] as Container
       return BigDecimal.valueOf(storyContainer.count.toLong())
     }
     if (variables.containsKey(token)) {
-      return variables[token]
+      return variables[token]!!
     }
     wrapper.logException(InkRunTimeException("Could not identify the variable $token or $pathId"))
-    */
     return BigDecimal.ZERO
+  }
+
+  private fun getValueId(id: String): String {
+    if (id == Symbol.DIVERT_END)
+      return id
+    if (id.contains(InkParser.DOT.toString()))
+      return id
+    return if (container != null) container!!.id + InkParser.DOT + id else id
   }
 
   override fun hasVariable(token: String): Boolean {
@@ -559,7 +621,8 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
   override fun getFunction(token: String): Function {
     if (hasFunction(token))
       return functions.get(token)!!
-    return NullFunction()
+    throw RuntimeException()
+    //return //NullFunction()
     // TODO: Empty Function
   }
 
@@ -575,21 +638,15 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     var ret = ""
     ret += "StoryDebugInfo File: " + fileNames
     ret += if (true) " Container :" + container.id else " Container: null"
-    if (containerIdx < container.size) {
-      val cnt = container.get(containerIdx)
+    if (container.index < container.size) {
+      val cnt = container.get(container.index)
       ret += if (true) " Line# :" + Integer.toString(cnt.lineNumber) else " Line#: ?"
     }
     return ret
   }
 
-  private class NullFunction : Function {
-
-    override val numParams: Int
-      get() = 1
-
-    override val isFixedNumParams: Boolean
-      get() = true
-
+  /*
+  private class NullFunction : Function("NOT", 1) {
     @Throws(InkRunTimeException::class)
     override fun eval(params: List<Any>, vmap: VariableMap): Any {
       //val param = params[0]
@@ -598,22 +655,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     }
   }
 
-  private class GetNullFunction : Function {
-
-    override val numParams: Int
-      get() = 0
-
-    override val isFixedNumParams: Boolean
-      get() = true
-
-    @Throws(InkRunTimeException::class)
-    override fun eval(params: List<Any>, vmap: VariableMap): Any {
-      return false
-    }
-  }
-
-
-  class NotFunction : Function {
+  class NotFunction : Function("NOT", 1) {
 
     override val numParams: Int
       get() = 1
@@ -687,13 +729,14 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
       return BigDecimal.ZERO
     }
   }
-
+  */
 
   companion object {
-    private val IS_NULL = "isNull"
-    private val GET_NULL = "getNull"
+    private val IS_NULL = "isnull"
+    private val GET_NULL = "getnull"
+    private val NOT = "not"
     private val RANDOM = "random"
-    private val IS_KNOT = "isKnot"
+    private val IS_KNOT = "isknot"
     private val FLOOR = "floor"
 
     private fun cleanUpText(str: String): String {
@@ -733,6 +776,16 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
       return c.size == 0
     }
     */
+  }
+
+  fun getDivert(d: String): Container {
+    if (content.containsKey(d))
+      return content.get(d) as Container
+    if (hasVariable(d)) {
+      val v = getValue(d)
+      return v as Container
+    }
+    throw InkRunTimeException("Attempt to divert to non-defined node " + d)
   }
 
 }

@@ -1,10 +1,10 @@
 package com.micabytes.ink
 
 open class Content(internal val lineNumber: Int,
-                   internal val text: String,
+                   internal open val text: String,
                    internal val parent: Container?) {
-  open internal val id: String = if (parent != null) parent.id + InkParser.DOT + parent.indexOf(this) else ""
-  internal val type = ContentType.TEXT
+  internal open val id : String = if (parent != null) parent.id + InkParser.DOT + parent.indexOf(this) else ""
+  internal open val type = ContentType.TEXT
   internal var count: Int = 0
 
   init {

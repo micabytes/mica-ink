@@ -13,15 +13,15 @@ class TestWrapper : StoryWrapper {
   }
 
   override fun logDebug(m: String) {
-    throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    // NOOP
   }
 
   override fun logError(m: String) {
-    throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    // NOOP
   }
 
   override fun logException(e: Exception) {
-    throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    // NOOP
   }
 
   override fun getStream(fileId: String): InputStream {

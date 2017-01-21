@@ -6,6 +6,7 @@ open class Container(lineNumber: Int,
                      content: String,
                      parent: Container?) : Content(lineNumber, content, parent) {
   //open internal val level: Int = 0
+  internal var index: Int = 0
   internal var children: MutableList<Content> = ArrayList()
   internal var background: String? = null
 

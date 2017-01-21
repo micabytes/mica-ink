@@ -1,35 +1,42 @@
 package com.micabytes.ink
 
 import java.math.BigDecimal
-import java.util.ArrayList
-import java.util.Random
+import java.util.*
 
 internal class Conditional @Throws(InkParseException::class)
 constructor(lineNumber: Int,
             text: String,
             parent: Container?) : Container(lineNumber, text, parent) {
 
+  internal enum class SequenceType {
+    SEQUENCE_NONE,
+    SEQUENCE_CYCLE,
+    SEQUENCE_ONCE,
+    SEQUENCE_SHUFFLE,
+    SEQUENCE_STOP
+  }
+
+  private var seqType: SequenceType = SequenceType.SEQUENCE_NONE
+  private var conditions: MutableList<ConditionalOptions> = ArrayList()
   private var selection: Int = 0
 
-  private class ConditionalOptions internal constructor(internal val condition: String) : Content() {
-    internal val lines: MutableList<Content> = ArrayList()
-
-    init {
-      type = ContentType.CONDITIONAL_OPTION
-    }
+  class ConditionalOptions internal constructor(lineNumber: Int,
+                                                        text: String,
+                                                        parent: Container?) : Container(lineNumber, text, parent) {
+    // NOOP
   }
 
   init {
     var str = text.substring(1).trim({ it <= ' ' })
     if (!str.isEmpty()) {
       if (!str.endsWith(":"))
-        throw InkParseException("Error in conditional block; condition not ended by \':\'. Line number: $lineNumber")
+        throw InkParseException("Error in conditional block; initial condition not ended by \':\'. Line number: $lineNumber")
       if (str.startsWith(CONDITIONAL_DASH))
         str = str.substring(1).trim({ it <= ' ' })
       val condition = str.substring(0, str.length - 1).trim({ it <= ' ' })
       verifySequenceCondition(condition)
-      if (type == ContentType.CONDITIONAL)
-        children.add(ConditionalOptions(condition))
+      if (seqType == SequenceType.SEQUENCE_NONE)
+        children.add(ConditionalOptions(lineNumber, condition, this))
     }
   }
 
@@ -63,13 +70,13 @@ constructor(lineNumber: Int,
 
   private fun verifySequenceCondition(str: String) {
     if (STOPPING.equals(str, ignoreCase = true))
-      type = ContentType.SEQUENCE_STOP
+      seqType = SequenceType.SEQUENCE_STOP
     if (SHUFFLE.equals(str, ignoreCase = true))
-      type = ContentType.SEQUENCE_SHUFFLE
+      seqType = SequenceType.SEQUENCE_SHUFFLE
     if (CYCLE.equals(str, ignoreCase = true))
-      type = ContentType.SEQUENCE_CYCLE
+      seqType = SequenceType.SEQUENCE_CYCLE
     if (ONCE.equals(str, ignoreCase = true))
-      type = ContentType.SEQUENCE_ONCE
+      seqType = SequenceType.SEQUENCE_ONCE
   }
 
   /*
@@ -115,11 +122,11 @@ constructor(lineNumber: Int,
       ContentType.CONDITIONAL -> {
         for (c in children) {
           val opt = c as ConditionalOptions
-          if (children.indexOf(c) == children.size - 1 && ELSE == opt.condition) {
+          if (children.indexOf(c) == children.size - 1 && ELSE == opt.text) {
             selection = children.indexOf(c)
             return
           } else {
-            val eval = Variable.evaluate(opt.condition, story)
+            val eval = Declaration.evaluate(opt.text, story)
             if (eval is Boolean) {
               if (eval) {
                 selection = children.indexOf(c)

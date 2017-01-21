@@ -34,7 +34,7 @@ internal class Comment(lineNumber: Int,
         if (conditions == null)
             return true
         for (condition in conditions!!) {
-            val obj = Variable.evaluate(condition, story) ?: return false
+            val obj = Declaration.evaluate(condition, story) ?: return false
             if (obj is Boolean && !obj)
                 return false
             if (obj is BigDecimal && obj.toInt() <= 0)

@@ -8,8 +8,9 @@ class ChoiceSpec : WordSpec() {
   init {
 
     "Choices" should {
+
       val singleChoice =
-          """== test_knotd
+          """== test_knot
           |Hello, world!
           |* Hello back!
           |  Nice to hear from you
@@ -36,7 +37,7 @@ class ChoiceSpec : WordSpec() {
       }
 
       val multiChoice =
-          """== test_knotd
+          """== test_knot
           |Hello, world!
           |* Hello back!
           |  Nice to hear from you
@@ -56,7 +57,7 @@ class ChoiceSpec : WordSpec() {
       }
 
       val suppressChoice =
-          """== test_knotd
+          """== test_knot
           |Hello, world!
           |*  [Hello back!]
           |  Nice to hear from you.
@@ -74,12 +75,13 @@ class ChoiceSpec : WordSpec() {
       }
 
       val mixedChoice =
-          """Hello world!
-        |*   Hello [back!] right back to you!
-        |    Nice to hear from you.
-      """.trimMargin()
+              """== test_knot
+                |Hello world!
+                |*   Hello [back!] right back to you!
+                |    Nice to hear from you.
+                """.trimMargin()
 
-      "- be mixed in to the text using the [] syntax" {
+      "be mixed in to the text using the [] syntax" {
         val inputStream = IOUtils.toInputStream(mixedChoice, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
@@ -99,7 +101,7 @@ class ChoiceSpec : WordSpec() {
         |    *   The man with the briefcase[?] looks disgusted as you stumble past him. -> find_help
       """.trimMargin()
 
-      "- disappear when used if they are a once-only choice" {
+      "disappear when used if they are a once-only choice" {
         val inputStream = IOUtils.toInputStream(varyingChoice, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
@@ -119,7 +121,7 @@ class ChoiceSpec : WordSpec() {
         |        -> END
       """.trimMargin()
 
-      "- not disappear when used if they are a sticky choices" {
+      "not disappear when used if they are a sticky choices" {
         val inputStream = IOUtils.toInputStream(stickyChoice, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
@@ -129,7 +131,6 @@ class ChoiceSpec : WordSpec() {
         story.choiceSize shouldBe (2)
       }
 
-      /*
       val fallbackChoice =
           """=== find_help ===
         |
@@ -140,24 +141,28 @@ class ChoiceSpec : WordSpec() {
         |        -> END
       """.trimMargin()
 
-      "- not be shown if it is a fallback choice and there are non-fallback choices available" {
+      "not be shown if it is a fallback choice and there are non-fallback choices available" {
         val inputStream = IOUtils.toInputStream(fallbackChoice, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
         story.choiceSize shouldBe (2)
       }
 
-      "- should be diverted to directly if it is a fallback choice and no others exist" {
+      "should be diverted to directly if it is a fallback choice and no others exist" {
         val inputStream = IOUtils.toInputStream(fallbackChoice, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
         story.choiceSize shouldBe (2)
         story.choose(0)
         story.next()
+        story.choiceSize shouldBe (1)
         story.choose(0)
-        story.next()
+        val text = story.next()
         story.isEnded shouldBe (true)
+        text.get(text.size - 1) shouldBe ("But it is too late: you collapse onto the station platform. This is the end.")
       }
+
+      // TODO: Error if fallback choice is not the last.
 
       val conditionalChoice =
           """=== choice_test ===
@@ -170,13 +175,7 @@ class ChoiceSpec : WordSpec() {
         |* { true } four
       """.trimMargin()
 
-
-
-
-
-      // TODO: Probably throw an error if there are non-fallback choices following a fallback choice.
-
-      "- not be visible if their conditions evaluate to 0" {
+      "not be visible if their conditions evaluate to 0" {
         val inputStream = IOUtils.toInputStream(conditionalChoice, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
@@ -199,24 +198,24 @@ class ChoiceSpec : WordSpec() {
         |    -> END
       """.trimMargin()
 
-      "- handle labels on choices and evaluate in expressions (example 1)" {
+      "handle labels on choices and evaluate in expressions (example 1)" {
         val inputStream = IOUtils.toInputStream(labelFlow, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
         story.choose(0)
         story.next()
         story.choiceSize shouldBe (2)
-        story.getChoice(0).getChoiceText(story) shouldBe ("\'Having a nice day?\'")
+        story.choiceText(0) shouldBe ("\'Having a nice day?\'")
       }
 
-      "- handle labels on choices and evaluate in expressions (example 2)" {
+      "handle labels on choices and evaluate in expressions (example 2)" {
         val inputStream = IOUtils.toInputStream(labelFlow, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
         story.choose(1)
         story.next()
         story.choiceSize shouldBe (2)
-        story.getChoice(1).getChoiceText(story) shouldBe ("Shove him aside")
+        story.choiceText(1) shouldBe ("Shove him aside")
       }
 
       val labelScope =
@@ -229,14 +228,14 @@ class ChoiceSpec : WordSpec() {
         |    * {knot.stitch_one.gatherpoint} Found gatherpoint
       """.trimMargin()
 
-      "- allow label references out of scope using the full path id" {
+      "allow label references out of scope using the full path id" {
         val inputStream = IOUtils.toInputStream(labelScope, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
         story.choose(0)
         story.next()
         story.choiceSize shouldBe (1)
-        story.getChoice(0).getChoiceText(story) shouldBe ("Found gatherpoint")
+        story.choiceText(0) shouldBe ("Found gatherpoint")
       }
 
     val labelScopeError =
@@ -249,12 +248,14 @@ class ChoiceSpec : WordSpec() {
         |    * {gatherpoint} Found gatherpoint
       """.trimMargin()
 
-    "- fail label references that are out of scope" {
+    "fail label references that are out of scope" {
       val inputStream = IOUtils.toInputStream(labelScopeError, "UTF-8")
-      val story = InkParser.parse(inputStream, StoryContainer(), "Test")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
       story.next()
       story.choose(0)
-      story.next() must throwA[InkRunTimeException]
+      shouldThrow<InkRunTimeException> {
+        story.next()
+      }
     }
 
       val divertChoice =
@@ -267,7 +268,7 @@ class ChoiceSpec : WordSpec() {
         |-   -> knot
       """.trimMargin()
 
-      "- be used up if they are once-only and a divert goes through them" {
+      "be used up if they are once-only and a divert goes through them" {
         val inputStream = IOUtils.toInputStream(divertChoice, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
@@ -277,9 +278,9 @@ class ChoiceSpec : WordSpec() {
         text.size shouldBe (2)
         text.get(0) shouldBe ("You pull a face, and the soldier comes at you! You shove the guard to one side, but he comes back swinging.")
         story.choiceSize shouldBe (1)
-        story.getChoice(0).getChoiceText(story) shouldBe ("Grapple and fight")
+        story.choiceText(0) shouldBe ("Grapple and fight")
       }
-    */
+
     }
 
   }

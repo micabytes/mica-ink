@@ -66,36 +66,36 @@ To use the library:
 import com.micabytes.ink.Story;
 ```
 
-Loading a story file:
+Loading a vMap file:
 ```
-  Story story = InkParser.parse(inputStream, new StoryContainer());
+  Story vMap = InkParser.parse(inputStream, new StoryContainer());
 ```
 
 Working through children line by line:
 ```
-  while (story.hasNext()) {
-    String line = story.next();
+  while (vMap.hasNext()) {
+    String line = vMap.next();
     ...
   }
 ```
 
 Working through all children children line by line up to the next stop:
 ```
-  List<String> lines = story.nextAll();
+  List<String> lines = vMap.nextAll();
 ```
 
 To get the available choices:
 ```
-  for (int i=0; i<story.getChoiceSize(); i++) {
-    Choice choice = story.getChoice(i);
-    String choiceText = choice.getChoiceText(story);
+  for (int i=0; i<vMap.getChoiceSize(); i++) {
+    Choice choice = vMap.getChoice(i);
+    String choiceText = choice.getChoiceText(vMap);
     ...
   }
 ```
 
 To select a choice:
 ```
-  story.choose(0)
+  vMap.choose(0)
 ```
 
 Note: Unfortunately, the existing ink interface doesn't work with standard Java (`continue` is a reserved keyword), so jInk will end up with a different interface. The above interface may change, as I clean up code and/or get a better idea.

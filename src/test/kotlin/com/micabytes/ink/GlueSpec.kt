@@ -5,7 +5,6 @@ import org.apache.commons.io.IOUtils
 
 class GlueSpec : WordSpec() {
 
-
   init {
 
     "Glue" should {

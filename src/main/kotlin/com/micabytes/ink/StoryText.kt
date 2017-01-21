@@ -55,7 +55,7 @@ private constructor() {
 
         private fun evaluateTextVariable(s: String, variables: VariableMap): String {
             try {
-                val obj = Variable.evaluate(s, variables)
+                val obj = Declaration.evaluate(s, variables)
                 if (obj is BigDecimal)
                 // We don't want BigDecimal canonical form
                     return obj.toPlainString()
@@ -102,7 +102,7 @@ private constructor() {
                 val options = text.split("[|]".toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray()
                 var `val` = 0
                 try {
-                    val value = Variable.evaluate(condition, variables)
+                    val value = Declaration.evaluate(condition, variables)
                     if (value is Boolean) {
                         `val` = if (value) 1 else 0
                     } else if (value is BigDecimal) {
@@ -130,7 +130,7 @@ private constructor() {
             val ifText = options[0]
             val elseText = if (options.size == 1) "" else options[1]
             try {
-                val obj = Variable.evaluate(condition, variables)
+                val obj = Declaration.evaluate(condition, variables)
                 if (obj is BigDecimal)
                     return if ((obj as Number).toInt() > 0) ifText else elseText
                 if (obj is Boolean)

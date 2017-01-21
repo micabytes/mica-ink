@@ -3,13 +3,14 @@ package com.micabytes.ink
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.math.BigDecimal
-import com.fasterxml.jackson.core.JsonGenerator
+//import com.fasterxml.jackson.core.JsonGenerator
 
 object StorySaver {
 
   @SuppressWarnings("OverlyComplexMethod", "OverlyNestedMethod")
   @Throws(IOException::class)
-  fun saveStream(g: JsonGenerator) {
+  fun saveStream() {
+    //g }: JsonGenerator) {
     /*
     g.writeStartObject()
     g.writeFieldName(StoryJson.FILES)
@@ -76,7 +77,8 @@ object StorySaver {
 
   @SuppressWarnings("rawtypes", "unchecked", "NullArgumentToVariableArgMethod")
   @Throws(IOException::class)
-  private fun saveObject(g: JsonGenerator, key: String, `val`: Any?) {
+  private fun saveObject() {
+    //g  }: JsonGenerator, key: String, `val`: Any?) {
     /*
     if (`val` == null) {
       g.writeNullField(key)

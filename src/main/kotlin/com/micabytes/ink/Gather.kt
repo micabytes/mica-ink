@@ -2,43 +2,53 @@ package com.micabytes.ink
 
 internal class Gather @Throws(InkParseException::class)
 constructor(lineNumber: Int,
-            content: String,
-            parent: Container?) : Content(lineNumber, content, parent) {
-/*
-    init {
-        lineNumber = l
-        type = ContentType.GATHER
-        level = 2
-        var s = str.substring(1).trim({ it <= ' ' })
-        while (s.startsWith("- ")) {
-            level++
-            s = s.substring(1).trim({ it <= ' ' })
-        }
-        if (current == null)
-            throw InkParseException("A gather must be nested within another knot, parent or choice/gather structure")
-        parent = current.getParent(level - 1)
-        parent!!.add(this)
-        addLine(s)
+            text: String,
+            parent: Container,
+            val level : Int) : Container(lineNumber, text, parent) {
+  override var id: String = parent.id + InkParser.DOT + parent.indexOf(this)
+
+  init {
+    var str = text.substring(1).trim({ it <= ' ' })
+    while (str.get(0) == InkParser.DASH)
+      str = str.substring(1).trim({ it <= ' ' })
+    if (str.startsWith(StoryText.BRACE_LEFT)) {
+      id = str.substring(str.indexOf(StoryText.BRACE_LEFT) + 1, str.indexOf(StoryText.BRACE_RIGHT)).trim({ it <= ' ' })
+      id = parent.id + InkParser.DOT + id
+      str = str.substring(str.indexOf(StoryText.BRACE_RIGHT) + 1).trim({ it <= ' ' })
+    }
+    if (!str.isEmpty()) {
+      if (str.contains(InkParser.DIVERT))
+        InkParser.parseDivert(lineNumber, str, this)
+      else
+        Content(lineNumber, str, this)
+    }
+  }
+
+  companion object {
+
+    fun getChoiceDepth(line: String): Int {
+      val notation = line[0]
+      var lvl = 0
+      var s = line.substring(1).trim({ it <= ' ' })
+      while (s.get(0) == notation) {
+        lvl++
+        s = s.substring(1).trim({ it <= ' ' })
+      }
+      return lvl
     }
 
-    private fun addLine(str: String) {
-        var s = str
-        if (s.startsWith("(")) {
-            id = s.substring(s.indexOf(Symbol.BRACE_LEFT.toInt()) + 1, s.indexOf(Symbol.BRACE_RIGHT.toInt())).trim({ it <= ' ' })
-            id = (if (parent != null) parent!!.id else null) + InkParser.DOT + id
-            s = s.substring(s.indexOf(Symbol.BRACE_RIGHT.toInt()) + 1).trim({ it <= ' ' })
-
-        }
-        //noinspection ResultOfObjectAllocationIgnored
-        Content(lineNumber, s, this)
+    fun getParent(currentContainer: Container, lvl: Int): Container {
+      var ret = currentContainer
+      val parentFound = false
+      while (!parentFound) {
+        if ((ret is Choice && lvl <= ret.level) || (ret is Gather && lvl <= ret.level))
+          ret = ret.parent!!
+        else
+          return ret
+      }
+      return ret
     }
+  }
 
-    companion object {
 
-        fun isGatherHeader(str: String): Boolean {
-            if (str.length < 2) return false
-            return str.startsWith("- ")
-        }
-    }
-*/
 }

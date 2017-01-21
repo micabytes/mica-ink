@@ -9,9 +9,21 @@ internal open class ParameterizedContainer(lineNumber: Int,
                                            parent: Container?) : Container(lineNumber, content, parent) {
 
   internal val parameters: ArrayList<String> = ArrayList<String>()
+  internal val variables: HashMap<String, Any> = HashMap<String, Any>()
+
+  fun hasValue(key: String): Boolean {
+    return variables.containsKey(key)
+  }
+
+  fun getValue(key: String): Any {
+    return variables[key]!!
+  }
+
+  fun setValue(key: String, value: Any) {
+    variables.put(key, value)
+  }
 
     /*
-    var variables: MutableMap<String, Any>? = null
 
     @Throws(InkRunTimeException::class)
     override fun initialize(story: Story, c: Content) {
@@ -25,7 +37,7 @@ internal open class ParameterizedContainer(lineNumber: Int,
             val vs = HashMap<String, Any>()
             for (i in param.indices) {
                 val p = param[i].trim({ it <= ' ' })
-                vs.put(parameters!![i], Variable.evaluate(p, story))
+                vs.put(parameters!![i], Declaration.evaluate(p, story))
             }
             if (variables == null)
                 variables = vs
@@ -36,19 +48,6 @@ internal open class ParameterizedContainer(lineNumber: Int,
         }
     }
 
-    fun hasValue(key: String): Boolean {
-        if (variables == null) return false
-        return variables!!.containsKey(key)
-    }
-
-    fun getValue(key: String): Any {
-        return variables!![key]
-    }
-
-    fun setValue(key: String, value: Any) {
-        if (variables == null) variables = HashMap<String, Any>()
-        variables!!.put(key, value)
-    }
 
     fun getParameters(): List<String> {
         return Collections.unmodifiableList(parameters!!)
