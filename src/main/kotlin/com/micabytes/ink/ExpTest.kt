@@ -563,7 +563,7 @@ addFunction(new KnotFunction("RANDOM", 0) {
   }
 
   /**
-   * Check that the expression have enough numbers and variables to fit the
+   * Check that the expression have enough numbers and values to fit the
    * requirements of the operators and functions, also check
    * for only 1 result stored at the end of the evaluation.
    */
@@ -603,7 +603,7 @@ addFunction(new KnotFunction("RANDOM", 0) {
       counter++
     }
     if (counter > 1) {
-      throw ExpressionException("Too many numbers or variables")
+      throw ExpressionException("Too many numbers or values")
     } else if (counter < 1) {
       throw ExpressionException("Empty expression")
     }
