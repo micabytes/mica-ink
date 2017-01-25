@@ -10,6 +10,9 @@ import java.util.Collections
 import java.util.Locale
 import java.util.Stack
 import java.util.TreeMap
+import jdk.nashorn.internal.objects.NativeArray.pop
+
+
 
 /**
  * Based on https://github.com/uklimaschewski/EvalEx
@@ -21,6 +24,7 @@ class Expression constructor(val originalExpression: String,
                              val defaultMathContext: MathContext = MathContext.DECIMAL32) {
   /// The expression evaluators exception class.
   class ExpressionException(message: String) : RuntimeException(message)
+
   /// The [MathContext] to use for calculations.
   private var mc = defaultMathContext
   /// The cached RPN (Reverse Polish Notation) of the expression.
@@ -320,37 +324,10 @@ class Expression constructor(val originalExpression: String,
       }
     })
     */
-    //variables.put("e", e)
-    //variables.put("PI", PI)
-    //variables.put("TRUE", BigDecimal.ONE)
-    //variables.put("FALSE", BigDecimal.ZERO)
-  }
-
-  private fun isNumber(st: String): Boolean {
-    if (st[0] == minusSign && st.length == 1) return false
-    if (st[0] == '+' && st.length == 1) return false
-    if (st[0] == 'e' || st[0] == 'E') return false
-    for (ch in st.toCharArray()) {
-      if (!Character.isDigit(ch) && ch != minusSign
-          && ch != decimalSeparator
-          && ch != 'e' && ch != 'E' && ch != '+')
-        return false
-    }
-    return true
-  }
-
-  private fun isStringParameter(st: String): Boolean {
-    if (st.startsWith("\"") && st.endsWith("\""))
-      return true
-    return false
-  }
-
-  private fun stripStringParameter(st: String): String {
-    if (st.startsWith("\"") && st.endsWith("\""))
-      return st.substring(1, st.length - 1)
-    if (st.startsWith("\'") && st.endsWith("\'"))
-      return st.substring(1, st.length - 1)
-    return st
+    //values.put("e", e)
+    //values.put("PI", PI)
+    //values.put("TRUE", BigDecimal.ONE)
+    //values.put("FALSE", BigDecimal.ZERO)
   }
 
   @Throws(InkRunTimeException::class)
@@ -368,7 +345,7 @@ class Expression constructor(val originalExpression: String,
         outputQueue.add(token)
       } else if (vMap.hasVariable(token)) {
         outputQueue.add(token)
-      } else if (vMap.hasFunction(token.toUpperCase(Locale.ROOT))) {
+      } else if (vMap.hasFunction(token)) {
         stack.push(token)
         lastFunction = token
       } else if (vMap.checkObject(token)) {
@@ -421,7 +398,7 @@ class Expression constructor(val originalExpression: String,
           throw ExpressionException("Mismatched parentheses")
         }
         stack.pop()
-        if (!stack.isEmpty() && vMap.hasFunction(stack.peek().toUpperCase(Locale.ROOT))) {
+        if (!stack.isEmpty() && (vMap.hasFunction(stack.peek()) || vMap.checkObject(stack.peek())) ) {
           outputQueue.add(stack.pop())
         }
       }
@@ -444,7 +421,9 @@ class Expression constructor(val originalExpression: String,
   fun eval(vMap: VariableMap): Any {
     val stack = Stack<Any>()
     for (token in getRPN(vMap)) {
-      if (operators.containsKey(token)) {
+      if (isNumber(token))
+        stack.push(BigDecimal(token, mc))
+      else if (operators.containsKey(token)) {
         val v1 = stack.pop()
         val v2 = stack.pop()
         stack.push(operators.get(token)!!.eval(v2 as BigDecimal, v1 as BigDecimal))
@@ -466,7 +445,7 @@ class Expression constructor(val originalExpression: String,
         }
       } else if (vMap.hasFunction(token)) {
         val f = vMap.getFunction(token)
-        val p = ArrayList<Any>(if (f.isFixedNumParams) f.numParams else 0)
+        val p = ArrayList<Any>(if (f.isFixedNumParams()) f.numParams() else 0)
         // pop parameters off the stack until we hit the start of  this function's parameter list
         while (!stack.isEmpty() && stack.peek() !== Expression.PARAMS_START) {
           val param = stack.pop()
@@ -478,10 +457,10 @@ class Expression constructor(val originalExpression: String,
         if (stack.peek() === Expression.PARAMS_START) {
           stack.pop()
         }
-        if (f.isFixedNumParams && p.size != f.numParams) {
-          throw ExpressionException("Function " + token + " expected " + f.numParams + " parameters, got " + p.size)
+        if (f.isFixedNumParams() && p.size != f.numParams()) {
+          throw ExpressionException("Function " + token + " expected " + f.numParams() + " parameters, got " + p.size)
         }
-        stack.push(f.eval(p))
+        stack.push(f.eval(p, vMap))
       } else if (vMap.checkObject(token)) {
         val vr = token.substring(0, token.indexOf("."))
         val function = token.substring(token.indexOf(".") + 1)
@@ -515,13 +494,13 @@ class Expression constructor(val originalExpression: String,
             var fResult = m.invoke(vl, *params)
             when (fResult) {
               is Boolean ->
-                  fResult = if (fResult) BigDecimal.ONE else BigDecimal.ZERO
+                fResult = if (fResult) BigDecimal.ONE else BigDecimal.ZERO
               is Int ->
-                  fResult = BigDecimal(fResult)
+                fResult = BigDecimal(fResult)
               is Float ->
-                  fResult = BigDecimal(fResult.toDouble())
+                fResult = BigDecimal(fResult.toDouble())
               is Double ->
-                  fResult = BigDecimal(fResult)
+                fResult = BigDecimal(fResult)
             }
             stack.push(fResult)
           } catch (e: NoSuchMethodException) {
@@ -547,10 +526,7 @@ class Expression constructor(val originalExpression: String,
       } else if ("(" == token) {
         stack.push(PARAMS_START)
       } else {
-        if (isNumber(token))
-          stack.push(BigDecimal(token, mc))
-        else
-          stack.push(token)
+        stack.push(token)
         //stack.push(object : LazyNumber {
         //  override fun eval(): BigDecimal {
         //    return BigDecimal(token, mc!!)
@@ -602,13 +578,13 @@ class Expression constructor(val originalExpression: String,
   }
 
   fun setVariable(variable: String, value: BigDecimal): Expression {
-    variables.put(variable, value)
+    values.put(variable, value)
     return this
   }
 
   fun setVariable(variable: String, value: String): Expression {
     if (isNumber(value))
-      variables.put(variable, BigDecimal(value))
+      values.put(variable, BigDecimal(value))
     else {
       expression = expression!!.replace("(?i)\\b$variable\\b".toRegex(), "(" + value + ")")
       rpn = null
@@ -659,8 +635,8 @@ class Expression constructor(val originalExpression: String,
       } else if (vMap.hasFunction(token.toUpperCase(Locale.ROOT))) {
         val f = vMap.getFunction(token.toUpperCase(Locale.ROOT))!!
         val numParams = stack.pop()
-        if (f.isFixedNumParams && numParams != f.numParams) {
-          throw ExpressionException("Function " + token + " expected " + f.numParams + " parameters, got " + numParams)
+        if (f.isFixedNumParams() && numParams != f.numParams()) {
+          throw ExpressionException("Function " + token + " expected " + f.numParams() + " parameters, got " + numParams)
         }
         if (stack.size <= 0) {
           throw ExpressionException("Too many function calls, maximum scope exceeded")
@@ -669,8 +645,11 @@ class Expression constructor(val originalExpression: String,
         stack[stack.size - 1] = stack.peek() + 1
       } else if (vMap.checkObject(token)) {
         // TODO: Verify this works
-        // push the result of the function
-        stack[stack.size - 1] = stack.peek() + 1
+        val numParams = stack.pop()
+        if (stack.size <= 0) {
+          throw ExpressionException("Too many function calls, maximum scope exceeded")
+        }        // push the result of the function
+        stack.set(stack.size - 1, stack.peek() + 1)
       } else if ("(" == token) {
         stack.push(0)
       } else {
@@ -680,7 +659,7 @@ class Expression constructor(val originalExpression: String,
     if (stack.size > 1) {
       throw ExpressionException("Too many unhandled function parameter lists")
     } else if (stack.peek() > 1) {
-      throw ExpressionException("Too many numbers or variables")
+      throw ExpressionException("Too many numbers or values")
     } else if (stack.peek() < 1) {
       throw ExpressionException("Empty expression")
     }
@@ -698,7 +677,7 @@ class Expression constructor(val originalExpression: String,
   }
 
   val declaredVariables: Set<String>
-    get() = Collections.unmodifiableSet(variables.keys)
+    get() = Collections.unmodifiableSet(values.keys)
 
   val declaredOperators: Set<String>
     get() = Collections.unmodifiableSet(operators.keys)
@@ -745,6 +724,7 @@ class Expression constructor(val originalExpression: String,
   }
 
   companion object {
+    val TRUE = "TRUE"
     /// Definition of PI as a constant, can be used in expressions as variable.
     val PI = BigDecimal("3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679")
     /// Definition of e: "Euler's number" as a constant, can be used in expressions as variable.
@@ -758,6 +738,33 @@ class Expression constructor(val originalExpression: String,
       override fun eval(): BigDecimal {
         return BigDecimal(0)
       }
+    }
+
+    fun isNumber(st: String): Boolean {
+      if (st[0] == minusSign && st.length == 1) return false
+      if (st[0] == '+' && st.length == 1) return false
+      if (st[0] == 'e' || st[0] == 'E') return false
+      for (ch in st.toCharArray()) {
+        if (!Character.isDigit(ch) && ch != minusSign
+            && ch != decimalSeparator
+            && ch != 'e' && ch != 'E' && ch != '+')
+          return false
+      }
+      return true
+    }
+
+    private fun isStringParameter(st: String): Boolean {
+      if (st.startsWith("\"") && st.endsWith("\""))
+        return true
+      return false
+    }
+
+    private fun stripStringParameter(st: String): String {
+      if (st.startsWith("\"") && st.endsWith("\""))
+        return st.substring(1, st.length - 1)
+      if (st.startsWith("\'") && st.endsWith("\'"))
+        return st.substring(1, st.length - 1)
+      return st
     }
 
   }

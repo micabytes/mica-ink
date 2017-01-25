@@ -1,43 +1,40 @@
 package com.micabytes.ink
 
-import java.util.ArrayList
-
-internal class Stitch(lineNumber: Int,
-                    text: String) : ParameterizedContainer(lineNumber, text, null) {
-  override var id: String = ""
-  val level: Int = 0
-  internal var isFunction: Boolean = false
-
-  init {
-    var pos = 0
-    while (InkParser.HEADER == text[pos]) {
-      pos++
-    }
-    val header = StringBuilder(pos + 1)
-    for (i in 0..pos - 1)
-      header.append(InkParser.HEADER)
-    var fullId = text.replace(header.toString().toRegex(), "").trim({ it <= ' ' })
-    if (fullId.startsWith(Symbol.FUNCTION)) {
-      isFunction = true
-      fullId = fullId.replaceFirst(Symbol.FUNCTION.toRegex(), "")
-    }
-    if (fullId.contains(StoryText.BRACE_LEFT)) {
-      val params = fullId.substring(fullId.indexOf(StoryText.BRACE_LEFT) + 1, fullId.indexOf(StoryText.BRACE_RIGHT))
-      val param = params.split(",".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
-      param.mapTo(parameters) { aParam -> aParam.trim({ it <= ' ' }) }
-      fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT))
-    }
-    id = fullId
-  }
+internal class Stitch(header: String,
+                      parent: Container,
+                      lineNumber: Int) : ParameterizedContainer(getId(header, parent), ParameterizedContainer.getParameters(header), parent, lineNumber) {
 
   companion object {
-    private val KNOT_HEADER = "=="
+    private val STITCH_HEADER = "="
+
     fun isStitchHeader(str: String): Boolean {
-      return str.startsWith(KNOT_HEADER)
+      return str.startsWith(STITCH_HEADER)
     }
+
+    fun  getId(header: String, parent: Container): String {
+      var id = header.replace(STITCH_HEADER.toRegex(), "").trim({ it <= ' ' })
+      if (id.startsWith(Symbol.FUNCTION)) {
+        id = id.replaceFirst(Symbol.FUNCTION.toRegex(), "")
+      }
+      if (id.contains(StoryText.BRACE_LEFT)) {
+        id = id.substring(0, id.indexOf(StoryText.BRACE_LEFT))
+      }
+      return parent.id + InkParser.DOT + id
+    }
+
+    fun getParent(currentContainer: Container): Container {
+      var container = currentContainer
+      while (container != null) {
+        if (container is Knot) return container
+        container = container.parent!!
+      }
+      return currentContainer!!
+    }
+
   }
 
 }
+
 
 /*
 internal class Stitch

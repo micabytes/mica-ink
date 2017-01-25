@@ -8,17 +8,18 @@ class ConditionalSpec : WordSpec() {
   init {
 
     "Conditionals" should {
+
       val ifTrue =
           """=== test
-        |VAR x = 2
-        |VAR y = 0
-        |{ x > 0:
-        |    ~ y = x - 1
-        |}
-        |The value is {y}.
-      """.trimMargin()
+          |VAR x = 2
+          |VAR y = 0
+          |{ x > 0:
+          |    ~ y = x - 1
+          |}
+          |The value is {y}.
+        """.trimMargin()
 
-      "- evaluate the statements if the condition evaluates to true" {
+      "evaluate the statements if the condition evaluates to true" {
         val inputStream = IOUtils.toInputStream(ifTrue, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -36,7 +37,7 @@ class ConditionalSpec : WordSpec() {
         |The value is {y}.
       """.trimMargin()
 
-      "- not evaluate the statement if the condition evaluates to false" {
+      "not evaluate the statement if the condition evaluates to false" {
         val inputStream = IOUtils.toInputStream(ifFalse, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -56,7 +57,7 @@ class ConditionalSpec : WordSpec() {
         |The value is {y}.
       """.trimMargin()
 
-      "- evaluate an else statement if it exists and no other condition evaluates to true" {
+      "evaluate an else statement if it exists and no other condition evaluates to true" {
         val inputStream = IOUtils.toInputStream(ifElse, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -79,7 +80,7 @@ class ConditionalSpec : WordSpec() {
         |The value is {y}.
       """.trimMargin()
 
-      "- evaluate an extended else statement if it exists and no other condition evaluates to true" {
+      "evaluate an extended else statement if it exists and no other condition evaluates to true" {
         val inputStream = IOUtils.toInputStream(ifElseExt, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -103,7 +104,7 @@ class ConditionalSpec : WordSpec() {
         |This is the end.
       """.trimMargin()
 
-      "- evaluate an extended else statement with text and divert at the end" {
+      "evaluate an extended else statement with text and divert at the end" {
         val inputStream = IOUtils.toInputStream(ifElseExtText1, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -112,8 +113,8 @@ class ConditionalSpec : WordSpec() {
         story.choiceSize shouldBe (1)
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (1)
-        text1.get(0) shouldBe ("This is the end.")
+        text1.size shouldBe (2)
+        text1.get(1) shouldBe ("This is the end.")
       }
 
       val ifElseExtText2 =
@@ -132,7 +133,7 @@ class ConditionalSpec : WordSpec() {
         |This is the end.
       """.trimMargin()
 
-      "- evaluate an extended else statement with text and divert at the end" {
+      "evaluate an extended else statement with text and divert at the end" {
         val inputStream = IOUtils.toInputStream(ifElseExtText2, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -141,8 +142,8 @@ class ConditionalSpec : WordSpec() {
         story.choiceSize shouldBe (1)
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (1)
-        text1.get(0) shouldBe ("This is the end.")
+        text1.size shouldBe (2)
+        text1.get(1) shouldBe ("This is the end.")
       }
 
       val ifElseExtText3 =
@@ -161,7 +162,7 @@ class ConditionalSpec : WordSpec() {
         |This is the end.
       """.trimMargin()
 
-      "- evaluate an extended else statement with text and divert at the end" {
+      "evaluate an extended else statement with text and divert at the end" {
         val inputStream = IOUtils.toInputStream(ifElseExtText3, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -170,12 +171,13 @@ class ConditionalSpec : WordSpec() {
         story.choiceSize shouldBe (1)
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (1)
-        text1.get(0) shouldBe ("This is the end.")
+        text1.size shouldBe (2)
+        text1.get(1) shouldBe ("This is the end.")
       }
 
       val condText =
-          """ "We are going on a trip," said Monsieur Fogg.
+          """ === start_test
+        |"We are going on a trip," said Monsieur Fogg.
         |* [The wager.] -> know_about_wager
         |* [I was surprised.] -> i_stared
         |
@@ -193,48 +195,49 @@ class ConditionalSpec : WordSpec() {
         |He said nothing in reply, merely considering his newspaper with as much thoroughness as entomologist considering his latest pinned addition.
       """.trimMargin()
 
-      "- work with conditional content which is not only logic (example 1)" {
+      "work with conditional content which is not only logic (example 1)" {
         val inputStream = IOUtils.toInputStream(condText, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
         story.choose(0)
         val text = story.next()
-        text.size shouldBe (3)
-        text.get(1) shouldBe ("I stared at Monsieur Fogg. \"But surely you are not serious?\" I demanded.")
+        text.size shouldBe (4)
+        text.get(2) shouldBe ("I stared at Monsieur Fogg. \"But surely you are not serious?\" I demanded.")
       }
 
-      "- work with conditional content which is not only logic (example 2)" {
+      "work with conditional content which is not only logic (example 2)" {
         val inputStream = IOUtils.toInputStream(condText, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
         story.choose(1)
         val text = story.next()
-        text.size shouldBe (2)
-        text.get(0) shouldBe ("I stared at Monsieur Fogg. \"But there must be a reason for this trip,\" I observed.")
+        text.size shouldBe (3)
+        text.get(1) shouldBe ("I stared at Monsieur Fogg. \"But there must be a reason for this trip,\" I observed.")
       }
 
       val condOpt =
-          """I looked...
-        |* [at the door]
-        |  -> door_open
-        |* [outside]
-        |  -> leave
-        |
-        |=== door_open
-        |at the door. It was open.
-        |-> leave
-        |
-        |=== leave
-        |I stood up and...        |
-        |{ door_open:
-        |    *   I strode out of the compartment[] and I fancied I heard my master quietly tutting to himself.           -> go_outside
-        |- else:
-        |    *   I asked permission to leave[] and Monsieur Fogg looked surprised.   -> open_door
-        |    *   I stood and went to open the door[]. Monsieur Fogg seemed untroubled by this small rebellion. -> open_door
-        |}
-      """.trimMargin()
+          """ === start_test
+          |I looked...
+          |* [at the door]
+          |  -> door_open
+          |* [outside]
+          |  -> leave
+          |
+          |=== door_open
+          |at the door. It was open.
+          |-> leave
+          |
+          |=== leave
+          |I stood up and...        |
+          |{ door_open:
+          |    *   I strode out of the compartment[] and I fancied I heard my master quietly tutting to himself.           -> go_outside
+          |- else:
+          |    *   I asked permission to leave[] and Monsieur Fogg looked surprised.   -> open_door
+          |    *   I stood and went to open the door[]. Monsieur Fogg seemed untroubled by this small rebellion. -> open_door
+          |}
+        """.trimMargin()
 
-      "- work with options as conditional content (example 1)" {
+      "work with options as conditional content (example 1)" {
         val inputStream = IOUtils.toInputStream(condOpt, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
@@ -243,7 +246,7 @@ class ConditionalSpec : WordSpec() {
         story.choiceSize shouldBe (1)
       }
 
-      "- work with options as conditional content (example 2)" {
+      "work with options as conditional content (example 2)" {
         val inputStream = IOUtils.toInputStream(condOpt, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
@@ -265,7 +268,7 @@ class ConditionalSpec : WordSpec() {
         |+ [Try again] -> test
       """.trimMargin()
 
-      "- go through the alternatives and stick on last when the keyword is stopping" {
+      "go through the alternatives and stick on last when the keyword is stopping" {
         val inputStream = IOUtils.toInputStream(stopping, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -273,16 +276,16 @@ class ConditionalSpec : WordSpec() {
         text0.get(0) shouldBe ("I entered the casino.")
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (1)
-        text1.get(0) shouldBe ("I entered the casino again.")
+        text1.size shouldBe (2)
+        text1.get(1) shouldBe ("I entered the casino again.")
         story.choose(0)
         val text2 = story.next()
-        text2.size shouldBe (1)
-        text2.get(0) shouldBe ("Once more, I went inside.")
+        text2.size shouldBe (3)
+        text2.get(2) shouldBe ("Once more, I went inside.")
         story.choose(0)
         val text3 = story.next()
-        text3.size shouldBe (1)
-        text3.get(0) shouldBe ("Once more, I went inside.")
+        text3.size shouldBe (4)
+        text3.get(3) shouldBe ("Once more, I went inside.")
       }
 
       val cycle =
@@ -295,7 +298,7 @@ class ConditionalSpec : WordSpec() {
         |+ [Try again] -> test
       """.trimMargin()
 
-      "- show each in turn and then cycle when the keyword is cycle" {
+      "show each in turn and then cycle when the keyword is cycle" {
         val inputStream = IOUtils.toInputStream(cycle, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -303,16 +306,16 @@ class ConditionalSpec : WordSpec() {
         text0.get(0) shouldBe ("I held my breath.")
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (1)
-        text1.get(0) shouldBe ("I waited impatiently.")
+        text1.size shouldBe (2)
+        text1.get(1) shouldBe ("I waited impatiently.")
         story.choose(0)
         val text2 = story.next()
-        text2.size shouldBe (1)
-        text2.get(0) shouldBe ("I paused.")
+        text2.size shouldBe (3)
+        text2.get(2) shouldBe ("I paused.")
         story.choose(0)
         val text3 = story.next()
-        text3.size shouldBe (1)
-        text3.get(0) shouldBe ("I held my breath.")
+        text3.size shouldBe (4)
+        text3.get(3) shouldBe ("I held my breath.")
       }
 
       val once =
@@ -324,7 +327,7 @@ class ConditionalSpec : WordSpec() {
         |+ [Try again] -> test
       """.trimMargin()
 
-      "- show each, once, in turn, until all have been shown when the keyword is once" {
+      "show each, once, in turn, until all have been shown when the keyword is once" {
         val inputStream = IOUtils.toInputStream(once, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -332,14 +335,14 @@ class ConditionalSpec : WordSpec() {
         text0.get(0) shouldBe ("Would my luck hold?")
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (1)
-        text1.get(0) shouldBe ("Could I win the hand?")
+        text1.size shouldBe (2)
+        text1.get(1) shouldBe ("Could I win the hand?")
         story.choose(0)
         val text2 = story.next()
-        text2.size shouldBe (0)
+        text2.size shouldBe (2)
         story.choose(0)
         val text3 = story.next()
-        text3.size shouldBe (0)
+        text3.size shouldBe (2)
       }
 
       val shuffle =
@@ -352,20 +355,20 @@ class ConditionalSpec : WordSpec() {
         |+ [Try again] -> test
       """.trimMargin()
 
-      "- show one at random when the keyword is shuffle" {
+      "show one at random when the keyword is shuffle" {
         val inputStream = IOUtils.toInputStream(shuffle, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
         text0.size shouldBe (1)
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (1)
+        text1.size shouldBe (2)
         story.choose(0)
         val text2 = story.next()
-        text2.size shouldBe (1)
+        text2.size shouldBe (3)
         story.choose(0)
         val text3 = story.next()
-        text3.size shouldBe (1)
+        text3.size shouldBe (4)
         // No check of the result, as that is random
       }
 
@@ -381,7 +384,7 @@ class ConditionalSpec : WordSpec() {
         |+ [Draw a card] I drew a card. -> test
       """.trimMargin()
 
-      "- show multiple lines of texts from multiline list blocks" {
+      "show multiple lines of texts from multiline list blocks" {
         val inputStream = IOUtils.toInputStream(multiline, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -389,14 +392,14 @@ class ConditionalSpec : WordSpec() {
         text0.get(0) shouldBe ("At the table, I drew a card. Ace of Hearts.")
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (2)
-        text1.get(0) shouldBe ("I drew a card. 2 of Diamonds.")
-        text1.get(1) shouldBe ("\"Should I hit you again,\" the croupier asks.")
+        text1.size shouldBe (3)
+        text1.get(1) shouldBe ("I drew a card. 2 of Diamonds.")
+        text1.get(2) shouldBe ("\"Should I hit you again,\" the croupier asks.")
         story.choose(0)
         val text2 = story.next()
-        text2.size shouldBe (2)
-        text2.get(0) shouldBe ("I drew a card. King of Spades.")
-        text2.get(1) shouldBe ("\"You lose,\" he crowed.")
+        text2.size shouldBe (5)
+        text2.get(3) shouldBe ("I drew a card. King of Spades.")
+        text2.get(4) shouldBe ("\"You lose,\" he crowed.")
       }
 
       val multilineDivert =
@@ -414,7 +417,7 @@ class ConditionalSpec : WordSpec() {
         |"You lose," he crowed.
       """.trimMargin()
 
-      "- allow for embedded diverts" {
+      "allow for embedded diverts" {
         val inputStream = IOUtils.toInputStream(multilineDivert, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -422,14 +425,14 @@ class ConditionalSpec : WordSpec() {
         text0.get(0) shouldBe ("At the table, I drew a card. Ace of Hearts.")
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (2)
-        text1.get(0) shouldBe ("I drew a card. 2 of Diamonds.")
-        text1.get(1) shouldBe ("\"Should I hit you again,\" the croupier asks.")
+        text1.size shouldBe (3)
+        text1.get(1) shouldBe ("I drew a card. 2 of Diamonds.")
+        text1.get(2) shouldBe ("\"Should I hit you again,\" the croupier asks.")
         story.choose(0)
         val text2 = story.next()
-        text2.size shouldBe (2)
-        text2.get(0) shouldBe ("I drew a card. King of Spades.")
-        text2.get(1) shouldBe ("\"You lose,\" he crowed.")
+        text2.size shouldBe (5)
+        text2.get(3) shouldBe ("I drew a card. King of Spades.")
+        text2.get(4) shouldBe ("\"You lose,\" he crowed.")
       }
 
       val multilineChoice =
@@ -446,7 +449,7 @@ class ConditionalSpec : WordSpec() {
         |+ [Draw a card] I drew a card. -> test
       """.trimMargin()
 
-      "- allow for embedded choices" {
+      "allow for embedded choices" {
         val inputStream = IOUtils.toInputStream(multilineChoice, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -457,8 +460,8 @@ class ConditionalSpec : WordSpec() {
         story.choiceSize shouldBe (2)
         story.choose(0)
         val text2 = story.next()
-        text2.size shouldBe (1)
-        text2.get(0) shouldBe ("I left the table.")
+        text2.size shouldBe (4)
+        text2.get(3) shouldBe ("I left the table.")
       }
 
     }
@@ -485,7 +488,7 @@ class ConditionalSpec : WordSpec() {
         |-> END
       """.trimMargin()
 
-      "- allow for diverts in the conditional that direct to another knot" {
+      "allow for diverts in the conditional that direct to another knot" {
         val inputStream = IOUtils.toInputStream(condChoice1, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -493,8 +496,8 @@ class ConditionalSpec : WordSpec() {
         text0.get(0) shouldBe ("This is a knot.")
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (1)
-        text1.get(0) shouldBe ("This is choice 1.")
+        text1.size shouldBe (2)
+        text1.get(1) shouldBe ("This is choice 1.")
       }
 
       val condChoice0 =
@@ -517,7 +520,7 @@ class ConditionalSpec : WordSpec() {
         |-> END
       """.trimMargin()
 
-      "- allow for diverts in the else clause" {
+      "allow for diverts in the else clause" {
         val inputStream = IOUtils.toInputStream(condChoice0, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -525,8 +528,8 @@ class ConditionalSpec : WordSpec() {
         text0.get(0) shouldBe ("This is a knot.")
         story.choose(0)
         val text1 = story.next()
-        text1.size shouldBe (1)
-        text1.get(0) shouldBe ("This is choice 0.")
+        text1.size shouldBe (2)
+        text1.get(1) shouldBe ("This is choice 0.")
       }
     }
   }

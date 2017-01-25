@@ -5,31 +5,30 @@ import java.util.regex.Pattern
 class Declaration internal constructor(lineNumber: Int,
                                        decl: String,
                                        parent: Container) :
-    Content(lineNumber,
+    Content(getId(parent),
         if (decl.startsWith(VAR_))
           decl.substring(4).trim({ it <= ' ' })
         else
-          decl.substring(2).trim({ it <= ' ' })
-        , parent) {
+          decl.substring(1).replace(Symbol.RETURN, Symbol.RETURNEQ).trim({ it <= ' ' })
+        ,
+        parent,
+        lineNumber) {
 
-  override val type = if (decl.startsWith(VAR_))
-    ContentType.VARIABLE_DECLARATION
-  else
-    ContentType.VARIABLE_EXPRESSION
+  val isDeclaration = decl.startsWith(VAR_)
 
   @Throws(InkRunTimeException::class)
   fun evaluate(story: Story) {
-    when (type) {
-      ContentType.VARIABLE_DECLARATION -> declareVariable(story)
-      else -> calculate(story)
-    }
+    if (isDeclaration)
+      declareVariable(story)
+    else
+      calculate(story)
   }
 
   @Throws(InkRunTimeException::class)
   private fun declareVariable(story: Story) {
     val tokens = EQ_SPLITTER.split(text)
     if (tokens.size != 2)
-      throw InkRunTimeException("Invalid variable declaration. Expected variables, values, and/or operators after \'=\'.")
+      throw InkRunTimeException("Invalid variable declaration. Expected values, values, and/or operators after \'=\'.")
     val variable = tokens[0].trim { it <= ' ' }
     val value = tokens[1].trim { it <= ' ' }
     if (value.startsWith(Symbol.DIVERT)) {
@@ -66,7 +65,7 @@ class Declaration internal constructor(lineNumber: Int,
       return
     }
     if (tokens.size > 2)
-      throw InkRunTimeException("Invalid variable expression. Expected variables, values, and operators after \'=\' in line $lineNumber")
+      throw InkRunTimeException("Invalid variable expression. Expected values, values, and operators after \'=\' in line $lineNumber")
     val variable = tokens[0].trim { it <= ' ' }
     val value = tokens[1].trim { it <= ' ' }
     if (!story.hasVariable(variable))
@@ -103,6 +102,10 @@ class Declaration internal constructor(lineNumber: Int,
     internal val FALSE_UC = "FALSE"
     //private val RETURN = Symbol.RETURN
     //private val RETURNEQ = "return ="
+
+    fun getId(parent: Container): String {
+      return parent.id + InkParser.DOT + parent.size
+    }
 
     fun evaluate(str: String, variables: VariableMap): Any {
       // TODO: Note that this means that spacing will mess up expressions; needs to be fixed

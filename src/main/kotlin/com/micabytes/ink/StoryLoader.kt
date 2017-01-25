@@ -97,7 +97,7 @@ object StoryLoader {
           while (p.nextToken() != JsonToken.END_OBJECT) {
             val varName = p.currentName
             val obj = loadObjectStream(p)
-            variables.put(varName, obj)
+            values.put(varName, obj)
           }
         }
         StoryJson.RUNNING -> running = p.nextBooleanValue()!!

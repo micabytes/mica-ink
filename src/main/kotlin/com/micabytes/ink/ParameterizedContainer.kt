@@ -1,27 +1,39 @@
 package com.micabytes.ink
 
-import java.util.ArrayList
-import java.util.Collections
-import java.util.HashMap
+import java.util.*
 
-internal open class ParameterizedContainer(lineNumber: Int,
-                                           content: String,
-                                           parent: Container?) : Container(lineNumber, content, parent) {
-
-  internal val parameters: ArrayList<String> = ArrayList<String>()
-  internal val variables: HashMap<String, Any> = HashMap<String, Any>()
+internal open class ParameterizedContainer(id: String,
+                                           val parameters: List<String>,
+                                           parent: Container?,
+                                           lineNumber: Int) : Container(id, "", parent, lineNumber) {
+  internal val values: HashMap<String, Any> = HashMap<String, Any>()
 
   fun hasValue(key: String): Boolean {
-    return variables.containsKey(key)
+    return values.containsKey(key)
   }
 
   fun getValue(key: String): Any {
-    return variables[key]!!
+    return values[key]!!
   }
 
   fun setValue(key: String, value: Any) {
-    variables.put(key, value)
+    values.put(key, value)
   }
+
+  companion object {
+
+    fun getParameters(header: String): List<String> {
+      val params: ArrayList<String> = ArrayList<String>()
+      if (header.contains(StoryText.BRACE_LEFT)) {
+        val paramStr = header.substring(header.indexOf(StoryText.BRACE_LEFT) + 1, header.indexOf(StoryText.BRACE_RIGHT))
+        val param = paramStr.split(",".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
+        param.mapTo(params) { aParam -> aParam.trim({ it <= ' ' }) }
+      }
+      return params
+    }
+
+  }
+
 
     /*
 
@@ -39,11 +51,11 @@ internal open class ParameterizedContainer(lineNumber: Int,
                 val p = param[i].trim({ it <= ' ' })
                 vs.put(parameters!![i], Declaration.evaluate(p, story))
             }
-            if (variables == null)
-                variables = vs
+            if (values == null)
+                values = vs
             else {
-                variables!!.clear()
-                variables!!.putAll(vs)
+                values!!.clear()
+                values!!.putAll(vs)
             }
         }
     }
@@ -57,14 +69,6 @@ internal open class ParameterizedContainer(lineNumber: Int,
         parameters = ArrayList(params)
     }
 
-    fun getVariables(): Map<String, Any>? {
-        if (variables == null) return null
-        return Collections.unmodifiableMap(variables!!)
-    }
-
-    fun setVariables(vars: HashMap<String, Any>) {
-        variables = HashMap(vars)
-    }
     */
 
 }

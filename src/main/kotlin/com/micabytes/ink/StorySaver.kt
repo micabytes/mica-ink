@@ -62,7 +62,7 @@ object StorySaver {
       g.writeStringField(StoryJson.IMAGE, image)
     g.writeFieldName(StoryJson.VARIABLES)
     g.writeStartObject()
-    for ((key, value) in variables) {
+    for ((key, value) in values) {
       if (value != null) {
         saveObject(g, key, value)
       } else {

@@ -7,18 +7,17 @@ import java.util.*
 class Story(internal val wrapper: StoryWrapper, fileName: String, internal var container: Container, internal val content: HashMap<String, Content>) : VariableMap {
   // Story Content
   private val fileNames: MutableList<String> = ArrayList()
-  private val functions = TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER)
   private val interrupts = ArrayList<StoryInterrupt>()
-  private val storyEnd = Knot(0, "== END ==")
+  private val storyEnd = Knot("== END ==", 0)
   private var endProcessing = false
   private var currentText = Symbol.GLUE
   private val text: MutableList<String> = ArrayList()
   private val choices = ArrayList<Container>()
   private val variables = HashMap<String, Any>()
-  /// All defined functions with name and implementation.
+  private val functions = TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER)
   //private val functions = TreeMap<String, LazyFunction>(String.CASE_INSENSITIVE_ORDER)
-  /// All defined variables with name and value.
-  //private val variables = TreeMap<String, BigDecimal>(String.CASE_INSENSITIVE_ORDER)
+  /// All defined values with name and value.
+  //private val values = TreeMap<String, BigDecimal>(String.CASE_INSENSITIVE_ORDER)
   // Story state
   //private var container: Container? = null
   //private val comments = ArrayList<Comment>()
@@ -29,6 +28,10 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
   init {
     fileNames.add(fileName)
     content.put(storyEnd.id, storyEnd)
+    for (cnt in content) {
+      if (cnt.value is Knot && (cnt.value as Knot).isFunction)
+        functions.put(cnt.value.id.toLowerCase(Locale.US), cnt.value as Knot)
+    }
     variables.put(Declaration.TRUE_UC, BigDecimal.ONE)
     variables.put(Declaration.FALSE_UC, BigDecimal.ZERO)
     /*
@@ -39,6 +42,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     functions.put(IS_KNOT, IsKnotFunction())
     functions.put(FLOOR, FloorFunction())
     */
+
   }
 
   fun add(story: Story) {
@@ -59,6 +63,18 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     while (!endProcessing) {
       val current = container.get(container.index)
       when (current) {
+        is Stitch -> {
+          if (container.index == 0) {
+            container.index = container.size
+            container = current
+            container.index = 0
+            current.count++
+          }
+          else {
+            container.index = container.size
+            increment()
+          }
+        }
         is Choice -> {
           if (current.isFallBack()) {
             if (choices.isEmpty()) {
@@ -66,6 +82,7 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
               container.index ++
               container = current
               container.index = 0
+              current.count++
             } else
               increment()
           } else {
@@ -81,9 +98,17 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
             container.index ++
             container = current
             container.index = 0
+            current.count++
           }
         }
-        //is Comment -> comments.add(current)
+        is Conditional -> {
+          container.index ++
+          container = current.resolveConditional(this)
+          current.count++
+          container.index = 0
+          if (container.index >= container.size)
+            increment()
+        }
         is Declaration -> {
           current.evaluate(this)
           increment()
@@ -91,12 +116,15 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
         is Divert -> {
           container.index ++
           container = current.resolveDivert(this)
+          current.count++
           container.index = 0
         }
         // is ..
+      //is Comment -> comments.add(current)
         // is Tunnel
         else -> {
           addText(current)
+          current.count ++
           increment()
         }
       }
@@ -104,7 +132,9 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
         endProcessing = true
     }
     if (!currentText.isEmpty()) {
-      text.add(cleanUpText(currentText))
+      val txt = cleanUpText(currentText)
+      if (!txt.isEmpty())
+        text.add(txt)
     }
     return text
   }
@@ -137,6 +167,12 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
           */
         }
         is Gather -> {
+          container = container.parent!!
+        }
+        is Conditional -> {
+          container = container.parent!!
+        }
+        is ConditionalOption -> {
           container = container.parent!!
         }
         else -> {
@@ -397,8 +433,8 @@ return ""
       val fd = getFullId(d)
       divertTo = storyContent[fd] as Container
       if (divertTo == null) {
-        if (variables.containsKey(d))
-          divertTo = variables[d] as Container
+        if (values.containsKey(d))
+          divertTo = values[d] as Container
         if (divertTo == null)
           throw InkRunTimeException("Attempt to divert to non-defined " + d + " or " + fd + " in line " + content.lineNumber)
       }
@@ -571,14 +607,21 @@ return ""
       return BigDecimal.ZERO
     }
     if (content.containsKey(token)) {
-      val storyContainer = content[token] as Container
+      val storyContainer = content[token] as Content
       return BigDecimal.valueOf(storyContainer.count.toLong())
     }
     val pathId = getValueId(token)
     if (content.containsKey(pathId)) {
-      val storyContainer = content[pathId] as Container
+      val storyContainer = content[pathId] as Content
       return BigDecimal.valueOf(storyContainer.count.toLong())
     }
+    val knotId = getKnotId(token)
+    if (content.containsKey(knotId)) {
+      val storyContainer = content[knotId] as Content
+      return BigDecimal.valueOf(storyContainer.count.toLong())
+    }
+    if (container is ParameterizedContainer && (container as ParameterizedContainer).hasValue(token))
+      return (container as ParameterizedContainer).getValue(token)
     if (variables.containsKey(token)) {
       return variables[token]!!
     }
@@ -594,6 +637,20 @@ return ""
     return if (container != null) container!!.id + InkParser.DOT + id else id
   }
 
+  private fun getKnotId(id: String): String {
+    if (id == Symbol.DIVERT_END)
+      return id
+    if (id.contains(InkParser.DOT.toString()))
+      return id
+    var knot = container
+    while (knot != null) {
+      if (knot is Knot)
+        return knot.id + InkParser.DOT + id
+      knot = knot.parent!!
+    }
+    return id
+  }
+
   override fun hasVariable(token: String): Boolean {
     /*
     if (Character.isDigit(token[0]))
@@ -606,31 +663,38 @@ return ""
       }
       c = c.parent
     }
-    if (storyContent.containsKey(token))
+    */
+    if (functions.containsKey(token))
+      return false // TODO: Need a better solution for this. Perhaps lookahead in shuntingYard
+    if (content.containsKey(token))
       return true
-    if (storyContent.containsKey(getValueId(token)))
+    if (content.containsKey(getValueId(token)))
       return true
-      */
+    if (content.containsKey(getKnotId(token)))
+      return true
+    if (container is ParameterizedContainer && (container as ParameterizedContainer).hasValue(token))
+      return true
     return variables.containsKey(token)
   }
 
   override fun hasFunction(token: String): Boolean {
-    return functions.containsKey(token)
+    return functions.containsKey(token.toLowerCase(Locale.US))
   }
 
   override fun getFunction(token: String): Function {
-    if (hasFunction(token))
-      return functions.get(token)!!
+    if (hasFunction(token.toLowerCase(Locale.US)))
+      return functions.get(token.toLowerCase(Locale.US))!!
     throw RuntimeException()
     //return //NullFunction()
     // TODO: Empty Function
   }
 
   override fun checkObject(token: String): Boolean {
-    /*
+    if (Expression.isNumber(token))
+      return false
     if (token.contains(".")) {
-      return hasVariable(token.substring(0, token.indexOf(InkParser.DOT.toInt())))
-    }*/
+      return hasVariable(token.substring(0, token.indexOf(InkParser.DOT)))
+    }
     return false
   }
 
@@ -762,28 +826,22 @@ return ""
       }
       return null
     }
-
-    private fun checkResult(res: Any?): Boolean {
-      if (res == null)
-        return false
-      if (res is Boolean && (res as Boolean?)!!)
-        return true
-      return res is BigDecimal && res.toInt() > 0
-    }
-
-
-    private fun isContainerEmpty(c: Container): Boolean {
-      return c.size == 0
-    }
     */
   }
 
   fun getDivert(d: String): Container {
     if (content.containsKey(d))
       return content.get(d) as Container
-    if (hasVariable(d)) {
-      val v = getValue(d)
-      return v as Container
+    if (content.containsKey(getValueId(d)))
+      return content.get(getValueId(d)) as Container
+    if (content.containsKey(getKnotId(d)))
+      return content.get(getKnotId(d)) as Container
+    if (variables.containsKey(d)) {
+      val t = variables.get(d)
+      if (t is Container)
+        return t
+      else
+        throw InkRunTimeException("Attempt to divert to a variable " + d + " which is not a Container")
     }
     throw InkRunTimeException("Attempt to divert to non-defined node " + d)
   }

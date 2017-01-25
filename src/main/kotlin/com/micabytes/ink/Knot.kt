@@ -1,40 +1,103 @@
 package com.micabytes.ink
 
-// TODO: Functions should check that stitches are not added.
+internal class Knot(header: String,
+                    lineNumber: Int) :
+    ParameterizedContainer(Knot.getId(header), ParameterizedContainer.getParameters(header), null, lineNumber),
+    Function {
 
-internal class Knot(lineNumber: Int,
-                    text: String) : ParameterizedContainer(lineNumber, text, null) {
-  override var id: String = ""
-  val level: Int = 0
-  internal var isFunction: Boolean = false
+  internal val isFunction: Boolean = Knot.isFunction(header)
 
-  init {
-    var pos = 0
-    while (InkParser.HEADER == text[pos]) {
-      pos++
+  override fun isFixedNumParams(): Boolean {
+    return true
+  }
+
+  override fun numParams(): Int {
+    return parameters.size
+  }
+
+  override fun eval(params: List<Any>, vMap: VariableMap): Any {
+    // Should probably do some checks when creating functions to ensure no illegal items are added.
+    // Note - this resolution will have some issue if local variables are impleemented.
+    val story = vMap as Story
+    if (params.size != parameters.size)
+      throw InkRunTimeException("Parameters passed to function " + id + " do not match the definition of the function. Passed " + params.size + " parameters and expected " + parameters.size)
+    val callingContainer = story.container
+    story.container = this
+    for (i in parameters.indices)
+      values.put(parameters[i], params[i])
+    for (c in children) {
+      when (c) {
+        is Declaration -> {
+          if (c.text.startsWith(Symbol.RETURN)) {
+            values.put(Symbol.RETURN, "")
+            c.evaluate(story)
+            story.container = callingContainer
+            return values[Symbol.RETURN]!!
+          }
+          else
+            c.evaluate(story)
+        }
+        is Conditional -> {
+          val opt = c.resolveConditional(story)
+          for (oc in opt.children) {
+            when (oc) {
+              is Declaration -> {
+                if (oc.text.startsWith(Symbol.RETURN)) {
+                  values.put(Symbol.RETURN, "")
+                  oc.evaluate(story)
+                  story.container = callingContainer
+                  return values[Symbol.RETURN]!!
+                } else
+                  oc.evaluate(story)
+              }
+              else -> {
+                story.container = callingContainer
+                return oc.getText(story)
+              }
+            }
+          }
+        }
+        else -> {
+          story.container = callingContainer
+          return c.getText(story)
+        }
+      }
     }
-    val header = StringBuilder(pos + 1)
-    for (i in 0..pos - 1)
-      header.append(InkParser.HEADER)
-    var fullId = text.replace(header.toString().toRegex(), "").trim({ it <= ' ' })
-    if (fullId.startsWith(Symbol.FUNCTION)) {
-      isFunction = true
-      fullId = fullId.replaceFirst(Symbol.FUNCTION.toRegex(), "")
-    }
-    if (fullId.contains(StoryText.BRACE_LEFT)) {
-      val params = fullId.substring(fullId.indexOf(StoryText.BRACE_LEFT) + 1, fullId.indexOf(StoryText.BRACE_RIGHT))
-      val param = params.split(",".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
-      param.mapTo(parameters) { aParam -> aParam.trim({ it <= ' ' }) }
-      fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT))
-    }
-    id = fullId
+    story.container = callingContainer
+    return 0
   }
 
   companion object {
+
     private val KNOT_HEADER = "=="
-    fun isKnotHeader(str: String): Boolean {
+
+    fun isKnot(str: String): Boolean {
       return str.startsWith(KNOT_HEADER)
     }
+
+    fun getId(id: String): String {
+      var pos = 0
+      while (InkParser.HEADER == id[pos]) {
+        pos++
+      }
+      val header = StringBuilder(pos + 1)
+      for (i in 0..pos - 1)
+        header.append(InkParser.HEADER)
+      var fullId = id.replace(header.toString().toRegex(), "").trim({ it <= ' ' })
+      if (fullId.startsWith(Symbol.FUNCTION)) {
+        fullId = fullId.replaceFirst(Symbol.FUNCTION.toRegex(), "")
+      }
+      if (fullId.contains(StoryText.BRACE_LEFT)) {
+        fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT))
+      }
+      return fullId.trim({ it <= ' ' })
+    }
+
+    fun isFunction(id: String): Boolean {
+      val strippedId = id.replace(InkParser.HEADER.toString().toRegex(), "").trim({ it <= ' ' })
+      return (strippedId.startsWith(Symbol.FUNCTION))
+    }
+
   }
 
 }

@@ -1,12 +1,18 @@
 package com.micabytes.ink
 
-import java.math.BigDecimal
 import java.util.*
 
 interface LazyNumber {
   fun eval(): Any
 }
 
+interface Function {
+  fun numParams(): Int
+  fun isFixedNumParams(): Boolean
+  fun eval(params: List<Any>, vMap: VariableMap): Any
+}
+
+/*
 abstract class LazyFunction(val name: String, val numParams: Int) {
   val isFixedNumParams: Boolean = (numParams > 0)
   abstract fun lazyEval(lazyParams: List<LazyNumber>): LazyNumber
@@ -31,6 +37,7 @@ abstract class Function(name: String, numParams: Int) : LazyFunction(name.toUppe
 
   abstract fun eval(parameters: List<Any>): Any
 }
+*/
 
 
 

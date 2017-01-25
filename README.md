@@ -6,13 +6,13 @@ jInk is - or rather - may become a Java implementation of Inkle Studios (@inkle)
 
 Currently, this reimplements Part 1 to Part 3 of the [Ink documentation](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md), with the following omissions (that I know of - other things may be missing that I've simply forgotten to get implemented):
 
-- Conditions on choices (as well as the choice text) cannot be multi-line.
+- Conditions on choices (as well as the choice header) cannot be multi-line.
 - evaluation of conditions has some limitations (not only supported as a function, evaluation of 'and' and 'or' is space sensitive).
 - Multi-line comments are not implemented.
 - CHOICE_COUNT and TURNS_SINCE are not implemented (essentially functions, and those haven't been implemented yet).
 - Doesn't parse check for -> END yet (i.e., quite happy to have knots and threads ending in nothing).
 - Have not tested "Advanced: Gathers directly after an option"
-- No temporary variables at this point (parameters exist, though).
+- No temporary values at this point (parameters exist, though).
 - No pass by reference parameters.
 - No constants.
 - No extern functions.
@@ -23,7 +23,7 @@ And of course, the key elements of Part 4 are missing:
 
 Most of the examples in the implemented section of the documentation are used as tests, with a few additional test cases grabbed from the 'ink/Tests' where appropriate.
 
-This implementation does one thing that the standard Ink implementation does not, which is to allow the use of native Java objects as variables, and permit the calling of methods on those objects.
+This implementation does one thing that the standard Ink implementation does not, which is to allow the use of native Java objects as values, and permit the calling of methods on those objects.
 
 ## Roadmap
 

@@ -2,13 +2,12 @@ package com.micabytes.ink
 
 import java.util.ArrayList
 
-open class Container(lineNumber: Int,
-                     content: String,
-                     parent: Container?) : Content(lineNumber, content, parent) {
-  //open internal val level: Int = 0
+open class Container(id: String,
+                     text: String,
+                     parent: Container?,
+                     lineNumber: Int) : Content(id, text, parent, lineNumber) {
   internal var index: Int = 0
   internal var children: MutableList<Content> = ArrayList()
-  internal var background: String? = null
 
   fun add(item: Content) {
     children.add(item)
@@ -18,26 +17,11 @@ open class Container(lineNumber: Int,
     return children[i]
   }
 
-  val size: Int
-    get() = children.size
-
   fun indexOf(c: Content): Int {
     return children.indexOf(c)
   }
 
-  /*
-  internal fun getParent(lvl: Int): Container {
-    var c: Container = this
-    while (c.level > lvl && c.parent != null) {
-      c = c.parent!!
-    }
-    return c
-  }
-  */
-
-  @Throws(InkRunTimeException::class)
-  open fun initialize(story: Story, c: Content) {
-    count++
-  }
+  val size: Int
+    get() = children.size
 
 }

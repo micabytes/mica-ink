@@ -1,12 +1,11 @@
 package com.micabytes.ink
 
-import java.util.ArrayList
-import java.util.HashMap
-
 // TODO: Functions should check that stitches are not added.
 
 internal class KnotFunction(lineNumber: Int,
-                    text: String) : ParameterizedContainer(lineNumber, text, null) {
+                    text: String) : ParameterizedContainer(text, ParameterizedContainer.getParameters(text), null, lineNumber) {
+
+  /*
   override var id: String = ""
   val level: Int = 0
   internal var isFunction: Boolean = false
@@ -25,9 +24,9 @@ internal class KnotFunction(lineNumber: Int,
       fullId = fullId.replaceFirst(Symbol.FUNCTION.toRegex(), "")
     }
     if (fullId.contains(StoryText.BRACE_LEFT)) {
-      val params = fullId.substring(fullId.indexOf(StoryText.BRACE_LEFT) + 1, fullId.indexOf(StoryText.BRACE_RIGHT))
-      val param = params.split(",".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
-      param.mapTo(parameters) { aParam -> aParam.trim({ it <= ' ' }) }
+      //val params = fullId.substring(fullId.indexOf(StoryText.BRACE_LEFT) + 1, fullId.indexOf(StoryText.BRACE_RIGHT))
+      //val param = params.split(",".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
+      //param.mapTo(parameters) { aParam -> aParam.trim({ it <= ' ' }) }
       fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT))
     }
     id = fullId
@@ -39,7 +38,7 @@ internal class KnotFunction(lineNumber: Int,
       return str.startsWith(KNOT_HEADER)
     }
   }
-
+*/
 }
 
 /**
@@ -83,10 +82,10 @@ class KnotFunction(l: Int, str: String) : ParameterizedContainer(), Function {
             throw InkRunTimeException("Parameters passed to function " + id + " do not match the definition of the function. Passed " + params.size + " parameters and expected " + parameters!!.size)
         val callingContainer = story.container
         story.container = this
-        if (variables == null)
-            variables = HashMap<String, Any>()
+        if (values == null)
+            values = HashMap<String, Any>()
         for (i in parameters!!.indices) {
-            variables!!.put(parameters!![i], params[i])
+            values!!.put(parameters!![i], params[i])
         }
         for (c in children) {
             if (c.type == ContentType.TEXT) {
@@ -95,10 +94,10 @@ class KnotFunction(l: Int, str: String) : ParameterizedContainer(), Function {
             } else if (c.isVariable) {
                 val v = c as Declaration
                 if (v.isVariableReturn) {
-                    variables!!.put(Symbol.RETURN, "")
+                    values!!.put(Symbol.RETURN, "")
                     v.evaluate(story)
                     story.container = callingContainer
-                    return variables!![Symbol.RETURN]
+                    return values!![Symbol.RETURN]
                 }
                 v.evaluate(story)
             } else if (c.isConditional) {
@@ -113,10 +112,10 @@ class KnotFunction(l: Int, str: String) : ParameterizedContainer(), Function {
                     if (cd.isVariable) {
                         val v = cd as Declaration
                         if (v.isVariableReturn) {
-                            variables!!.put(Symbol.RETURN, "")
+                            values!!.put(Symbol.RETURN, "")
                             v.evaluate(story)
                             story.container = callingContainer
-                            return variables!![Symbol.RETURN]
+                            return values!![Symbol.RETURN]
                         }
                         v.evaluate(story)
                     }

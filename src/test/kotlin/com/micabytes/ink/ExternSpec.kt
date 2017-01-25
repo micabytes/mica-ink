@@ -10,9 +10,10 @@ class ExternSpec : WordSpec() {
     "Methods on external objects" should {
 
       val helloWorld =
-          """{x.hello()}
-        |-> END
-      """.trimMargin()
+          """=== test_knot
+          |{x.hello()}
+          |-> END
+        """.trimMargin()
 
       "- be possible to call on an object without any parameters" {
         val inputStream = IOUtils.toInputStream(helloWorld, "UTF-8")
@@ -24,9 +25,10 @@ class ExternSpec : WordSpec() {
       }
 
       val helloNoBrace =
-          """{x.hello()}
-        |-> END
-      """.trimMargin()
+          """=== test_knot
+          |{x.hello()}
+          |-> END
+        """.trimMargin()
 
       "- be possible to call on an object without any parameters and no function brace" {
         val inputStream = IOUtils.toInputStream(helloNoBrace, "UTF-8")
@@ -38,10 +40,11 @@ class ExternSpec : WordSpec() {
       }
 
       val mambo =
-          """VAR y = 5
-        |{x.number(y)}
-        |-> END
-      """.trimMargin()
+          """=== test_knot
+          | VAR y = 5
+          |{x.number(y)}
+          |-> END
+        """.trimMargin()
 
       "- be possible to call on an object with a parameter defined" {
         val inputStream = IOUtils.toInputStream(mambo, "UTF-8")
@@ -54,10 +57,10 @@ class ExternSpec : WordSpec() {
 
       val externChoices =
           """=== choice_test ===
-      |Test conditional choices
-      |+ {x.wrong()} not displayed
-      |+ shown
-      """.trimMargin()
+          |Test conditional choices
+          |+ {x.wrong()} not displayed
+          |+ shown
+          """.trimMargin()
 
       "- resolve external bools correctly in conditional choices" {
         val inputStream = IOUtils.toInputStream(externChoices, "UTF-8")

@@ -13,6 +13,7 @@ class Symbol private constructor() {
   companion object {
     internal val BRACE_LEFT = '('
     internal val BRACE_RIGHT = ')'
+    internal val DASH = '-'
     internal val FUNCTION_HEADER = "=="
     internal val GLUE = "<>"
     val DIVERT = "->"
@@ -21,5 +22,6 @@ class Symbol private constructor() {
     val EVENT = "event"
     internal val FUNCTION = "function"
     internal val RETURN = "return"
+    internal val RETURNEQ = "return ="
   }
 }

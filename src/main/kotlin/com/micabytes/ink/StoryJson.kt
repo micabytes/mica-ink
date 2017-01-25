@@ -14,7 +14,7 @@ class StoryJson private constructor() {
         val CONTENT = "children"
         val ID = "id"
         val COUNT = "count"
-        val VARIABLES = "variables"
+        val VARIABLES = "values"
         val CONTAINER = "container"
         val COUNTER = "counter"
         val TEXT = "text"

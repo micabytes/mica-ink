@@ -4,9 +4,9 @@ import java.math.BigDecimal
 import java.util.*
 
 internal class Conditional @Throws(InkParseException::class)
-constructor(lineNumber: Int,
-            text: String,
-            parent: Container?) : Container(lineNumber, text, parent) {
+constructor(header: String,
+            parent: Container,
+            lineNumber: Int) : Container(getId(parent), "", parent, lineNumber) {
 
   internal enum class SequenceType {
     SEQUENCE_NONE,
@@ -16,57 +16,41 @@ constructor(lineNumber: Int,
     SEQUENCE_STOP
   }
 
-  private var seqType: SequenceType = SequenceType.SEQUENCE_NONE
-  private var conditions: MutableList<ConditionalOptions> = ArrayList()
-  private var selection: Int = 0
-
-  class ConditionalOptions internal constructor(lineNumber: Int,
-                                                        text: String,
-                                                        parent: Container?) : Container(lineNumber, text, parent) {
-    // NOOP
-  }
+  var seqType: SequenceType = SequenceType.SEQUENCE_NONE
 
   init {
-    var str = text.substring(1).trim({ it <= ' ' })
+    val str = header.substring(1).trim({ it <= ' ' })
     if (!str.isEmpty()) {
       if (!str.endsWith(":"))
         throw InkParseException("Error in conditional block; initial condition not ended by \':\'. Line number: $lineNumber")
-      if (str.startsWith(CONDITIONAL_DASH))
-        str = str.substring(1).trim({ it <= ' ' })
       val condition = str.substring(0, str.length - 1).trim({ it <= ' ' })
       verifySequenceCondition(condition)
-      if (seqType == SequenceType.SEQUENCE_NONE)
-        children.add(ConditionalOptions(lineNumber, condition, this))
+      if (seqType == SequenceType.SEQUENCE_NONE) {
+        children.add(ConditionalOption(header, this, lineNumber))
+      }
     }
   }
 
-  /*
-  @Throws(InkParseException::class)
-  fun parseLine(l: Int, line: String) {
-    val str = if (line.endsWith(InkParser.CONDITIONAL_END))
-      line.substring(0, line.indexOf(InkParser.CONDITIONAL_END))
-    else
-      line
-    if (type == ContentType.CONDITIONAL) {
-      if (str.startsWith(CONDITIONAL_DASH) && !str.startsWith(Symbol.DIVERT)) {
-        if (!str.endsWith(CONDITIONAL_COLON))
-          throw InkParseException("Error in conditional block; condition not ended by \':\'. LineNumber: $l")
-        val condition = str.substring(1, str.length - 1).trim({ it <= ' ' })
-        children.add(ConditionalOptions(condition))
-      } else {
-        InkParser.parseLine(l, str, this)
+  fun  resolveConditional(story: Story): Container {
+    index = size
+    when (seqType) {
+      SequenceType.SEQUENCE_NONE -> {
+        for (opt in children) {
+          if ((opt as ConditionalOption).evaluate(story)) {
+            return opt
+          }
+        }
       }
-    } else {
-      if (str.startsWith(CONDITIONAL_DASH) && !str.startsWith(Symbol.DIVERT)) {
-        val first = str.substring(1).trim({ it <= ' ' })
-        children.add(ConditionalOptions(""))
-        InkParser.parseLine(l, first, this)
-      } else {
-        InkParser.parseLine(l, str, this)
-      }
+      SequenceType.SEQUENCE_CYCLE -> return children[count % children.size] as Container
+      SequenceType.SEQUENCE_ONCE -> if (count < size) return children[count] as Container
+      SequenceType.SEQUENCE_SHUFFLE -> return children[Random().nextInt(children.size)] as Container
+      SequenceType.SEQUENCE_STOP -> return children[if (count >= children.size) children.size - 1 else count] as Container
+      else -> story.logException(InkRunTimeException("Invalid conditional type."))
     }
+    val empty = ConditionalOption("", this, 0)
+    children.remove(empty)
+    return empty
   }
-  */
 
   private fun verifySequenceCondition(str: String) {
     if (STOPPING.equals(str, ignoreCase = true))
@@ -77,79 +61,6 @@ constructor(lineNumber: Int,
       seqType = SequenceType.SEQUENCE_CYCLE
     if (ONCE.equals(str, ignoreCase = true))
       seqType = SequenceType.SEQUENCE_ONCE
-  }
-
-  /*
-  override val size: Int
-    get() {
-      if (selection >= children.size)
-        return 1
-      val opt = children[selection] as ConditionalOptions
-      return opt.lines.size
-    }
-
-  override fun get(i: Int): Content {
-    if (selection >= children.size)
-      return Content(lineNumber, "", this)
-    val opt = children[selection] as ConditionalOptions
-    return opt.lines[i]
-  }
-
-  override fun indexOf(c: Content): Int {
-    if (selection >= children.size)
-      return 0
-    val opt = children[selection] as ConditionalOptions
-    return opt.lines.indexOf(c)
-  }
-
-  @SuppressWarnings("RefusedBequest")
-  override fun add(item: Content) {
-    val cond = children[children.size - 1] as ConditionalOptions
-    cond.lines.add(item)
-  }
-  */
-
-  @Throws(InkRunTimeException::class)
-  override fun initialize(story: Story, c: Content) {
-    evaluate(story)
-    super.initialize(story, c)
-  }
-
-  @SuppressWarnings("OverlyComplexMethod")
-  @Throws(InkRunTimeException::class)
-  private fun evaluate(story: Story) {
-    when (type) {
-      ContentType.CONDITIONAL -> {
-        for (c in children) {
-          val opt = c as ConditionalOptions
-          if (children.indexOf(c) == children.size - 1 && ELSE == opt.text) {
-            selection = children.indexOf(c)
-            return
-          } else {
-            val eval = Declaration.evaluate(opt.text, story)
-            if (eval is Boolean) {
-              if (eval) {
-                selection = children.indexOf(c)
-                return
-              }
-            } else {
-              val `val` = eval as BigDecimal
-              if (`val`.toInt() > 0) {
-                selection = children.indexOf(c)
-                return
-              }
-            }
-          }
-        }
-        // Failed
-        selection = children.size
-      }
-      ContentType.SEQUENCE_CYCLE -> selection = count % children.size
-      ContentType.SEQUENCE_ONCE -> selection = count
-      ContentType.SEQUENCE_SHUFFLE -> selection = Random().nextInt(children.size)
-      ContentType.SEQUENCE_STOP -> selection = if (count >= children.size) children.size - 1 else count
-      else -> story.logException(InkRunTimeException("Invalid conditional type."))
-    }
   }
 
   companion object {
@@ -164,6 +75,7 @@ constructor(lineNumber: Int,
     fun isConditionalHeader(str: String): Boolean {
       return str.startsWith(StoryText.CBRACE_LEFT) && !str.contains(StoryText.CBRACE_RIGHT)
     }
+
   }
 
 }

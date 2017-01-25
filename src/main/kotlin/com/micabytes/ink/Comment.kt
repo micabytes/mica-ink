@@ -5,7 +5,7 @@ import java.util.ArrayList
 
 internal class Comment(lineNumber: Int,
                        content: String,
-                       parent: Container?) : Content(lineNumber, content, parent) {
+                       parent: Container?) : Content("", content, parent, lineNumber) {
     private var conditions: ArrayList<String>? = null
 
     /*

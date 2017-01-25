@@ -13,7 +13,7 @@ object InkParser {
   internal val DIVERT = "->"
   private val VAR_DECL = 'V'
   private val VAR_STAT = '~'
-  private val CONDITIONAL_HEADER = '{'
+  val CONDITIONAL_HEADER = '{'
   internal val CONDITIONAL_END = '}'
   val DOT = '.'
   private val DEFAULT_KNOT_NAME = "default"
@@ -70,59 +70,62 @@ object InkParser {
     val firstChar = if (line.isEmpty()) WHITESPACE else line[0]
     when (firstChar) {
       HEADER -> {
-        if (Knot.isKnotHeader(line)) {
-          return mutableListOf(Knot(lineNumber, line))
-        }
-        if (KnotFunction.isFunctionHeader(line)) {
-          return mutableListOf(KnotFunction(lineNumber, line))
+        if (Knot.isKnot(line)) {
+          return mutableListOf(Knot(line, lineNumber))
         }
         if (Stitch.isStitchHeader(line)) {
-          return mutableListOf(Stitch(lineNumber, line))
+          if (currentContainer == null)
+            throw InkParseException("Stitch without a containing Knot at line " + lineNumber) // add fileName
+          return parseContainer(Stitch(line, Stitch.getParent(currentContainer), lineNumber))
         }
       }
       CHOICE_DOT, CHOICE_PLUS -> {
         if (currentContainer == null)
           throw InkParseException("Choice without an anchor at line " + lineNumber) // add fileName
         val choiceDepth = Choice.getChoiceDepth(line)
-        return parseContainer(Choice(lineNumber, line, Choice.getParent(currentContainer, choiceDepth), choiceDepth))
+        return parseContainer(Choice(line, choiceDepth, Choice.getParent(currentContainer, choiceDepth), lineNumber))
       }
       DASH -> {
         if (line.startsWith(DIVERT))
           return parseDivert(lineNumber, line, currentContainer)
         if (currentContainer == null)
           throw InkParseException("Dash without an anchor at line " + lineNumber) // add fileName
-        if (isConditional(currentContainer))
-          return mutableListOf(Conditional.ConditionalOptions(lineNumber, line, getConditional(currentContainer!!)))
+        if (isConditional(currentContainer)) {
+          return parseContainer(ConditionalOption(line, getConditional(currentContainer), lineNumber))
+        }
         else {
           val level = Gather.getChoiceDepth(line)
-          return parseContainer(Gather(lineNumber, line, Gather.getParent(currentContainer, level), level))
+          return parseContainer(Gather(line, Gather.getParent(currentContainer, level), level, lineNumber))
         }
       }
       VAR_DECL, VAR_STAT -> {
         if (currentContainer == null)
           throw InkParseException("Declaration is not inside a knot/container at line " + lineNumber) // add fileName
-        if (Declaration.isVariableHeader(line))
-          return mutableListOf(Declaration(lineNumber, line, currentContainer!!))
-      }
-      CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(line))
-        return parseContainer(Conditional(lineNumber, line, currentContainer))
-      CONDITIONAL_END -> if (currentContainer is Conditional || currentContainer is Conditional.ConditionalOptions)
-          return mutableListOf(currentContainer.parent as Content)
-      else -> {
-        if (line.contains(DIVERT))
-          return parseDivert(lineNumber, line, currentContainer)
-        if (!line.isEmpty() && currentContainer != null) {
-          return mutableListOf(Content(lineNumber, line, currentContainer))
+        if (Declaration.isVariableHeader(line)) {
+          return parseContainer(Declaration(lineNumber, line, currentContainer))
         }
       }
+      CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(line))
+        return parseContainer(Conditional(line, currentContainer!!, lineNumber))
+      CONDITIONAL_END -> if (currentContainer is Conditional || currentContainer is ConditionalOption)
+        return mutableListOf(getConditional(currentContainer).parent as Content)
+      else -> {
+        // NOOP
+      }
     }
+    if (line.contains(DIVERT))
+      return parseDivert(lineNumber, line, currentContainer)
+    if (!line.isEmpty() && currentContainer != null)
+      return parseContainer(Content(Content.getId(currentContainer), line, currentContainer, lineNumber))
     // Should throw error.
     return ArrayList<Content>()
   }
 
-  private fun parseContainer(cont: Container): MutableList<Content> {
-    val list = mutableListOf(cont as Content)
-    list.addAll(cont.children)
+  private fun parseContainer(cont: Content): MutableList<Content> {
+    cont.parent!!.add(cont)
+    val list = mutableListOf(cont)
+    if (cont is Container)
+      list.addAll(cont.children)
     return list
   }
 
@@ -148,18 +151,22 @@ object InkParser {
     val ret = ArrayList<Content>()
     val div = line.split(DIVERT)
     if (!div[0].isEmpty()) {
-      ret.add(Content(lineNumber, div[0] + Symbol.GLUE, currentContainer))
+      val text = Content(Content.getId(currentContainer!!), div[0] + Symbol.GLUE, currentContainer, lineNumber)
+      currentContainer.add(text)
+      ret.add(text)
     }
     for (i in 1 until div.size) {
       if (div[i].isNotEmpty()) {
-        ret.add(Divert(lineNumber, div[i], currentContainer))
+        val divert = Divert(lineNumber, div[i], currentContainer!!)
+        currentContainer.add(divert)
+        ret.add(divert)
       }
     }
-    return ret;
+    return ret
   }
 
   private fun parseComment(lineNumber: Int, comment: String, current: Container?) {
-    val token: Array<String> = AT_SPLITTER.split(comment)
+    /*val token: Array<String> = AT_SPLITTER.split(comment)
     if (token.size < 2) return
     for (i in 1..token.size - 1) {
       if (token[i].startsWith(IMG)) {
@@ -172,7 +179,7 @@ object InkParser {
       //  val cont = Comment(lineNumber, token[i])
       //  current?.add(cont)
       //}
-    }
+    }*/
   }
 
 
