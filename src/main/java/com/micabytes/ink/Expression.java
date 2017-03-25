@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
 
-import static javax.swing.text.html.HTML.Tag.I;
-
 /* Based on https://github.com/uklimaschewski/EvalEx */
 @SuppressWarnings("ALL")
 public class Expression {
