@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.InkParser.parseDivert
+import com.micabytes.ink.exception.InkRunTimeException
 import java.math.BigDecimal
 import java.util.*
 
@@ -9,29 +9,29 @@ internal class Choice(textBase: String,
                       parent: Container,
                       lineNumber: Int) : Container(Choice.getId(textBase, parent), Choice.extractChoiceText(textBase), parent, lineNumber) {
   private var conditions: MutableList<String> = ArrayList()
-  private val repeatable = (textBase[0] == InkParser.CHOICE_PLUS)
+  private val repeatable = (textBase[0] == Symbol.CHOICE_PLUS)
 
   init {
     val notation = textBase[0]
     var header = textBase
     while (header[0] == notation)
       header = header.substring(1).trim({ it <= ' ' })
-    if (header.startsWith(StoryText.BRACE_LEFT)) {
-      header = header.substring(header.indexOf(StoryText.BRACE_RIGHT) + 1).trim({ it <= ' ' })
+    if (header.startsWith(Symbol.BRACE_LEFT)) {
+      header = header.substring(header.indexOf(Symbol.BRACE_RIGHT) + 1).trim({ it <= ' ' })
     }
-    while (header.startsWith(StoryText.CBRACE_LEFT)) {
-      conditions.add(header.substring(header.indexOf(StoryText.CBRACE_LEFT) + 1, header.indexOf(StoryText.CBRACE_RIGHT)).trim({ it <= ' ' }))
-      header = header.substring(header.indexOf(StoryText.CBRACE_RIGHT) + 1).trim({ it <= ' ' })
+    while (header.startsWith(Symbol.CBRACE_LEFT)) {
+      conditions.add(header.substring(header.indexOf(Symbol.CBRACE_LEFT) + 1, header.indexOf(Symbol.CBRACE_RIGHT)).trim({ it <= ' ' }))
+      header = header.substring(header.indexOf(Symbol.CBRACE_RIGHT) + 1).trim({ it <= ' ' })
     }
     val result = if (header.contains("]"))
       header.replace("\\[.*\\]".toRegex(), "").trim({ it <= ' ' })
     else
       header
     if (!result.isEmpty()) {
-      if (result.contains(InkParser.DIVERT))
-        parseDivert(lineNumber, result, this)
+      if (result.contains(Symbol.DIVERT))
+        InkParser.parseDivert(lineNumber, result, this)
       else
-        children.add(Content(id + InkParser.DOT + size, result, this, lineNumber))
+        children.add(Content(id + Symbol.DOT + size, result, this, lineNumber))
     }
   }
 
@@ -78,11 +78,11 @@ internal class Choice(textBase: String,
       var id = header
       while (id.startsWith(notation))
         id = id.substring(1).trim({ it <= ' ' })
-      if (id.startsWith(StoryText.BRACE_LEFT)) {
-        id = id.substring(id.indexOf(StoryText.BRACE_LEFT) + 1, id.indexOf(StoryText.BRACE_RIGHT)).trim({ it <= ' ' })
-        return parent.id + InkParser.DOT + id
+      if (id.startsWith(Symbol.BRACE_LEFT)) {
+        id = id.substring(id.indexOf(Symbol.BRACE_LEFT) + 1, id.indexOf(Symbol.BRACE_RIGHT)).trim({ it <= ' ' })
+        return parent.id + Symbol.DOT + id
       }
-      return parent.id + InkParser.DOT + parent.size
+      return parent.id + Symbol.DOT + parent.size
     }
 
     fun extractChoiceText(header: String): String {
@@ -90,14 +90,14 @@ internal class Choice(textBase: String,
       var text = header
       while (text[0] == notation)
         text = text.substring(1).trim({ it <= ' ' })
-      if (text.startsWith(StoryText.BRACE_LEFT)) {
-        text = text.substring(text.indexOf(StoryText.BRACE_RIGHT) + 1).trim({ it <= ' ' })
+      if (text.startsWith(Symbol.BRACE_LEFT)) {
+        text = text.substring(text.indexOf(Symbol.BRACE_RIGHT) + 1).trim({ it <= ' ' })
       }
-      while (text.startsWith(StoryText.CBRACE_LEFT)) {
-        text = text.substring(text.indexOf(StoryText.CBRACE_RIGHT) + 1).trim({ it <= ' ' })
+      while (text.startsWith(Symbol.CBRACE_LEFT)) {
+        text = text.substring(text.indexOf(Symbol.CBRACE_RIGHT) + 1).trim({ it <= ' ' })
       }
       if (text.contains("]"))
-        text = text.substring(0, text.indexOf(StoryText.SBRACE_RIGHT)).replace(StoryText.SBRACE_LEFT, "").trim({ it <= ' ' })
+        text = text.substring(0, text.indexOf(Symbol.SBRACE_RIGHT)).replace(Symbol.SBRACE_LEFT.toString(), "").trim({ it <= ' ' })
       return text
     }
 

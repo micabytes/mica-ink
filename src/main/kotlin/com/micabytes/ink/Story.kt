@@ -1,29 +1,23 @@
 package com.micabytes.ink
 
+import com.micabytes.ink.exception.InkRunTimeException
 import java.math.BigDecimal
-import java.nio.channels.GatheringByteChannel
 import java.util.*
 
-class Story(internal val wrapper: StoryWrapper, fileName: String, internal var container: Container, internal val content: HashMap<String, Content>) : VariableMap {
+class Story(internal val wrapper: StoryWrapper,
+            fileName: String,
+            internal var container: Container,
+            internal val content: HashMap<String, Content>) : VariableMap {
   // Story Content
-  private val fileNames: MutableList<String> = ArrayList()
+  internal val fileNames: MutableList<String> = ArrayList()
   private val interrupts = ArrayList<StoryInterrupt>()
   private val storyEnd = Knot("== END ==", 0)
   private var endProcessing = false
   private var currentText = Symbol.GLUE
-  private val text: MutableList<String> = ArrayList()
-  private val choices = ArrayList<Container>()
-  private val variables = HashMap<String, Any>()
+  internal val text: MutableList<String> = ArrayList()
+  internal val choices = ArrayList<Container>()
+  internal val variables = HashMap<String, Any>()
   private val functions = TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER)
-  //private val functions = TreeMap<String, LazyFunction>(String.CASE_INSENSITIVE_ORDER)
-  /// All defined values with name and value.
-  //private val values = TreeMap<String, BigDecimal>(String.CASE_INSENSITIVE_ORDER)
-  // Story state
-  //private var container: Container? = null
-  //private val comments = ArrayList<Comment>()
-  //private var image: String? = null
-  //private var processing: Boolean = false
-  //private var running: Boolean = false
 
   init {
     fileNames.add(fileName)
@@ -32,8 +26,10 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
       if (cnt.value is Knot && (cnt.value as Knot).isFunction)
         functions.put(cnt.value.id.toLowerCase(Locale.US), cnt.value as Knot)
     }
-    variables.put(Declaration.TRUE_UC, BigDecimal.ONE)
-    variables.put(Declaration.FALSE_UC, BigDecimal.ZERO)
+    putVariable(Symbol.TRUE, BigDecimal.ONE)
+    putVariable(Symbol.FALSE, BigDecimal.ZERO)
+    putVariable(Symbol.PI, Expression.PI)
+    putVariable(Symbol.e, Expression.e)
     /*
     functions.put(IS_NULL, NullFunction())
     functions.put(GET_NULL, GetNullFunction())
@@ -41,6 +37,35 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
     functions.put(RANDOM, RandomFunction())
     functions.put(IS_KNOT, IsKnotFunction())
     functions.put(FLOOR, FloorFunction())
+    */
+    /*
+    addFunction(object : Function("SQRT", 1) {
+      override fun eval(parameters: List<BigDecimal>): BigDecimal {
+        val x = parameters[0]
+        if (x.compareTo(BigDecimal.ZERO) == 0) {
+          return BigDecimal(0)
+        }
+        if (x.signum() < 0) {
+          throw ExpressionException(
+              "Argument to SQRT() function must not be negative")
+        }
+        val n = x.movePointRight(mc!!.precision shl 1)
+            .toBigInteger()
+
+        val bits = n.bitLength() + 1 shr 1
+        var ix = n.shiftRight(bits)
+        var ixPrev: BigInteger
+
+        do {
+          ixPrev = ix
+          ix = ix.add(n.divide(ix)).shiftRight(1)
+          // Give other threads a chance to work;
+          Thread.`yield`()
+        } while (ix.compareTo(ixPrev) != 0)
+
+        return BigDecimal(ix, mc!!.precision)
+      }
+    })
     */
 
   }
@@ -119,8 +144,9 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
           current.count++
           container.index = 0
         }
-        // is ..
-      //is Comment -> comments.add(current)
+        is Tag -> {
+          wrapper.resolveTag(current.text)
+        }
         // is Tunnel
         else -> {
           addText(current)
@@ -228,8 +254,24 @@ class Story(internal val wrapper: StoryWrapper, fileName: String, internal var c
       }
       c = c.parent
     }
+    /*if (isNumber(value))
+      values.put(variable, BigDecimal(value))
+    else {
+      expression = expression!!.replace("(?i)\\b$variable\\b".toRegex(), "(" + value + ")")
+      rpn = null
+    }*/
     variables.put(key, value)
   }
+
+  /*
+  fun with(variable: String, value: BigDecimal): Expression {
+    return setVariable(variable, value)
+  }
+
+  fun and(variable: String, value: String): Expression {
+    return setVariable(variable, value)
+  }
+  */
 
   val isEnded: Boolean
     get() = container == storyEnd
@@ -279,13 +321,13 @@ if (!hasNext()) {
 //var endOfLine = false
 
 private fun resolveExtras() {
-for (interrupt in interrupts) {
- if (interrupt.isActive && interrupt.isChoice) {
-   val cond = interrupt.interruptCondition
+for (text in interrupts) {
+ if (text.isActive && text.isChoice) {
+   val cond = text.condition
    try {
      val res = Declaration.evaluate(cond, this)
      if (checkResult(res)) {
-       val choice = storyContent[interrupt.id] as Choice
+       val choice = storyContent[text.id] as Choice
        if (choice.evaluateConditions(this)) {
          choices.add(0, choice)
        }
@@ -402,7 +444,7 @@ if (content.type == ContentType.TEXT) {
 if (content is Choice) {
  addChoice(content as Choice)
 }
-if (content is Comment) {
+if (content is Tag) {
  comments.add(content)
 }
 if (content is Declaration)
@@ -450,40 +492,15 @@ return ""
 
   @SuppressWarnings("OverlyNestedMethod")
   private fun resolveInterrupt(divert: String): String {
-    for (interrupt in interrupts) {
-      if (interrupt.isActive && interrupt.isDivert) {
-        val cond = interrupt.interruptCondition
-        try {
-          val res = Declaration.evaluate(cond, this)
-          if (checkResult(res)) {
-            val interruptText = interrupt.interrupt
-            if (interruptText.contains(Symbol.DIVERT)) {
-              val from = interruptText.substring(0, interruptText.indexOf(Symbol.DIVERT)).trim({ it <= ' ' })
-              if (from == divert) {
-                val to = interruptText.substring(interruptText.indexOf(Symbol.DIVERT) + 2).trim({ it <= ' ' })
-                interrupt.done()
-                putVariable(Symbol.EVENT, interrupt)
-                return to
-              }
-            }
-          }
-        } catch (e: InkRunTimeException) {
-          wrapper.logException(e)
-          return divert
-        }
-
-      }
-    }
-    return divert
   }
 
   private fun getFullId(id: String): String {
     if (id == Symbol.DIVERT_END)
       return id
-    if (id.contains(InkParser.DOT.toString()))
+    if (id.contains(Symbol.DOT.toString()))
       return id
     val p = if (container != null) container!!.parent else null
-    return if (p != null) p.id + InkParser.DOT + id else id
+    return if (p != null) p.id + Symbol.DOT + id else id
   }
 
   @Throws(InkRunTimeException::class)
@@ -505,9 +522,9 @@ return ""
 
 
   private fun completeExtras(extraContainer: Container) {
-    for (interrupt in interrupts) {
-      if (interrupt.id == extraContainer.id) {
-        interrupt.done()
+    for (text in interrupts) {
+      if (text.id == extraContainer.id) {
+        text.done()
       }
     }
   }
@@ -632,26 +649,26 @@ return ""
   private fun getValueId(id: String): String {
     if (id == Symbol.DIVERT_END)
       return id
-    if (id.contains(InkParser.DOT.toString()))
+    if (id.contains(Symbol.DOT.toString()))
       return id
-    return if (container != null) container!!.id + InkParser.DOT + id else id
+    return if (container != null) container!!.id + Symbol.DOT + id else id
   }
 
   private fun getKnotId(id: String): String {
     if (id == Symbol.DIVERT_END)
       return id
-    if (id.contains(InkParser.DOT.toString()))
+    if (id.contains(Symbol.DOT.toString()))
       return id
     var knot = container
     while (knot != null) {
       if (knot is Knot)
-        return knot.id + InkParser.DOT + id
+        return knot.id + Symbol.DOT + id
       knot = knot.parent!!
     }
     return id
   }
 
-  override fun hasVariable(token: String): Boolean {
+  override fun hasValue(token: String): Boolean {
     /*
     if (Character.isDigit(token[0]))
       return false
@@ -689,11 +706,11 @@ return ""
     // TODO: Empty Function
   }
 
-  override fun checkObject(token: String): Boolean {
+  override fun hasGameObject(token: String): Boolean {
     if (Expression.isNumber(token))
       return false
     if (token.contains(".")) {
-      return hasVariable(token.substring(0, token.indexOf(InkParser.DOT)))
+      return hasValue(token.substring(0, token.indexOf(Symbol.DOT)))
     }
     return false
   }
@@ -795,6 +812,30 @@ return ""
   }
   */
 
+  fun resolveInterrupt(divert: String): String {
+    for (interrupt in interrupts) {
+      if (interrupt.isActive && interrupt.isDivert) {
+        try {
+          val res = Declaration.evaluate(interrupt.condition, this)
+          if (checkResult(res)) {
+            val from = interrupt.text.substring(0, interrupt.text.indexOf(Symbol.DIVERT)).trim({ it <= ' ' })
+            if (from == divert) {
+              val to = interrupt.text.substring(interrupt.text.indexOf(Symbol.DIVERT) + 2).trim({ it <= ' ' })
+              interrupt.isActive = false
+              putVariable(Symbol.EVENT, interrupt)
+              return to
+            }
+          }
+        } catch (e: InkRunTimeException) {
+          wrapper.logException(e)
+          return divert
+        }
+
+      }
+    }
+    return divert
+  }
+
   companion object {
     private val IS_NULL = "isnull"
     private val GET_NULL = "getnull"
@@ -845,6 +886,14 @@ return ""
     }
     throw InkRunTimeException("Attempt to divert to non-defined node " + d)
   }
+
+
+  fun checkResult(res: Any): Boolean {
+    if (res is Boolean)return res
+    if (res is BigDecimal) return res > BigDecimal.ZERO
+    return false
+  }
+
 
 }
 

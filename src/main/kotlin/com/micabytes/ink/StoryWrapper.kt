@@ -7,6 +7,7 @@ interface StoryWrapper {
   fun getStream(fileId: String): InputStream
   fun getStoryObject(objId: String): Any
   fun getInterrupt(s: String): StoryInterrupt
+  fun resolveTag(t: String)
   fun logDebug(m: String)
   fun logError(m: String)
   fun logException(e: Exception)

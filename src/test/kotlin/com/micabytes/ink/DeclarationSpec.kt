@@ -1,5 +1,6 @@
 package com.micabytes.ink
 
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.commons.io.IOUtils
 

@@ -1,11 +1,16 @@
 # Local configuration file (sdk path, etc)
 local.properties
+projectFilesBackup/
 
 # IntelliJ user specific files
 build/
+.idea/copyright/
+.idea/runConfigurations.xml
 .idea/tasks.xml
 .idea/workspace.xml
 
 # Gradle files
 .idea/gradle.xml
 .idea/libraries
+.gradle/
+lib/

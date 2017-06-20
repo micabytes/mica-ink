@@ -1,5 +1,6 @@
 package com.micabytes.ink
 
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.commons.io.IOUtils
 
@@ -42,7 +43,7 @@ class GatherSpec : WordSpec() {
           |    *   I cheered with joy. <>
           |-   The road could not be much further! Mackie would have the engine running, and then I'd be safe.
           |    *   I reached the road and looked about[]. And would you believe it?
-          |    *   I should interrupt to say Mackie is normally very reliable[]. He's never once let me down. Or rather, never once, previously to that night.
+          |    *   I should text to say Mackie is normally very reliable[]. He's never once let me down. Or rather, never once, previously to that night.
           |-   The road was empty. Mackie was nowhere to be seen.
         """.trimMargin()
 

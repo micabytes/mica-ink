@@ -22,7 +22,7 @@ class ParseSpec : WordSpec() {
         |This is an illegally named knot.
       """.trimMargin()
 
-          "- return an error when two knots/stitches share the same name" {
+          "return an error when two knots/stitches share the same name" {
             // val inputStream = IOUtils.toInputStream(knotNaming, "UTF-8")
             // TODO: Throw exception on parse error (not implemented yet)
             // InkParser.parse(inputStream, TestWrapper(), "Test") must throwA[InkParseException]

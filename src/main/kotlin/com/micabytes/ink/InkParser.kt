@@ -1,34 +1,20 @@
 package com.micabytes.ink
 
+import com.micabytes.ink.exception.InkParseException
 import java.io.InputStream
 import java.util.*
-import java.util.regex.Pattern
 
 object InkParser {
-  private val WHITESPACE = ' '
-  internal val HEADER = '='
-  internal val DASH = '-'
-  internal val CHOICE_DOT = '*'
-  internal val CHOICE_PLUS = '+'
-  internal val DIVERT = "->"
-  private val VAR_DECL = 'V'
-  private val VAR_STAT = '~'
-  val CONDITIONAL_HEADER = '{'
-  internal val CONDITIONAL_END = '}'
-  val DOT = '.'
-  private val DEFAULT_KNOT_NAME = "default"
-  private val AT_SPLITTER = Pattern.compile("[@]")
-  private val INCLUDE = "INCLUDE"
-  private val IMG = "img("
 
   @Throws(InkParseException::class)
   fun parse(provider: StoryWrapper, fileName: String): Story {
-    val input: InputStream = provider.getStream(fileName) ?: throw InkParseException("Could get InputStream from filename " + fileName)
+    val input: InputStream = provider.getStream(fileName)
     return parse(input, provider, fileName)
   }
 
   @Throws(InkParseException::class)
   fun parse(inputStream: InputStream, provider: StoryWrapper, fileName: String): Story {
+    val includes = ArrayList<String>()
     val content = HashMap<String, Content>()
     var topContainer: Container? = null
     inputStream.reader(Charsets.UTF_8).buffered(DEFAULT_BUFFER_SIZE).use {
@@ -37,16 +23,24 @@ object InkParser {
       var currentContainer: Container? = null
       while (line != null) {
         var trimmedLine = line.trim { it <= ' ' }
-        if (trimmedLine.contains("//")) {
-          val comment = trimmedLine.substring(trimmedLine.indexOf("//")).trim({ it <= ' ' })
-          parseComment(lineNumber, comment, currentContainer)
-          trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf("//")).trim({ it <= ' ' })
+        if (trimmedLine.contains(Symbol.COMMENT)) {
+          trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf(Symbol.COMMENT)).trim({ it <= ' ' })
         }
-        if (trimmedLine.startsWith(INCLUDE)) {
-          // TODO: Include
-          //val includeFile = trimmedLine.replace(INCLUDE, "").trim({ it <= ' ' })
-          //val incl = parse(provider, includeFile)
-          //story.addAll(incl)
+        // Tags don't seem to work-
+        if (trimmedLine.contains(Symbol.HASHMARK)) {
+          val tags = trimmedLine.substring(trimmedLine.indexOf(Symbol.HASHMARK)).trim({ it <= ' ' }).split(Symbol.HASHMARK)
+          for (tag in tags) {
+            val current = Tag(tag, currentContainer, lineNumber)
+            if (currentContainer != null)
+              currentContainer.add(current)
+            if (!content.containsKey(current.id))
+              content.put(current.id, current)
+          }
+          trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf(Symbol.HASHMARK)).trim({ it <= ' ' })
+        }
+        if (trimmedLine.startsWith(Symbol.INCLUDE)) {
+          val includeFile = trimmedLine.replace(Symbol.INCLUDE, "").trim({ it <= ' ' })
+          includes.add(includeFile)
         }
         val tokens = parseLine(lineNumber, trimmedLine, currentContainer)
         for (current in tokens) {
@@ -62,14 +56,18 @@ object InkParser {
       }
     }
     if (topContainer == null) throw InkParseException("Could not detect a root knot node in " + fileName)
-    return Story(provider, fileName, topContainer!!, content)
+    val story = Story(provider, fileName, topContainer!!, content)
+    for (includeFile in includes) {
+      story.add(parse(provider, includeFile))
+    }
+    return story
   }
 
   @Throws(InkParseException::class)
   internal fun parseLine(lineNumber: Int, line: String, currentContainer: Container?): List<Content> {
-    val firstChar = if (line.isEmpty()) WHITESPACE else line[0]
+    val firstChar = if (line.isEmpty()) Symbol.WHITESPACE else line[0]
     when (firstChar) {
-      HEADER -> {
+      Symbol.HEADER -> {
         if (Knot.isKnot(line)) {
           return mutableListOf(Knot(line, lineNumber))
         }
@@ -79,14 +77,14 @@ object InkParser {
           return parseContainer(Stitch(line, Stitch.getParent(currentContainer), lineNumber))
         }
       }
-      CHOICE_DOT, CHOICE_PLUS -> {
+      Symbol.CHOICE_DOT, Symbol.CHOICE_PLUS -> {
         if (currentContainer == null)
           throw InkParseException("Choice without an anchor at line " + lineNumber) // add fileName
         val choiceDepth = Choice.getChoiceDepth(line)
         return parseContainer(Choice(line, choiceDepth, Choice.getParent(currentContainer, choiceDepth), lineNumber))
       }
-      DASH -> {
-        if (line.startsWith(DIVERT))
+      Symbol.DASH -> {
+        if (line.startsWith(Symbol.DIVERT))
           return parseDivert(lineNumber, line, currentContainer)
         if (currentContainer == null)
           throw InkParseException("Dash without an anchor at line " + lineNumber) // add fileName
@@ -98,22 +96,22 @@ object InkParser {
           return parseContainer(Gather(line, Gather.getParent(currentContainer, level), level, lineNumber))
         }
       }
-      VAR_DECL, VAR_STAT -> {
+      Symbol.VAR_DECL, Symbol.VAR_STAT -> {
         if (currentContainer == null)
           throw InkParseException("Declaration is not inside a knot/container at line " + lineNumber) // add fileName
         if (Declaration.isVariableHeader(line)) {
           return parseContainer(Declaration(lineNumber, line, currentContainer))
         }
       }
-      CONDITIONAL_HEADER -> if (Conditional.isConditionalHeader(line))
+      Symbol.CBRACE_LEFT -> if (Conditional.isConditionalHeader(line))
         return parseContainer(Conditional(line, currentContainer!!, lineNumber))
-      CONDITIONAL_END -> if (currentContainer is Conditional || currentContainer is ConditionalOption)
+      Symbol.CBRACE_RIGHT -> if (currentContainer is Conditional || currentContainer is ConditionalOption)
         return mutableListOf(getConditional(currentContainer).parent as Content)
       else -> {
         // NOOP
       }
     }
-    if (line.contains(DIVERT))
+    if (line.contains(Symbol.DIVERT))
       return parseDivert(lineNumber, line, currentContainer)
     if (!line.isEmpty() && currentContainer != null)
       return parseContainer(Content(Content.getId(currentContainer), line, currentContainer, lineNumber))
@@ -149,7 +147,7 @@ object InkParser {
 
   internal fun parseDivert(lineNumber: Int, line: String, currentContainer: Container?): List<Content> {
     val ret = ArrayList<Content>()
-    val div = line.split(DIVERT)
+    val div = line.split(Symbol.DIVERT)
     if (!div[0].isEmpty()) {
       val text = Content(Content.getId(currentContainer!!), div[0] + Symbol.GLUE, currentContainer, lineNumber)
       currentContainer.add(text)
@@ -165,65 +163,4 @@ object InkParser {
     return ret
   }
 
-  private fun parseComment(lineNumber: Int, comment: String, current: Container?) {
-    /*val token: Array<String> = AT_SPLITTER.split(comment)
-    if (token.size < 2) return
-    for (i in 1..token.size - 1) {
-      if (token[i].startsWith(IMG)) {
-        val img = token[i].substring(token[i].indexOf(Symbol.BRACE_LEFT) + 1, token[i].indexOf(Symbol.BRACE_RIGHT)).trim({ it <= ' ' })
-        if (current != null) {
-          current.background = img
-        }
-      }
-      //if (token[i].startsWith(CHOICE_DOT.toString()) || token[i].startsWith(CHOICE_PLUS.toString())) {
-      //  val cont = Comment(lineNumber, token[i])
-      //  current?.add(cont)
-      //}
-    }*/
-  }
-
-
 }
-
-
-/*
-
-catch (e: IOException) {
-  provider.logException(e)
-} finally {
-  try {
-    if (inputStreamReader != null)
-      inputStreamReader.close()
-  } catch (e: IOException) {
-    provider.logException(e)
-  }
-
-  try {
-    if (bufferedReader != null)
-      bufferedReader.close()
-  } catch (e: IOException) {
-    provider.logException(e)
-  }
-}
-*/
-/*
-else if (conditional != null) {
-val cond = current.get(current.size - 1) as Conditional
-//cond.parseLine(lineNumber, trimmedLine)
-if (trimmedLine.endsWith(CONDITIONAL_END))
-// This is a bug. Means conditions cannot have text line that ends with CBRACE_RIGHT
-  conditional = null
-} else {
-val cont = parseLine(lineNumber, trimmedLine, current)
-if (cont != null) {
-  //cont.generateId(current)
-  story.add(cont)
-  if (cont is Container) {
-    current = cont as Container
-  }
-}
-if (cont != null && cont is Conditional) {
-  conditional = cont as Conditional?
-}
-}
-*/

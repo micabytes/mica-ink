@@ -1,22 +1,13 @@
 package com.micabytes.ink
 
+abstract class StoryInterrupt(
+    val id: String,
+    val text: String,
+    val condition: String,
+    val file: String) {
 
-interface StoryInterrupt {
-
-    val id: String
-
-    val interrupt: String
-
-    val interruptCondition: String
-
-    val interruptFile: String
-
-    val isChoice: Boolean
-
-    val isDivert: Boolean
-
-    val isActive: Boolean
-
-    fun done()
+    val isChoice = text.startsWith(Symbol.CHOICE_DOT) || text.startsWith(Symbol.CHOICE_PLUS)
+    val isDivert = text.startsWith(Symbol.DIVERT)
+    var isActive: Boolean = true
 
 }

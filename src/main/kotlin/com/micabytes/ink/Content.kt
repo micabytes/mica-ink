@@ -14,7 +14,7 @@ open class Content(val id: String,
   companion object {
 
     fun getId(parent: Container): String {
-      return parent.id + InkParser.DOT + parent.size
+      return parent.id + Symbol.DOT + parent.size
     }
 
   }

@@ -1,5 +1,7 @@
 package com.micabytes.ink
 
+import com.micabytes.ink.exception.InkRunTimeException
+
 internal class Knot(header: String,
                     lineNumber: Int) :
     ParameterizedContainer(Knot.getId(header), ParameterizedContainer.getParameters(header), null, lineNumber),
@@ -7,13 +9,9 @@ internal class Knot(header: String,
 
   internal val isFunction: Boolean = Knot.isFunction(header)
 
-  override fun isFixedNumParams(): Boolean {
-    return true
-  }
+  override val isFixedNumParams = true
 
-  override fun numParams(): Int {
-    return parameters.size
-  }
+  override val numParams = parameters.size
 
   override fun eval(params: List<Any>, vMap: VariableMap): Any {
     // Should probably do some checks when creating functions to ensure no illegal items are added.
@@ -77,24 +75,24 @@ internal class Knot(header: String,
 
     fun getId(id: String): String {
       var pos = 0
-      while (InkParser.HEADER == id[pos]) {
+      while (Symbol.HEADER == id[pos]) {
         pos++
       }
       val header = StringBuilder(pos + 1)
       for (i in 0..pos - 1)
-        header.append(InkParser.HEADER)
+        header.append(Symbol.HEADER)
       var fullId = id.replace(header.toString().toRegex(), "").trim({ it <= ' ' })
       if (fullId.startsWith(Symbol.FUNCTION)) {
         fullId = fullId.replaceFirst(Symbol.FUNCTION.toRegex(), "")
       }
-      if (fullId.contains(StoryText.BRACE_LEFT)) {
-        fullId = fullId.substring(0, fullId.indexOf(StoryText.BRACE_LEFT))
+      if (fullId.contains(Symbol.BRACE_LEFT)) {
+        fullId = fullId.substring(0, fullId.indexOf(Symbol.BRACE_LEFT))
       }
       return fullId.trim({ it <= ' ' })
     }
 
     fun isFunction(id: String): Boolean {
-      val strippedId = id.replace(InkParser.HEADER.toString().toRegex(), "").trim({ it <= ' ' })
+      val strippedId = id.replace(Symbol.HEADER.toString().toRegex(), "").trim({ it <= ' ' })
       return (strippedId.startsWith(Symbol.FUNCTION))
     }
 

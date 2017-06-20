@@ -1,6 +1,7 @@
 package com.micabytes.ink
 
-import java.math.BigDecimal
+import com.micabytes.ink.exception.InkParseException
+import com.micabytes.ink.exception.InkRunTimeException
 import java.util.*
 
 internal class Conditional @Throws(InkParseException::class)
@@ -68,12 +69,9 @@ constructor(header: String,
     private val SHUFFLE = "shuffle"
     private val CYCLE = "cycle"
     private val ONCE = "once"
-    private val CONDITIONAL_DASH = "-"
-    private val CONDITIONAL_COLON = ":"
-    private val ELSE = "else"
 
     fun isConditionalHeader(str: String): Boolean {
-      return str.startsWith(StoryText.CBRACE_LEFT) && !str.contains(StoryText.CBRACE_RIGHT)
+      return str.startsWith(Symbol.CBRACE_LEFT) && !str.contains(Symbol.CBRACE_RIGHT)
     }
 
   }

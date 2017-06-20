@@ -10,10 +10,10 @@ class ConditionalOption internal constructor(condition: String,
     if (condition.startsWith(Symbol.DASH) && !condition.endsWith(':')) {
       val txt = condition.substring(1).trim({ it <= ' ' })
       if (!txt.isEmpty()) {
-        if (txt.contains(InkParser.DIVERT))
+        if (txt.contains(Symbol.DIVERT))
           InkParser.parseDivert(lineNumber, txt, this)
         else
-          children.add(Content(id + InkParser.DOT + size, txt, this, lineNumber))
+          children.add(Content(id + Symbol.DOT + size, txt, this, lineNumber))
       }
     }
   }
@@ -29,13 +29,13 @@ class ConditionalOption internal constructor(condition: String,
       if (txt.isEmpty()) return txt
       if (!txt.endsWith(":"))
         return ""
-      var str = if (txt.startsWith(Symbol.DASH) || txt.startsWith(InkParser.CONDITIONAL_HEADER))
+      var str = if (txt.startsWith(Symbol.DASH) || txt.startsWith(Symbol.CBRACE_LEFT))
         txt.substring(1).trim({ it <= ' ' })
       else
         txt
       str = str.substring(0, str.length - 1).trim({ it <= ' ' })
       if (str.equals("else", ignoreCase = true))
-        return Expression.TRUE
+        return Symbol.TRUE
       else
         return str
     }

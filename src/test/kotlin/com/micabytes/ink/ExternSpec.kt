@@ -1,5 +1,6 @@
 package com.micabytes.ink
 
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.commons.io.IOUtils
 
@@ -15,7 +16,7 @@ class ExternSpec : WordSpec() {
           |-> END
         """.trimMargin()
 
-      "- be possible to call on an object without any parameters" {
+      "be possible to call on an object without any parameters" {
         val inputStream = IOUtils.toInputStream(helloWorld, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.putVariable("x", TestClass())
@@ -30,7 +31,7 @@ class ExternSpec : WordSpec() {
           |-> END
         """.trimMargin()
 
-      "- be possible to call on an object without any parameters and no function brace" {
+      "be possible to call on an object without any parameters and no function brace" {
         val inputStream = IOUtils.toInputStream(helloNoBrace, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.putVariable("x", TestClass())
@@ -46,7 +47,7 @@ class ExternSpec : WordSpec() {
           |-> END
         """.trimMargin()
 
-      "- be possible to call on an object with a parameter defined" {
+      "be possible to call on an object with a parameter defined" {
         val inputStream = IOUtils.toInputStream(mambo, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.putVariable("x", TestClass())
@@ -62,7 +63,7 @@ class ExternSpec : WordSpec() {
           |+ shown
           """.trimMargin()
 
-      "- resolve external bools correctly in conditional choices" {
+      "resolve external bools correctly in conditional choices" {
         val inputStream = IOUtils.toInputStream(externChoices, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.putVariable("x", TestClass())

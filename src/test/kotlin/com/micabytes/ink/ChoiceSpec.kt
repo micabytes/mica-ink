@@ -1,5 +1,8 @@
 package com.micabytes.ink
 
+import com.micabytes.ink.exception.InkRunTimeException
+import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldThrow
 import io.kotlintest.specs.WordSpec
 import org.apache.commons.io.IOUtils
 
@@ -256,7 +259,7 @@ class ChoiceSpec : WordSpec() {
       shouldThrow<InkRunTimeException> {
         story.next()
       }
-    }.config(ignored = true)
+    }.config(enabled = false)
 
       val divertChoice =
           """=== knot
@@ -279,7 +282,7 @@ class ChoiceSpec : WordSpec() {
         text.get(1) shouldBe ("You pull a face, and the soldier comes at you! You shove the guard to one side, but he comes back swinging.")
         story.choiceSize shouldBe (1)
         story.choiceText(0) shouldBe ("Grapple and fight")
-      }.config(ignored = true)
+      }.config(enabled = false)
 
     }
 

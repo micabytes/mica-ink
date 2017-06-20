@@ -1,5 +1,6 @@
 package com.micabytes.ink
 
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.commons.io.IOUtils
 
@@ -19,7 +20,7 @@ class FunctionSpec : WordSpec() {
           |    ~ return ((b - a) * k) + a
         """.trimMargin()
 
-      "- return a value from a function in a variable expression" {
+      "return a value from a function in a variable expression" {
         val inputStream = IOUtils.toInputStream(funcBasic, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -37,7 +38,7 @@ class FunctionSpec : WordSpec() {
           |    ~ return 3.8
         """.trimMargin()
 
-      "- return a value from a function with no parameters" {
+      "return a value from a function with no parameters" {
         val inputStream = IOUtils.toInputStream(funcNone, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -56,7 +57,7 @@ class FunctionSpec : WordSpec() {
           |    ~ return ((b - a) * k) + a
         """.trimMargin()
 
-      "- handle conditionals in the function" {
+      "handle conditionals in the function" {
         val inputStream = IOUtils.toInputStream(funcInline, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -74,7 +75,7 @@ class FunctionSpec : WordSpec() {
           |VAR x = a * b
         """.trimMargin()
 
-      "- be able to set a variable as a command" {
+      "be able to set a variable as a command" {
         val inputStream = IOUtils.toInputStream(setVarFunc, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -97,7 +98,7 @@ class FunctionSpec : WordSpec() {
           |~ y = x + c
         """.trimMargin()
 
-      "- handle conditionals and setting of values (test 1)" {
+      "handle conditionals and setting of values (test 1)" {
         val inputStream = IOUtils.toInputStream(complexFunc1, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -125,7 +126,7 @@ class FunctionSpec : WordSpec() {
           |VAR z = 1
         """.trimMargin()
 
-      "- handle conditionals and setting of values (test 2)" {
+      "handle conditionals and setting of values (test 2)" {
         val inputStream = IOUtils.toInputStream(complexFunc2, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -157,7 +158,7 @@ class FunctionSpec : WordSpec() {
           |VAR fee = (1 + dst) * 10 * mult
         """.trimMargin()
 
-      "- handle conditionals and setting of values (test 3)" {
+      "handle conditionals and setting of values (test 3)" {
         val inputStream = IOUtils.toInputStream(complexFunc3, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()

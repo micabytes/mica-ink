@@ -1,11 +1,14 @@
 package com.micabytes.ink
 
+/** The interface for the story object.
+ *
+  */
 interface VariableMap {
   fun logException(e: Exception)
-  fun hasVariable(token: String): Boolean
+  fun hasValue(token: String): Boolean
   fun getValue(token: String): Any
   fun hasFunction(token: String): Boolean
   fun getFunction(token: String): Function
-  fun checkObject(token: String): Boolean
+  fun hasGameObject(token: String): Boolean
   fun debugInfo(): String
 }

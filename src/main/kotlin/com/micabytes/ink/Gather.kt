@@ -1,5 +1,7 @@
 package com.micabytes.ink
 
+import com.micabytes.ink.exception.InkParseException
+
 internal class Gather @Throws(InkParseException::class)
 constructor(text: String,
             parent: Container,
@@ -8,13 +10,13 @@ constructor(text: String,
 
   init {
     var str = text.substring(1).trim({ it <= ' ' })
-    while (str.get(0) == InkParser.DASH)
+    while (str[0] == Symbol.DASH)
       str = str.substring(1).trim({ it <= ' ' })
-    if (str.startsWith(StoryText.BRACE_LEFT)) {
-      str = str.substring(str.indexOf(StoryText.BRACE_RIGHT) + 1).trim({ it <= ' ' })
+    if (str.startsWith(Symbol.BRACE_LEFT)) {
+      str = str.substring(str.indexOf(Symbol.BRACE_RIGHT) + 1).trim({ it <= ' ' })
     }
     if (!str.isEmpty()) {
-      if (str.contains(InkParser.DIVERT))
+      if (str.contains(Symbol.DIVERT))
         InkParser.parseDivert(lineNumber, str, this)
       else
         children.add(Content(Content.getId(this), str, this, lineNumber))
@@ -27,7 +29,7 @@ constructor(text: String,
       val notation = line[0]
       var lvl = 0
       var s = line.substring(1).trim({ it <= ' ' })
-      while (s.get(0) == notation) {
+      while (s[0] == notation) {
         lvl++
         s = s.substring(1).trim({ it <= ' ' })
       }
@@ -36,13 +38,13 @@ constructor(text: String,
 
     fun getId(text: String, parent: Container): String {
       var str = text.substring(1).trim({ it <= ' ' })
-      while (str.get(0) == InkParser.DASH)
+      while (str[0] == Symbol.DASH)
         str = str.substring(1).trim({ it <= ' ' })
-      if (str.startsWith(StoryText.BRACE_LEFT)) {
-        val id = str.substring(str.indexOf(StoryText.BRACE_LEFT) + 1, str.indexOf(StoryText.BRACE_RIGHT)).trim({ it <= ' ' })
-        return parent.id + InkParser.DOT + id
+      if (str.startsWith(Symbol.BRACE_LEFT)) {
+        val id = str.substring(str.indexOf(Symbol.BRACE_LEFT) + 1, str.indexOf(Symbol.BRACE_RIGHT)).trim({ it <= ' ' })
+        return parent.id + Symbol.DOT + id
       }
-      return parent.id + InkParser.DOT + parent.size
+      return parent.id + Symbol.DOT + parent.size
     }
 
     fun getParent(currentContainer: Container, lvl: Int): Container {

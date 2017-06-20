@@ -1,5 +1,6 @@
 package com.micabytes.ink
 
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.commons.io.IOUtils
 
@@ -13,7 +14,7 @@ class VariableTextSpec : WordSpec() {
         |+ [Again] -> test
       """.trimMargin()
 
-      "- step through each element and repeat the final element" {
+      "step through each element and repeat the final element" {
         val inputStream = IOUtils.toInputStream(sequence, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -45,7 +46,7 @@ class VariableTextSpec : WordSpec() {
         |+ [Again] -> test
       """.trimMargin()
 
-      "- cycle through the element repeatedly" {
+      "cycle through the element repeatedly" {
         val inputStream = IOUtils.toInputStream(cycle, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -78,7 +79,7 @@ class VariableTextSpec : WordSpec() {
         |+ [Again] -> test
       """.trimMargin()
 
-      "- step through each element and return no text once the list is exhausted" {
+      "step through each element and return no text once the list is exhausted" {
         val inputStream = IOUtils.toInputStream(once, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -112,7 +113,7 @@ class VariableTextSpec : WordSpec() {
         |+ [Again] -> test
       """.trimMargin()
 
-      "- allow for empty text elements in the list" {
+      "allow for empty text elements in the list" {
         val inputStream = IOUtils.toInputStream(emptyElements, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -134,7 +135,7 @@ class VariableTextSpec : WordSpec() {
         |+ ["Hello, {&Master|Monsieur|you}!"] -> test
       """.trimMargin()
 
-      "- be usable in a choice test" {
+      "be usable in a choice test" {
         val inputStream = IOUtils.toInputStream(listInChoice, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
@@ -162,11 +163,11 @@ class VariableTextSpec : WordSpec() {
       val one =
           """=== test
         |VAR x = 1
-        |We needed to find {# x : nothing|one apple|two pears|many oranges}.
+        |We needed to find {? x : nothing|one apple|two pears|many oranges}.
         |-> END
       """.trimMargin()
 
-      "- return the text string in the sequence if the condition is a valid value" {
+      "return the text string in the sequence if the condition is a valid value" {
         val inputStream = IOUtils.toInputStream(one, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -177,11 +178,11 @@ class VariableTextSpec : WordSpec() {
       val minusOne =
           """=== test
         |VAR x = -1
-        |We needed to find {# x : nothing|one apple|two pears|many oranges}.
+        |We needed to find {? x : nothing|one apple|two pears|many oranges}.
         |-> END
       """.trimMargin()
 
-      "- return the text string in the sequence if the condition is a valid value" {
+      "return the text string in the sequence if the condition is a valid value" {
         val inputStream = IOUtils.toInputStream(minusOne, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
@@ -192,11 +193,11 @@ class VariableTextSpec : WordSpec() {
       val ten =
           """=== test
         |VAR x = 10
-        |We needed to find {# x : nothing|one apple|two pears|many oranges}.
+        |We needed to find {? x : nothing|one apple|two pears|many oranges}.
         |-> END
       """.trimMargin()
 
-      "- return the text string in the sequence if the condition is a valid value" {
+      "return the text string in the sequence if the condition is a valid value" {
         val inputStream = IOUtils.toInputStream(ten, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()

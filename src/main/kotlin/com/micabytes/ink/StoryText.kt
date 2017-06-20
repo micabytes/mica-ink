@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-
+import com.micabytes.ink.exception.InkRunTimeException
 import java.math.BigDecimal
 import java.util.Random
 
@@ -13,20 +13,13 @@ private constructor() {
   }
 
   companion object {
-    internal val BRACE_RIGHT = ")"
-    internal val BRACE_LEFT = "("
-    internal val CBRACE_RIGHT = "}"
-    internal val CBRACE_LEFT = "{"
-    internal val SBRACE_LEFT = "["
-    internal val SBRACE_RIGHT = "]"
     private val ERROR = "(ERROR:"
-    private val COLON = ':'
 
     fun getText(text: String, count: Int, variables: VariableMap): String {
       var ret = text
-      while (ret.contains(CBRACE_LEFT)) {
-        val start = ret.lastIndexOf(CBRACE_LEFT)
-        val end = ret.indexOf(CBRACE_RIGHT, start)
+      while (ret.contains(Symbol.CBRACE_LEFT)) {
+        val start = ret.lastIndexOf(Symbol.CBRACE_LEFT)
+        val end = ret.indexOf(Symbol.CBRACE_RIGHT, start)
         if (end < 0) {
           variables.logException(InkRunTimeException("Mismatched curly braces in text: " + text))
           return ret
@@ -39,7 +32,7 @@ private constructor() {
     }
 
     private fun evaluateText(str: String, count: Int, variables: VariableMap): String {
-      val s = str.replace(CBRACE_LEFT, "").replace(CBRACE_RIGHT, "")
+      val s = str.replace(Symbol.CBRACE_LEFT.toString(), "").replace(Symbol.CBRACE_RIGHT.toString(), "")
       if (s.contains(":"))
         return evaluateConditionalText(s, variables)
       if (s.startsWith("&"))
@@ -62,67 +55,70 @@ private constructor() {
         return obj.toString()
       } catch (e: InkRunTimeException) {
         variables.logException(e)
-        return ERROR + s + BRACE_RIGHT
+        return ERROR + s + Symbol.BRACE_RIGHT
       }
 
     }
 
     private fun evaluateSequenceText(str: String, count: Int): String {
-      val tokens = str.split("[|]".toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray()
+      val tokens = str.split("[|]".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
       val i = if (count < tokens.size) count else tokens.size - 1
       return tokens[i]
     }
 
     private fun evaluateShuffleText(str: String): String {
       val s = str.substring(1)
-      val tokens = s.split("[|]".toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray()
+      val tokens = s.split("[|]".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
       val i = Random().nextInt(tokens.size)
       return tokens[i]
     }
 
     private fun evaluateOnceOnlyText(str: String, count: Int): String {
       val s = str.substring(1)
-      val tokens = s.split("[|]".toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray()
+      val tokens = s.split("[|]".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
       return if (count < tokens.size) tokens[count] else ""
     }
 
     private fun evaluateCycleText(str: String, count: Int): String {
       val s = str.substring(1)
-      val tokens = s.split("[|]".toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray()
+      val tokens = s.split("[|]".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
       val i = count % tokens.size
       return tokens[i]
     }
 
     private fun evaluateConditionalText(str: String, variables: VariableMap): String {
-      if (str.startsWith("#")) {
-        val condition = str.substring(1, str.indexOf(COLON)).trim({ it <= ' ' })
-        val text = str.substring(str.indexOf(COLON) + 1)
-        val options = text.split("[|]".toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray()
-        var `val` = 0
+      //if (str.startsWith("when")) {
+      //  return evaluateWhen(str, variables)
+      //}
+      if (str.startsWith("?")) {
+        val condition = str.substring(1, str.indexOf(Symbol.COLON)).trim({ it <= ' ' })
+        val text = str.substring(str.indexOf(Symbol.COLON) + 1)
+        val options = text.split("[|]".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
+        var v = 0
         try {
           val value = Declaration.evaluate(condition, variables)
           if (value is Boolean) {
-            `val` = if (value) 1 else 0
+            v = if (value) 1 else 0
           } else if (value is BigDecimal) {
-            `val` = value.toInt()
+            v = value.toInt()
           } else {
-            `val` = if (value == null) 0 else 1
+            v = 1
           }
         } catch (e: InkRunTimeException) {
           variables.logException(e)
           // TODO: Change?
         }
 
-        if (`val` >= options.size)
+        if (v >= options.size)
           return options[options.size - 1]
-        if (`val` < 0)
+        if (v < 0)
           return options[0]
-        return options[`val`]
+        return options[v]
       }
       // Regular conditional
-      val condition = str.substring(0, str.indexOf(COLON)).trim({ it <= ' ' })
-      val text = str.substring(str.indexOf(COLON) + 1)
-      val options = text.split("[|]".toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray()
+      val condition = str.substring(0, str.indexOf(Symbol.COLON)).trim({ it <= ' ' })
+      val text = str.substring(str.indexOf(Symbol.COLON) + 1)
+      val options = text.split("[|]".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
       if (options.size > 2)
         variables.logException(InkRunTimeException("Too many options in a conditional text."))
       val ifText = options[0]
@@ -140,6 +136,38 @@ private constructor() {
         return elseText
       }
 
+    }
+
+    private fun evaluateWhen(str: String, variables: VariableMap): String {
+      /*
+      val condition = str.substring(0, str.indexOf(Symbol.COLON)).trim({ it <= ' ' }).replaceFirst("when", "")
+      val text = str.substring(str.indexOf(Symbol.COLON) + 1)
+      val options = text.split("[|]".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()
+      var v = 0
+      var vStr: String? = null
+      try {
+        val value = Declaration.evaluate(condition, variables)
+        when (value) {
+          is Boolean -> v = if (value) 1 else 0
+          is BigDecimal -> v = value.toInt()
+          is String -> vStr = value
+          else -> v = 1
+        }
+      } catch (e: InkRunTimeException) {
+        variables.logException(e)
+      }
+      for (option in options) {
+        val opt = option.split("=>").toTypedArray()
+        if (opt[0][0].isDigit) {
+          val d = opt[0].toDouble()
+          if ()
+
+
+        }
+        return opt[1]
+      }
+      */
+      return ""
     }
 
   }

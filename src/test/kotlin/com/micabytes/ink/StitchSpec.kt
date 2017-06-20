@@ -1,5 +1,6 @@
 package com.micabytes.ink
 
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.commons.io.IOUtils
 
@@ -21,7 +22,7 @@ class StitchSpec : WordSpec() {
         |    I put myself in third.
       """.trimMargin()
 
-      "- be automatically started with if there is no content in a knot" {
+      "be automatically started with if there is no content in a knot" {
         val inputStream = IOUtils.toInputStream(autoStitch, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
@@ -29,7 +30,7 @@ class StitchSpec : WordSpec() {
         text.get(0) shouldBe ("I settled my master.")
       }
 
-      "- be automatically diverted to if there is no other content in a knot" {
+      "be automatically diverted to if there is no other content in a knot" {
         val inputStream = IOUtils.toInputStream(autoStitch, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         story.next()
@@ -54,7 +55,7 @@ class StitchSpec : WordSpec() {
         |    I put myself in third.
       """.trimMargin()
 
-      "- not be diverted to if the knot has content" {
+      "not be diverted to if the knot has content" {
         val inputStream = IOUtils.toInputStream(manualStitch, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val knotText = story.next()
@@ -66,7 +67,7 @@ class StitchSpec : WordSpec() {
         stitchText.get(1) shouldBe ("I put myself in third.")
       }
 
-      "- be usable locally without the full name" {
+      "be usable locally without the full name" {
         val inputStream = IOUtils.toInputStream(manualStitch, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val knotText = story.next()
