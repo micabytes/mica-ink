@@ -812,6 +812,10 @@ public class Story implements VariableMap {
     variables.put(key, value);
   }
 
+  public void putVariables(Map<String, Object> values) {
+    variables.putAll(values);
+  }
+
   public Container getContainer(String key) {
     return (Container) storyContent.get(key);
   }
