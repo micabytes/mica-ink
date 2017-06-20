@@ -7,7 +7,7 @@ VAR hung_cloak = false
 VAR dropped_cloak = false
 VAR examined_self = false
 
-Hurrying through the rainswept November night, you're glad to see the bright lights of the Opera House. It's surprising that there aren't more people about but, hey, what do you expect in a cheap demonstration story...?
+Hurrying through the rainswept November night, you're glad to see the bright lights of the Opera House. It's surprising that there aren't more people about but, hey, what do you expect in a cheap demonstration vMap...?
 
 * [Enter the foyer.] You enter the foyer of the Opera house.
   -> foyer
@@ -31,7 +31,7 @@ You are standing in a spacious hall, splendidly decorated in red and gold, with 
   -> bar_dark
 
 == leave
-{No. You've only just arrived, and besides, the weather outside seems to be getting worse.|No. It's really raining cats and dogs out there.|Are you still considering that option? The answer is still no.|Come on, get on with the story.}
+{No. You've only just arrived, and besides, the weather outside seems to be getting worse.|No. It's really raining cats and dogs out there.|Are you still considering that option? The answer is still no.|Come on, get on with the vMap.}
 -> foyer_options
 
 

@@ -2,19 +2,17 @@
 
 [![CI Status](http://img.shields.io/travis/micabytes/jink.svg?style=flat)](https://travis-ci.org/micabytes/jink)
 
-Note: Currently experimenting with rewriting this in Kotlin, which may/will lead to the travis build occasionally breaking.
-
-jInk is - or rather - may become a Java implementation of Inkle Studios (@inkle) scripting language ink for writing interactive narrative. It remains in-development, in that it is being used for my Android game Pirates and Traders 2, which is still in early access. This means I will likely still make some major changes to the code base and possibly the interface, so use at your own risk.
+jInk is a Kotlin implementation of Inkle Studios (@inkle) scripting language ink for writing interactive narrative. It remains in-development, in that it is being used for my Android game Pirates and Traders 2, which is still in early access. This means I will likely still make some major changes to the code base and possibly the interface, so use at your own risk.
 
 Currently, this reimplements Part 1 to Part 3 of the [Ink documentation](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md), with the following omissions (that I know of - other things may be missing that I've simply forgotten to get implemented):
 
-- Conditions on choices (as well as the choice text) cannot be multi-line.
+- Conditions on choices (as well as the choice header) cannot be multi-line.
 - evaluation of conditions has some limitations (not only supported as a function, evaluation of 'and' and 'or' is space sensitive).
 - Multi-line comments are not implemented.
 - CHOICE_COUNT and TURNS_SINCE are not implemented (essentially functions, and those haven't been implemented yet).
 - Doesn't parse check for -> END yet (i.e., quite happy to have knots and threads ending in nothing).
 - Have not tested "Advanced: Gathers directly after an option"
-- No temporary variables at this point (parameters exist, though).
+- No temporary values at this point (parameters exist, though).
 - No pass by reference parameters.
 - No constants.
 - No extern functions.
@@ -25,7 +23,7 @@ And of course, the key elements of Part 4 are missing:
 
 Most of the examples in the implemented section of the documentation are used as tests, with a few additional test cases grabbed from the 'ink/Tests' where appropriate.
 
-This implementation does one thing that the standard Ink implementation does not, which is to allow the use of native Java objects as variables, and permit the calling of methods on those objects.
+This implementation does one thing that the standard Ink implementation does not, which is to allow the use of native Java objects as values, and permit the calling of methods on those objects.
 
 ## Roadmap
 
@@ -68,36 +66,36 @@ To use the library:
 import com.micabytes.ink.Story;
 ```
 
-Loading a story file:
+Loading a vMap file:
 ```
-  Story story = InkParser.parse(inputStream, new StoryContainer());
+  Story vMap = InkParser.parse(inputStream, new StoryContainer());
 ```
 
-Working through content line by line:
+Working through children line by line:
 ```
-  while (story.hasNext()) {
-    String line = story.next();
+  while (vMap.hasNext()) {
+    String line = vMap.next();
     ...
   }
 ```
 
-Working through all content content line by line up to the next stop:
+Working through all children children line by line up to the next stop:
 ```
-  List<String> lines = story.nextAll();
+  List<String> lines = vMap.nextAll();
 ```
 
 To get the available choices:
 ```
-  for (int i=0; i<story.getChoiceSize(); i++) {
-    Choice choice = story.getChoice(i);
-    String choiceText = choice.getChoiceText(story);
+  for (int i=0; i<vMap.getChoiceSize(); i++) {
+    Choice choice = vMap.getChoice(i);
+    String choiceText = choice.getChoiceText(vMap);
     ...
   }
 ```
 
 To select a choice:
 ```
-  story.choose(0)
+  vMap.choose(0)
 ```
 
 Note: Unfortunately, the existing ink interface doesn't work with standard Java (`continue` is a reserved keyword), so jInk will end up with a different interface. The above interface may change, as I clean up code and/or get a better idea.
