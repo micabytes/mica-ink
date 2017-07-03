@@ -34,10 +34,10 @@ class Story(internal val wrapper: StoryWrapper,
     functions.put(IS_NULL, IsNullFunction())
     functions.put(NOT, NotFunction())
     functions.put(RANDOM, RandomFunction())
+    functions.put(FLOOR, FloorFunction())
     /*
     functions.put(GET_NULL, GetNullFunction())
     functions.put(IS_KNOT, IsKnotFunction())
-    functions.put(FLOOR, FloorFunction())
     */
     /*
     addFunction(object : Function("SQRT", 1) {
@@ -770,6 +770,18 @@ return ""
     }
   }
 
+  private class FloorFunction : Function {
+    override val numParams: Int = 1
+    override val isFixedNumParams: Boolean = true
+    override fun eval(params: List<Any>, vMap: VariableMap): Any {
+      val param = params[0]
+      if (param is BigDecimal) {
+        return BigDecimal.valueOf(param.toInt().toLong())
+      }
+      return BigDecimal.ZERO
+    }
+  }
+
   /*
   private class IsKnotFunction : Function {
 
@@ -789,23 +801,6 @@ return ""
     }
   }
 
-  private class FloorFunction : Function {
-
-    override val numParams: Int
-      get() = 1
-
-    override val isFixedNumParams: Boolean
-      get() = true
-
-    @Throws(InkRunTimeException::class)
-    override fun eval(params: List<Any>, vmap: VariableMap): Any {
-      val param = params[0]
-      if (param is BigDecimal) {
-        return BigDecimal.valueOf(param.toInt().toLong())
-      }
-      return BigDecimal.ZERO
-    }
-  }
   */
 
   fun resolveInterrupt(divert: String): String {
