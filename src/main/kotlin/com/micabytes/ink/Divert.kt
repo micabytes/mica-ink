@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.exception.InkRunTimeException
+import com.micabytes.ink.util.InkRunTimeException
 
 internal class Divert(lineNumber: Int,
                       text: String,
@@ -12,9 +12,8 @@ internal class Divert(lineNumber: Int,
     if (d.contains(Symbol.BRACE_LEFT))
       d = d.substring(0, d.indexOf(Symbol.BRACE_LEFT))
     d = story.resolveInterrupt(d)
-    val container = story.getDivert(d)
-    container.count++
-    return container
+    return story.getDivert(d)
+    //container.count++ // TODO: Not sure I understand this
   }
 
 }

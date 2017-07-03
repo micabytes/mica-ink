@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.exception.InkParseException
+import com.micabytes.ink.util.InkParseException
 
 internal class Gather @Throws(InkParseException::class)
 constructor(text: String,

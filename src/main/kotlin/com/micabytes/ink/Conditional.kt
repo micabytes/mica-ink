@@ -1,7 +1,7 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.exception.InkParseException
-import com.micabytes.ink.exception.InkRunTimeException
+import com.micabytes.ink.util.InkParseException
+import com.micabytes.ink.util.InkRunTimeException
 import java.util.*
 
 internal class Conditional @Throws(InkParseException::class)

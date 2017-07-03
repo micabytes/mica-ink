@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.exception.InkRunTimeException
+import com.micabytes.ink.util.InkRunTimeException
 
 internal class Knot(header: String,
                     lineNumber: Int) :

@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.exception.InkParseException
+import com.micabytes.ink.util.InkParseException
 import java.io.InputStream
 import java.util.*
 
@@ -28,13 +28,16 @@ object InkParser {
         }
         // Tags don't seem to work-
         if (trimmedLine.contains(Symbol.HASHMARK)) {
-          val tags = trimmedLine.substring(trimmedLine.indexOf(Symbol.HASHMARK)).trim({ it <= ' ' }).split(Symbol.HASHMARK)
+          val tags = trimmedLine.substring(trimmedLine.indexOf(Symbol.HASHMARK) + 1).trim({ it <= ' ' }).split(Symbol.HASHMARK)
           for (tag in tags) {
-            val current = Tag(tag, currentContainer, lineNumber)
-            if (currentContainer != null)
-              currentContainer.add(current)
-            if (!content.containsKey(current.id))
-              content.put(current.id, current)
+            val tagTxt = tag.trim({ it <= ' '})
+            if (!tagTxt.isEmpty()) {
+              val current = Tag(tagTxt, currentContainer, lineNumber)
+              if (currentContainer != null)
+                currentContainer.add(current)
+              if (!content.containsKey(current.id))
+                content.put(current.id, current)
+            }
           }
           trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf(Symbol.HASHMARK)).trim({ it <= ' ' })
         }
@@ -155,7 +158,7 @@ object InkParser {
     }
     for (i in 1 until div.size) {
       if (div[i].isNotEmpty()) {
-        val divert = Divert(lineNumber, div[i], currentContainer!!)
+        val divert = Divert(lineNumber, div[i].trim(), currentContainer!!)
         currentContainer.add(divert)
         ret.add(divert)
       }

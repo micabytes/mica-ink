@@ -1,5 +1,5 @@
-// @title(Cloak of Darkness)
-// @byline(This implementation by Michael Akinde; original by Roger Firth)
+# title(Cloak of Darkness)
+# byline(This implementation by Michael Akinde; original by Roger Firth)
 === opera_house
 VAR scuffled = 0
 VAR has_cloak = true

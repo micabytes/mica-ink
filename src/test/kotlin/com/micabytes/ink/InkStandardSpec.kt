@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.exception.InkRunTimeException
+import com.micabytes.ink.util.InkRunTimeException
 import io.kotlintest.matchers.shouldThrow
 import io.kotlintest.specs.WordSpec
 import org.apache.commons.io.IOUtils

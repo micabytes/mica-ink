@@ -2,7 +2,7 @@ package com.micabytes.ink
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
-import com.micabytes.ink.exception.InkLoadingException
+import com.micabytes.ink.util.InkLoadingException
 import java.io.IOException
 import java.math.BigDecimal
 

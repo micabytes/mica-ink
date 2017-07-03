@@ -7,6 +7,6 @@ import java.math.BigDecimal
  * left- or right associative.
  */
 abstract class Operator(val oper: String, val precedence: Int, val isLeftAssoc: Boolean) {
-  abstract fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal
+  abstract fun eval(v1: Any, v2: Any): Any
 }
 

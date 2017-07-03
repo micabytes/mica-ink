@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.exception.InkRunTimeException
+import com.micabytes.ink.util.InkRunTimeException
 import java.util.regex.Pattern
 
 class Declaration internal constructor(lineNumber: Int,

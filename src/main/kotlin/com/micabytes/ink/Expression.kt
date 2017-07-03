@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.exception.InkRunTimeException
+import com.micabytes.ink.util.InkRunTimeException
 import java.lang.reflect.InvocationTargetException
 import java.math.BigDecimal
 import java.math.MathContext
@@ -14,7 +14,7 @@ import java.util.*
  * @param originalExpression The expression. E.g. `"2.4*sin(3)/(2-4)"` or `"sin(y)>0 & max(z, 3)>3"`
  * @param defaultMathContext The [MathContext] to use by default
  */
-class Expression constructor(val originalExpression: String,
+class Expression constructor(originalExpression: String,
                              val defaultMathContext: MathContext = MathContext.DECIMAL32) {
   /// The expression evaluators exception class.
   class ExpressionException(message: String) : RuntimeException(message)
@@ -30,7 +30,7 @@ class Expression constructor(val originalExpression: String,
   /// All defined operators with name and implementation.
   private val operators = TreeMap<String, Operator>(String.CASE_INSENSITIVE_ORDER)
   /// The current infix expression, with optional variable substitutions.
-  var expression: String = originalExpression
+  var expression: String = originalExpression.trim { it <= ' ' }
     private set
 
   /**
@@ -88,16 +88,31 @@ class Expression constructor(val originalExpression: String,
         token.append(minusSign)
         pos++
         token.append(next())
-      } else if (Character.isLetter(ch) || firstVarChars.indexOf(ch) >= 0 || ch == '_' || ch == '\"') {
+      } else if (Character.isLetter(ch) || firstVarChars.indexOf(ch) >= 0 || ch == '_' ) { // || ch == '\"'
         while ((Character.isLetter(ch)
             || Character.isDigit(ch)
             || varChars.indexOf(ch) >= 0
             || ch == '_' || ch == '.' || ch == '\"'
-            || token.isEmpty() && firstVarChars.indexOf(ch) >= 0) && pos < input.length) {
+            //|| token.isEmpty() && firstVarChars.indexOf(ch) >= 0
+            ) && pos < input.length) {
           token.append(input[pos++])
           ch = if (pos == input.length) '0' else input[pos]
         }
-      } else if (ch == '(' || ch == ')' || ch == ',') {
+      }
+      else if (ch == '\"') {
+        token.append(input[pos++])
+        ch = if (pos == input.length) '0' else input[pos]
+        while (ch != '\"' && pos < input.length) {
+          token.append(ch)
+          pos++
+          ch = if (pos == input.length) '0' else input[pos]
+        }
+        if (ch == '\"' && pos < input.length) {
+          token.append(ch)
+          pos++
+        }
+      }
+      else if (ch == '(' || ch == ')' || ch == ',') {
         token.append(ch)
         pos++
       } else {
@@ -126,32 +141,49 @@ class Expression constructor(val originalExpression: String,
     this.mc = defaultMathContext
     this.expression = originalExpression
     addOperator(object : Operator("+", 20, true) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
-        return v1.add(v2, mc)
+      override fun eval(v1: Any, v2: Any): Any {
+        return when (v1) {
+          is BigDecimal -> v1.add(v2 as BigDecimal, mc)
+          is String -> stripStringParameter(v1) + stripStringParameter(v2.toString())
+          else -> BigDecimal.ZERO
+        }
       }
     })
     addOperator(object : Operator("-", 20, true) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
-        return v1.subtract(v2, mc)
+      override fun eval(v1: Any, v2: Any): Any {
+        return when (v1) {
+          is BigDecimal -> v1.subtract(v2 as BigDecimal, mc)
+          else -> BigDecimal.ZERO
+        }
       }
     })
     addOperator(object : Operator("*", 30, true) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
-        return v1.multiply(v2, mc)
+      override fun eval(v1: Any, v2: Any): Any {
+        return when (v1) {
+          is BigDecimal -> v1.multiply(v2 as BigDecimal, mc)
+          else -> BigDecimal.ZERO
+        }
       }
     })
     addOperator(object : Operator("/", 30, true) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
-        return v1.divide(v2, mc)
+      override fun eval(v1: Any, v2: Any): Any {
+        return when (v1) {
+          is BigDecimal -> v1.divide(v2 as BigDecimal, mc)
+          else -> BigDecimal.ZERO
+        }
       }
     })
     addOperator(object : Operator("%", 30, true) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
-        return v1.remainder(v2, mc)
+      override fun eval(v1: Any, v2: Any): Any {
+        return when (v1) {
+          is BigDecimal -> v1.remainder(v2 as BigDecimal, mc)
+          else -> BigDecimal.ZERO
+        }
       }
     })
     addOperator(object : Operator("^", 40, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
+      override fun eval(v1: Any, v2: Any): Any {
+        if (!(v1 is BigDecimal && v2 is BigDecimal)) return BigDecimal.ZERO
         var v2m = v2
         val signOf2 = v2m.signum()
         val dn1 = v1.toDouble()
@@ -170,60 +202,78 @@ class Expression constructor(val originalExpression: String,
       }
     })
     addOperator(object : Operator("&&", 4, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
+      override fun eval(v1: Any, v2: Any): Any {
         val b1 = v1 != BigDecimal.ZERO
         val b2 = v2 != BigDecimal.ZERO
         return if (b1 && b2) BigDecimal.ONE else BigDecimal.ZERO
       }
     })
     addOperator(object : Operator("||", 2, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
+      override fun eval(v1: Any, v2: Any): Any {
         val b1 = v1 != BigDecimal.ZERO
         val b2 = v2 != BigDecimal.ZERO
         return if (b1 || b2) BigDecimal.ONE else BigDecimal.ZERO
       }
     })
     addOperator(object : Operator(">", 10, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
+      override fun eval(v1: Any, v2: Any): Any {
+        if (!(v1 is BigDecimal && v2 is BigDecimal)) return BigDecimal.ZERO
         return if (v1.compareTo(v2) == 1) BigDecimal.ONE else BigDecimal.ZERO
       }
     })
     addOperator(object : Operator(">=", 10, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
+      override fun eval(v1: Any, v2: Any): Any {
+        if (!(v1 is BigDecimal && v2 is BigDecimal)) return BigDecimal.ZERO
         return if (v1 >= v2) BigDecimal.ONE else BigDecimal.ZERO
       }
     })
     addOperator(object : Operator("<", 10, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
-        return if (v1.compareTo(v2) == -1)
-          BigDecimal.ONE
-        else
-          BigDecimal.ZERO
+      override fun eval(v1: Any, v2: Any): Any {
+        if (!(v1 is BigDecimal && v2 is BigDecimal)) return BigDecimal.ZERO
+        return if (v1.compareTo(v2) == -1) BigDecimal.ONE else BigDecimal.ZERO
       }
     })
     addOperator(object : Operator("<=", 10, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
+      override fun eval(v1: Any, v2: Any): Any {
+        if (!(v1 is BigDecimal && v2 is BigDecimal)) return BigDecimal.ZERO
         return if (v1 <= v2) BigDecimal.ONE else BigDecimal.ZERO
       }
     })
-    addOperator(object : Operator("=", 7, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
-        return if (v1.compareTo(v2) == 0) BigDecimal.ONE else BigDecimal.ZERO
-      }
-    })
     addOperator(object : Operator("==", 7, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
+      override fun eval(v1: Any, v2: Any): Any {
         return operators["="]!!.eval(v1, v2)
       }
     })
+    addOperator(object : Operator("=", 7, false) {
+      override fun eval(v1: Any, v2: Any): Any {
+        return when (v1) {
+          is BigDecimal -> if (v1.compareTo(v2 as BigDecimal) == 0) BigDecimal.ONE else BigDecimal.ZERO
+          is String -> if (stripStringParameter(v1).compareTo(stripStringParameter(v2 as String)) == 0) BigDecimal.ONE else BigDecimal.ZERO
+          else -> BigDecimal.ZERO
+        }
+      }
+    })
     addOperator(object : Operator("!=", 7, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
-        return if (v1.compareTo(v2) != 0) BigDecimal.ONE else BigDecimal.ZERO
+      override fun eval(v1: Any, v2: Any): Any {
+        return when (v1) {
+          is BigDecimal -> if (v1.compareTo(v2 as BigDecimal) != 0) BigDecimal.ONE else BigDecimal.ZERO
+          is String -> if (stripStringParameter(v1).compareTo(stripStringParameter(v2 as String)) != 0) BigDecimal.ONE else BigDecimal.ZERO
+          else -> BigDecimal.ZERO
+        }
       }
     })
     addOperator(object : Operator("<>", 7, false) {
-      override fun eval(v1: BigDecimal, v2: BigDecimal): BigDecimal {
+      override fun eval(v1: Any, v2: Any): Any {
         return operators["!="]!!.eval(v1, v2)
+      }
+    })
+    addOperator(object : Operator("?:", 40, false) {
+      override fun eval(v1: Any, v2: Any): Any {
+        return when (v2) {
+          is BigDecimal -> if (v1 is BigDecimal && v1 == BigDecimal.ZERO) return v2 else v1
+          is String -> if (v1 is BigDecimal && v1 == BigDecimal.ZERO) return stripStringParameter(v2) else v1
+          else -> if (v1 is BigDecimal && v1 == BigDecimal.ZERO) return v2 else v1
+        }
       }
     })
     /*
@@ -420,7 +470,7 @@ class Expression constructor(val originalExpression: String,
       else if (operators.containsKey(token)) {
         val v1 = stack.pop()
         val v2 = stack.pop()
-        stack.push(operators[token]!!.eval(v2 as BigDecimal, v1 as BigDecimal))
+        stack.push(operators[token]!!.eval(v2, v1))
         //val number = object : LazyNumber {
         //  override fun eval(): BigDecimal {
         //    return operators[token]!!.eval(v2.eval(), v1.eval())
@@ -480,38 +530,49 @@ class Expression constructor(val originalExpression: String,
           params[i] = p[i]
         }
         val valClass = vl.javaClass
-        try {
-          val m = valClass.getMethod(function, *paramTypes)
-          var fResult = m.invoke(vl, *params)
-          when (fResult) {
-            is Boolean ->
-              fResult = if (fResult) BigDecimal.ONE else BigDecimal.ZERO
-            is Int ->
-              fResult = BigDecimal(fResult)
-            is Float ->
-              fResult = BigDecimal(fResult.toDouble())
-            is Double ->
-              fResult = BigDecimal(fResult)
+        if (vl is BigDecimal && vl == BigDecimal.ZERO) {
+          /*
+          var errMsg = "Trying to call " + function + " on <<null>> variable " + vr + " (" + vr + ", " + valClass.name + ") with the parameters:"
+          for (i in paramTypes.indices)
+            errMsg += " " + paramTypes[i]!!.name
+          errMsg += ". " + vMap.debugInfo()
+          vMap.logException(InkRunTimeException(errMsg))
+          */
+          stack.push(BigDecimal.ZERO)
+        } else {
+          try {
+            val m = valClass.getMethod(function, *paramTypes)
+            var fResult = m.invoke(vl, *params) ?: BigDecimal.ZERO
+            when (fResult) {
+              is Boolean ->
+                fResult = if (fResult) BigDecimal.ONE else BigDecimal.ZERO
+              is Int ->
+                fResult = BigDecimal(fResult)
+              is Float ->
+                fResult = BigDecimal(fResult.toDouble())
+              is Double ->
+                fResult = BigDecimal(fResult)
+            }
+            stack.push(fResult)
+          } catch (e: NoSuchMethodException) {
+            var errMsg = "Could not identify a method " + function + " on variable " + vr + " (" + vr + ", " + valClass.name + ") with the parameters:"
+            for (i in paramTypes.indices)
+              errMsg += " " + paramTypes[i]!!.name
+            errMsg += ". " + vMap.debugInfo()
+            throw InkRunTimeException(errMsg, e)
+          } catch (e: InvocationTargetException) {
+            var errMsg = "Could not invoke a method " + function + " on variable " + vr + " (" + vr + ", " + valClass.name + ") with the parameters:"
+            for (i in paramTypes.indices)
+              errMsg += " " + paramTypes[i]!!.name
+            errMsg += ". " + vMap.debugInfo()
+            throw InkRunTimeException(errMsg, e)
+          } catch (e: IllegalAccessException) {
+            var errMsg = "Could not access a method " + function + " on variable " + vr + " (" + vr + ", " + valClass.name + ") with the parameters:"
+            for (i in paramTypes.indices)
+              errMsg += " " + paramTypes[i]!!.name
+            errMsg += ". " + vMap.debugInfo()
+            throw InkRunTimeException(errMsg, e)
           }
-          stack.push(fResult)
-        } catch (e: NoSuchMethodException) {
-          var errMsg = "Could not identify a method " + function + " on variable " + vr + " (" + vr + ", " + valClass.name + ") with the parameters:"
-          for (i in paramTypes.indices)
-            errMsg += " " + paramTypes[i]!!.name
-          errMsg += ". " + vMap.debugInfo()
-          throw InkRunTimeException(errMsg, e)
-        } catch (e: InvocationTargetException) {
-          var errMsg = "Could not invoke a method " + function + " on variable " + vr + " (" + vr + ", " + valClass.name + ") with the parameters:"
-          for (i in paramTypes.indices)
-            errMsg += " " + paramTypes[i]!!.name
-          errMsg += ". " + vMap.debugInfo()
-          throw InkRunTimeException(errMsg, e)
-        } catch (e: IllegalAccessException) {
-          var errMsg = "Could not access a method " + function + " on variable " + vr + " (" + vr + ", " + valClass.name + ") with the parameters:"
-          for (i in paramTypes.indices)
-            errMsg += " " + paramTypes[i]!!.name
-          errMsg += ". " + vMap.debugInfo()
-          throw InkRunTimeException(errMsg, e)
         }
       } else if ("(" == token) {
         stack.push(PARAMS_START)
@@ -524,14 +585,14 @@ class Expression constructor(val originalExpression: String,
         //})
       }
     }
-    val obj = stack.pop()
+    val obj: Any? = stack.pop()
     when (obj) {
       is BigDecimal ->
         return obj.stripTrailingZeros()
       is String ->
         if (isStringParameter(obj)) return stripStringParameter(obj)
     }
-    return obj
+    return obj ?: 0
   }
 
   @Suppress("unused")
