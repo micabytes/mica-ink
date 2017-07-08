@@ -103,7 +103,7 @@ class Declaration internal constructor(lineNumber: Int,
         val ex = Expression(ev)
         return ex.eval(variables)
       } catch (e: Expression.ExpressionException) {
-        throw InkRunTimeException("Error evaluating expression " + ev, e)
+        throw InkRunTimeException("Error evaluating expression " + ev + ". " + e.message, e)
       }
     }
 
