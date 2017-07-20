@@ -142,7 +142,7 @@ class Story(internal val wrapper: StoryWrapper,
         is Divert -> {
           container.index ++
           container = current.resolveDivert(this)
-          current.count++
+          container.count++
           container.index = 0
         }
         is Tag -> {
