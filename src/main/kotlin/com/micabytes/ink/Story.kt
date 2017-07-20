@@ -1,6 +1,6 @@
 package com.micabytes.ink
 
-import com.micabytes.ink.exception.InkRunTimeException
+import com.micabytes.ink.util.InkRunTimeException
 import java.math.BigDecimal
 import java.util.*
 
@@ -14,10 +14,11 @@ class Story(internal val wrapper: StoryWrapper,
   private val storyEnd = Knot("== END ==", 0)
   private var endProcessing = false
   private var currentText = Symbol.GLUE
-  internal val text: MutableList<String> = ArrayList()
-  internal val choices = ArrayList<Container>()
+  val text: MutableList<String> = ArrayList()
+  val choices = ArrayList<Container>()
   internal val variables = HashMap<String, Any>()
   private val functions = TreeMap<String, Function>(String.CASE_INSENSITIVE_ORDER)
+
 
   init {
     fileNames.add(fileName)
@@ -30,13 +31,13 @@ class Story(internal val wrapper: StoryWrapper,
     putVariable(Symbol.FALSE, BigDecimal.ZERO)
     putVariable(Symbol.PI, Expression.PI)
     putVariable(Symbol.e, Expression.e)
-    /*
-    functions.put(IS_NULL, NullFunction())
-    functions.put(GET_NULL, GetNullFunction())
+    functions.put(IS_NULL, IsNullFunction())
     functions.put(NOT, NotFunction())
     functions.put(RANDOM, RandomFunction())
-    functions.put(IS_KNOT, IsKnotFunction())
     functions.put(FLOOR, FloorFunction())
+    /*
+    functions.put(GET_NULL, GetNullFunction())
+    functions.put(IS_KNOT, IsKnotFunction())
     */
     /*
     addFunction(object : Function("SQRT", 1) {
@@ -146,6 +147,7 @@ class Story(internal val wrapper: StoryWrapper,
         }
         is Tag -> {
           wrapper.resolveTag(current.text)
+          increment()
         }
         // is Tunnel
         else -> {
@@ -154,7 +156,7 @@ class Story(internal val wrapper: StoryWrapper,
           increment()
         }
       }
-      if (container == storyEnd)
+      if (container.id == storyEnd.id)
         endProcessing = true
     }
     if (!currentText.isEmpty()) {
@@ -248,7 +250,11 @@ class Story(internal val wrapper: StoryWrapper,
     while (c != null) {
       if (c is Knot || c is Function || c is Stitch) {
         if ((c as ParameterizedContainer).hasValue(key)) {
-          c.setValue(key, value)
+          when (value) {
+            is Boolean -> c.setValue(key, if (value) BigDecimal.ONE else BigDecimal.ZERO)
+            is Int -> c.setValue(key, BigDecimal(value))
+            else -> c.setValue(key, value)
+          }
           return
         }
       }
@@ -263,6 +269,9 @@ class Story(internal val wrapper: StoryWrapper,
     variables.put(key, value)
   }
 
+  fun putVariables(map: Map<String, Any>) {
+    variables.putAll(map)
+  }
   /*
   fun with(variable: String, value: BigDecimal): Expression {
     return setVariable(variable, value)
@@ -274,8 +283,12 @@ class Story(internal val wrapper: StoryWrapper,
   */
 
   val isEnded: Boolean
-    get() = container == storyEnd
+    get() = container.id == storyEnd.id
 
+  // TODO: Should be allowed?
+  fun setContainer(s: String) {
+    container = content[s] as Container
+  }
 
   //fun getChoice(i: Int): Choice {
   //  return choices[i] as Choice
@@ -558,11 +571,6 @@ return ""
     return storyContent[key] as Container
   }
 
-  fun setContainer(s: String) {
-    val c = storyContent[s] as Container
-    if (c != null)
-      container = c
-  }
 
   // Legacy function used to set text
   @SuppressWarnings("AssignmentToCollectionOrArrayFieldFromParameter")
@@ -647,16 +655,16 @@ return ""
   }
 
   private fun getValueId(id: String): String {
-    if (id == Symbol.DIVERT_END)
-      return id
+    //if (id == Symbol.DIVERT_END)
+    //  return id
     if (id.contains(Symbol.DOT.toString()))
       return id
-    return if (container != null) container!!.id + Symbol.DOT + id else id
+    return container.id + Symbol.DOT + id
   }
 
   private fun getKnotId(id: String): String {
-    if (id == Symbol.DIVERT_END)
-      return id
+    //if (id == Symbol.DIVERT_END)
+    //  return id
     if (id.contains(Symbol.DOT.toString()))
       return id
     var knot = container
@@ -726,55 +734,55 @@ return ""
     return ret
   }
 
-  /*
-  private class NullFunction : Function("NOT", 1) {
-    @Throws(InkRunTimeException::class)
-    override fun eval(params: List<Any>, vmap: VariableMap): Any {
-      //val param = params[0]
-      //return param == null
-      return false
+  private class IsNullFunction : Function {
+    override val numParams: Int = 1
+    override val isFixedNumParams: Boolean = true
+    override fun eval(params: List<Any>, vMap: VariableMap): Any {
+      val param = params[0]
+      if (param == BigDecimal.ZERO) return BigDecimal.ONE
+      return BigDecimal.ZERO
     }
   }
 
-  class NotFunction : Function("NOT", 1) {
-
-    override val numParams: Int
-      get() = 1
-
-    override val isFixedNumParams: Boolean
-      get() = true
-
-    @Throws(InkRunTimeException::class)
-    override fun eval(params: List<Any>, vmap: VariableMap): Any {
+  class NotFunction : Function {
+    override val numParams: Int = 1
+    override val isFixedNumParams: Boolean = true
+    override fun eval(params: List<Any>, vMap: VariableMap): Any {
       val param = params[0]
-      if (param is Boolean)
-        return !param
-      if (param is BigDecimal)
-        return if (param.toInt() == 0) java.lang.Boolean.TRUE else java.lang.Boolean.FALSE
-      return java.lang.Boolean.FALSE
-    }
-  }
-
-  private class RandomFunction : Function {
-
-    override val numParams: Int
-      get() = 1
-
-    override val isFixedNumParams: Boolean
-      get() = true
-
-    @Throws(InkRunTimeException::class)
-    override fun eval(params: List<Any>, vmap: VariableMap): Any {
-      val param = params[0]
-      if (param is BigDecimal) {
-        val `val` = param.toInt()
-        if (`val` <= 0) return BigDecimal.ZERO
-        return BigDecimal(Random().nextInt(`val`))
+      when (param) {
+        is Boolean -> return !param
+        is BigDecimal -> return if (param == BigDecimal.ZERO) BigDecimal.ONE else BigDecimal.ZERO
       }
       return BigDecimal.ZERO
     }
   }
 
+  private class RandomFunction : Function {
+    override val numParams: Int = 1
+    override val isFixedNumParams: Boolean = true
+    override fun eval(params: List<Any>, vMap: VariableMap): Any {
+      val param = params[0]
+      if (param is BigDecimal) {
+        val v = param.toInt()
+        return if (v > 0) BigDecimal(Random().nextInt(v)) else BigDecimal.ZERO
+      }
+      return BigDecimal.ZERO
+    }
+  }
+
+  private class FloorFunction : Function {
+    override val numParams: Int = 1
+    override val isFixedNumParams: Boolean = true
+    override fun eval(params: List<Any>, vMap: VariableMap): Any {
+      val param = params[0]
+      if (param is BigDecimal) {
+        return BigDecimal.valueOf(param.toInt().toLong())
+      }
+      return BigDecimal.ZERO
+    }
+  }
+
+  /*
   private class IsKnotFunction : Function {
 
     override val numParams: Int
@@ -793,23 +801,6 @@ return ""
     }
   }
 
-  private class FloorFunction : Function {
-
-    override val numParams: Int
-      get() = 1
-
-    override val isFixedNumParams: Boolean
-      get() = true
-
-    @Throws(InkRunTimeException::class)
-    override fun eval(params: List<Any>, vmap: VariableMap): Any {
-      val param = params[0]
-      if (param is BigDecimal) {
-        return BigDecimal.valueOf(param.toInt().toLong())
-      }
-      return BigDecimal.ZERO
-    }
-  }
   */
 
   fun resolveInterrupt(divert: String): String {
@@ -893,6 +884,8 @@ return ""
     if (res is BigDecimal) return res > BigDecimal.ZERO
     return false
   }
+
+  fun clear() = text.clear()
 
 
 }

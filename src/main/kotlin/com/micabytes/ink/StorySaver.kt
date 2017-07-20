@@ -82,19 +82,19 @@ object StorySaver {
       else -> {
         val valClass = value.javaClass
         try {
-          val m = valClass.getMethod("getId", null)
-          val id = m.invoke(value, null)
+          val m = valClass.getMethod("getId")
+          val id = m.invoke(value)
           g.writeStringField(key, id as String)
         } catch (e: IllegalAccessException) {
-          story.wrapper.logError("SaveObject: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
+          story.wrapper.logError("StorySaver: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
         } catch (e: IllegalArgumentException) {
-          story.wrapper.logError("SaveObject: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
+          story.wrapper.logError("StorySaver: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
         } catch (e: SecurityException) {
-          story.wrapper.logError("SaveObject: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
+          story.wrapper.logError("StorySaver: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
         } catch (e: InvocationTargetException) {
-          story.wrapper.logError("SaveObject: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
+          story.wrapper.logError("StorySaver: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
         } catch (e: NoSuchMethodException) {
-          story.wrapper.logError("SaveObject: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
+          story.wrapper.logError("StorySaver: Could not save " + key + ": " + value + ". Not Boolean, Number, String and not an Object. " + e.message)
         }
       }
     }

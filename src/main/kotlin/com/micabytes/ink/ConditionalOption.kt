@@ -19,7 +19,7 @@ class ConditionalOption internal constructor(condition: String,
   }
 
   fun  evaluate(vMap: VariableMap): Boolean {
-    val res = Expression(text).eval(vMap)
+    val res = Declaration.evaluate(text, vMap)
     return (res as BigDecimal).toInt() > 0
   }
 
