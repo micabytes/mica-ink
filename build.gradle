@@ -2,7 +2,7 @@ apply plugin: 'kotlin'
 apply plugin: 'java'
 
 buildscript {
-  ext.kotlin_version = '1.1.3-2'
+  ext.kotlin_version = '1.1.4'
   ext.kotlintest_version = '2.0.3'
   ext.jackson_version = '2.8.7'
   repositories {
