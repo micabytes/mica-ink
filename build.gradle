@@ -3,7 +3,7 @@ apply plugin: 'java'
 
 buildscript {
   ext.kotlin_version = '1.1.4'
-  ext.kotlintest_version = '2.0.3'
+  ext.kotlintest_version = '2.0.5'
   ext.jackson_version = '2.8.7'
   repositories {
     jcenter { url "http://jcenter.bintray.com/" }
