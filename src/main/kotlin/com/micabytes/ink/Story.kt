@@ -230,7 +230,7 @@ class Story(internal val wrapper: StoryWrapper,
       container.index = 0
       choices.clear()
     } else {
-      val cId = if (container != null) container!!.id else "null"
+      val cId = if (container != null) container.id else "null"
       throw InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + cId + " cIndex: " + container.index)
     }
   }
