@@ -222,7 +222,8 @@ class Story(internal val wrapper: StoryWrapper,
   }
 
   @Throws(InkRunTimeException::class)
-  fun choose(i: Int) {
+  fun choose(idx: Int) {
+    val i = if (idx == -1) choices.size - 1 else idx
     if (i < choices.size && i >= 0) {
       container = choices[i]
       container.count++
