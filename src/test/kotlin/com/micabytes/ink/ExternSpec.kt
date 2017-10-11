@@ -3,6 +3,7 @@ package com.micabytes.ink
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.commons.io.IOUtils
+import java.math.BigDecimal
 
 class ExternSpec : WordSpec() {
 
@@ -19,7 +20,7 @@ class ExternSpec : WordSpec() {
       "be possible to call on an object without any parameters" {
         val inputStream = IOUtils.toInputStream(helloWorld, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        story.putVariable("x", TestClass())
+        story.putVariable("x", TestClass0())
         val text = story.next()
         text.size  shouldBe (1)
         text[0] shouldBe ("Hello, is it me you're looking for?")
@@ -34,7 +35,7 @@ class ExternSpec : WordSpec() {
       "be possible to call on an object without any parameters and no function brace" {
         val inputStream = IOUtils.toInputStream(helloNoBrace, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        story.putVariable("x", TestClass())
+        story.putVariable("x", TestClass0())
         val text = story.next()
         text.size  shouldBe (1)
         text[0] shouldBe ("Hello, is it me you're looking for?")
@@ -50,7 +51,7 @@ class ExternSpec : WordSpec() {
       "be possible to call on an object with a parameter defined" {
         val inputStream = IOUtils.toInputStream(mambo, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        story.putVariable("x", TestClass())
+        story.putVariable("x", TestClass0())
         val text = story.next()
         text.size  shouldBe (1)
         text[0] shouldBe ("Mambo Number 5")
@@ -66,7 +67,7 @@ class ExternSpec : WordSpec() {
       "resolve external bools correctly in conditional choices" {
         val inputStream = IOUtils.toInputStream(externChoices, "UTF-8")
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        story.putVariable("x", TestClass())
+        story.putVariable("x", TestClass0())
         story.next()
         story.choiceSize shouldBe (1)
       }
@@ -74,6 +75,22 @@ class ExternSpec : WordSpec() {
 
     }
 
+  }
+
+}
+
+class TestClass0 {
+
+  fun hello(): String {
+    return "Hello, is it me you're looking for?"
+  }
+
+  fun number(b: BigDecimal): String {
+    return "Mambo Number " + b.toPlainString()
+  }
+
+  fun wrong(): Boolean {
+    return false
   }
 
 }

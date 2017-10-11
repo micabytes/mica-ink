@@ -46,7 +46,6 @@ constructor(header: String,
       SequenceType.SEQUENCE_ONCE -> if (count < size) return children[count] as Container
       SequenceType.SEQUENCE_SHUFFLE -> return children[Random().nextInt(children.size)] as Container
       SequenceType.SEQUENCE_STOP -> return children[if (count >= children.size) children.size - 1 else count] as Container
-      else -> story.logException(InkRunTimeException("Invalid conditional type."))
     }
     val empty = ConditionalOption("", this, 0)
     children.remove(empty)
