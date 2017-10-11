@@ -22,7 +22,7 @@ class ExternSpec : WordSpec() {
         story.putVariable("x", TestClass())
         val text = story.next()
         text.size  shouldBe (1)
-        text.get(0) shouldBe ("Hello, is it me you're looking for?")
+        text[0] shouldBe ("Hello, is it me you're looking for?")
       }
 
       val helloNoBrace =
@@ -37,7 +37,7 @@ class ExternSpec : WordSpec() {
         story.putVariable("x", TestClass())
         val text = story.next()
         text.size  shouldBe (1)
-        text.get(0) shouldBe ("Hello, is it me you're looking for?")
+        text[0] shouldBe ("Hello, is it me you're looking for?")
       }
 
       val mambo =
@@ -53,7 +53,7 @@ class ExternSpec : WordSpec() {
         story.putVariable("x", TestClass())
         val text = story.next()
         text.size  shouldBe (1)
-        text.get(0) shouldBe ("Mambo Number 5")
+        text[0] shouldBe ("Mambo Number 5")
       }
 
       val externChoices =

@@ -19,23 +19,23 @@ class VariableTextSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
         text0.size shouldBe (1)
-        text0.get(0) shouldBe ("The radio hissed into life. \"Three!\"")
+        text0[0] shouldBe ("The radio hissed into life. \"Three!\"")
         story.choose(0)
         val text1 = story.next()
         text1.size shouldBe (2)
-        text1.get(1) shouldBe ("The radio hissed into life. \"Two!\"")
+        text1[1] shouldBe ("The radio hissed into life. \"Two!\"")
         story.choose(0)
         val text2 = story.next()
         text2.size shouldBe (3)
-        text2.get(2) shouldBe ("The radio hissed into life. \"One!\"")
+        text2[2] shouldBe ("The radio hissed into life. \"One!\"")
         story.choose(0)
         val text3 = story.next()
         text3.size shouldBe (4)
-        text3.get(3) shouldBe ("The radio hissed into life. There was the white noise racket of an explosion.")
+        text3[3] shouldBe ("The radio hissed into life. There was the white noise racket of an explosion.")
         story.choose(0)
         val text4 = story.next()
         text4.size shouldBe (5)
-        text4.get(4) shouldBe ("The radio hissed into life. There was the white noise racket of an explosion.")
+        text4[4] shouldBe ("The radio hissed into life. There was the white noise racket of an explosion.")
       }
     }
 
@@ -51,23 +51,23 @@ class VariableTextSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
         text0.size shouldBe (1)
-        text0.get(0) shouldBe ("The radio hissed into life. \"Three!\"")
+        text0[0] shouldBe ("The radio hissed into life. \"Three!\"")
         story.choose(0)
         val text1 = story.next()
         text1.size shouldBe (2)
-        text1.get(1) shouldBe ("The radio hissed into life. \"Two!\"")
+        text1[1] shouldBe ("The radio hissed into life. \"Two!\"")
         story.choose(0)
         val text2 = story.next()
         text2.size shouldBe (3)
-        text2.get(2) shouldBe ("The radio hissed into life. \"One!\"")
+        text2[2] shouldBe ("The radio hissed into life. \"One!\"")
         story.choose(0)
         val text3 = story.next()
         text3.size shouldBe (4)
-        text3.get(3) shouldBe ("The radio hissed into life. \"Three!\"")
+        text3[3] shouldBe ("The radio hissed into life. \"Three!\"")
         story.choose(0)
         val text4 = story.next()
         text4.size shouldBe (5)
-        text4.get(4) shouldBe ("The radio hissed into life. \"Two!\"")
+        text4[4] shouldBe ("The radio hissed into life. \"Two!\"")
       }
     }
 
@@ -84,23 +84,23 @@ class VariableTextSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
         text0.size shouldBe (1)
-        text0.get(0) shouldBe ("The radio hissed into life. \"Three!\"")
+        text0[0] shouldBe ("The radio hissed into life. \"Three!\"")
         story.choose(0)
         val text1 = story.next()
         text1.size shouldBe (2)
-        text1.get(1) shouldBe ("The radio hissed into life. \"Two!\"")
+        text1[1] shouldBe ("The radio hissed into life. \"Two!\"")
         story.choose(0)
         val text2 = story.next()
         text2.size shouldBe (3)
-        text2.get(2) shouldBe ("The radio hissed into life. \"One!\"")
+        text2[2] shouldBe ("The radio hissed into life. \"One!\"")
         story.choose(0)
         val text3 = story.next()
         text3.size shouldBe (4)
-        text3.get(3) shouldBe ("The radio hissed into life.")
+        text3[3] shouldBe ("The radio hissed into life.")
         story.choose(0)
         val text4 = story.next()
         text4.size shouldBe (5)
-        text4.get(4) shouldBe ("The radio hissed into life.")
+        text4[4] shouldBe ("The radio hissed into life.")
       }
     }
 
@@ -118,15 +118,15 @@ class VariableTextSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
         text0.size shouldBe (1)
-        text0.get(0) shouldBe ("The radio hissed into life.")
+        text0[0] shouldBe ("The radio hissed into life.")
         story.choose(0)
         val text1 = story.next()
         text1.size shouldBe (2)
-        text1.get(1) shouldBe ("The radio hissed into life.")
+        text1[1] shouldBe ("The radio hissed into life.")
         story.choose(0)
         val text2 = story.next()
         text2.size shouldBe (3)
-        text2.get(2) shouldBe ("The radio hissed into life. \"One!\"")
+        text2[2] shouldBe ("The radio hissed into life. \"One!\"")
       }
 
       val listInChoice =
@@ -172,7 +172,7 @@ class VariableTextSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
         text0.size shouldBe (1)
-        text0.get(0) shouldBe ("We needed to find one apple.")
+        text0[0] shouldBe ("We needed to find one apple.")
       }
 
       val minusOne =
@@ -187,7 +187,7 @@ class VariableTextSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
         text0.size shouldBe (1)
-        text0.get(0) shouldBe ("We needed to find nothing.")
+        text0[0] shouldBe ("We needed to find nothing.")
       }
 
       val ten =
@@ -202,7 +202,7 @@ class VariableTextSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text0 = story.next()
         text0.size shouldBe (1)
-        text0.get(0) shouldBe ("We needed to find many oranges.")
+        text0[0] shouldBe ("We needed to find many oranges.")
       }
     }
   }

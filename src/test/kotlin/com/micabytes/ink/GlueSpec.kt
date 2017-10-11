@@ -21,7 +21,7 @@ class GlueSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("Some content with glue.")
+        text[0] shouldBe ("Some content with glue.")
       }
 
       val glueWithDivert =
@@ -42,7 +42,7 @@ class GlueSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("We hurried home to Savile Row as fast as we could.")
+        text[0] shouldBe ("We hurried home to Savile Row as fast as we could.")
       }
 
     }

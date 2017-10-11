@@ -25,7 +25,7 @@ class FunctionSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("The value of x is 3.8.")
+        text[0] shouldBe ("The value of x is 3.8.")
       }
 
       val funcNone =
@@ -43,7 +43,7 @@ class FunctionSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("The value of x is 3.8.")
+        text[0] shouldBe ("The value of x is 3.8.")
       }
 
       //TODO: Should tests that all different kinds of data can be passed as parameters: booleans, numbers, strings, and game objects.
@@ -62,7 +62,7 @@ class FunctionSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("The value of x is 3.8.")
+        text[0] shouldBe ("The value of x is 3.8.")
       }
 
       val setVarFunc =
@@ -80,7 +80,7 @@ class FunctionSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("The value is 6.")
+        text[0] shouldBe ("The value is 6.")
       }
 
       val complexFunc1 =
@@ -103,7 +103,7 @@ class FunctionSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("The values are 6 and 10.")
+        text[0] shouldBe ("The values are 6 and 10.")
       }
 
       val complexFunc2 =
@@ -131,7 +131,7 @@ class FunctionSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("The values are -1 and 0 and 1.")
+        text[0] shouldBe ("The values are -1 and 0 and 1.")
       }
 
       val complexFunc3 =
@@ -163,7 +163,7 @@ class FunctionSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("\"I will pay you 120 reales if you get the goods to their destination. The goods will take up 20 cargo spaces.\"")
+        text[0] shouldBe ("\"I will pay you 120 reales if you get the goods to their destination. The goods will take up 20 cargo spaces.\"")
       }
 
     }

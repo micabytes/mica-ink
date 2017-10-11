@@ -40,12 +40,8 @@ class Expression constructor(originalExpression: String,
   private inner class Tokenizer(input: String) : Iterator<String> {
     var pos = 0
       private set
-    private val input: String
+    private val input: String = input.trim { it <= ' ' }
     private var previousToken: String? = null
-
-    init {
-      this.input = input.trim { it <= ' ' }
-    }
 
     override fun hasNext(): Boolean {
       return pos < input.length

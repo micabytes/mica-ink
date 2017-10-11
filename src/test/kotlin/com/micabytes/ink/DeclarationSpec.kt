@@ -23,7 +23,7 @@ class DeclarationSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("\"My name is Jean Passepartout, but my friend's call me Jackie. I'm 23 years old.\"")
+        text[0] shouldBe ("\"My name is Jean Passepartout, but my friend's call me Jackie. I'm 23 years old.\"")
       }
 
       val varCalc =
@@ -44,7 +44,7 @@ class DeclarationSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("The values are 1 and -1 and -6.")
+        text[0] shouldBe ("The values are 1 and -1 and -6.")
       }
 
       val varDivert =
@@ -70,7 +70,7 @@ class DeclarationSpec : WordSpec() {
         story.choose(1)
         val text = story.next()
         text.size shouldBe (3)
-        text.get(2) shouldBe ("Everybody dies.")
+        text[2] shouldBe ("Everybody dies.")
       }
 
     }

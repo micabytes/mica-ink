@@ -119,7 +119,7 @@ object InkParser {
     if (!line.isEmpty() && currentContainer != null)
       return parseContainer(Content(Content.getId(currentContainer), line, currentContainer, lineNumber))
     // Should throw error.
-    return ArrayList<Content>()
+    return ArrayList()
   }
 
   private fun parseContainer(cont: Content): MutableList<Content> {

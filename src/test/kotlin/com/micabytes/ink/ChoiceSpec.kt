@@ -24,7 +24,7 @@ class ChoiceSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("Hello, world!")
+        text[0] shouldBe ("Hello, world!")
       }
 
       "continue processing with the choice text when a choice is selected" {
@@ -34,9 +34,9 @@ class ChoiceSpec : WordSpec() {
         story.choose(0)
         val text = story.next()
         text.size shouldBe (3)
-        text.get(0) shouldBe ("Hello, world!")
-        text.get(1) shouldBe ("Hello back!")
-        text.get(2) shouldBe ("Nice to hear from you")
+        text[0] shouldBe ("Hello, world!")
+        text[1] shouldBe ("Hello back!")
+        text[2] shouldBe ("Nice to hear from you")
       }
 
       val multiChoice =
@@ -55,8 +55,8 @@ class ChoiceSpec : WordSpec() {
         story.choose(1)
         val text = story.next()
         text.size shouldBe (3)
-        text.get(1) shouldBe ("Goodbye")
-        text.get(2) shouldBe ("See you later")
+        text[1] shouldBe ("Goodbye")
+        text[2] shouldBe ("See you later")
       }
 
       val suppressChoice =
@@ -74,7 +74,7 @@ class ChoiceSpec : WordSpec() {
         story.choose(0)
         val text = story.next()
         text.size shouldBe (2)
-        text.get(1) shouldBe ("Nice to hear from you.")
+        text[1] shouldBe ("Nice to hear from you.")
       }
 
       val mixedChoice =
@@ -92,8 +92,8 @@ class ChoiceSpec : WordSpec() {
         story.choose(0)
         val text = story.next()
         text.size shouldBe (3)
-        text.get(1) shouldBe ("Hello right back to you!")
-        text.get(2) shouldBe ("Nice to hear from you.")
+        text[1] shouldBe ("Hello right back to you!")
+        text[2] shouldBe ("Nice to hear from you.")
       }
 
       val varyingChoice =
@@ -162,7 +162,7 @@ class ChoiceSpec : WordSpec() {
         story.choose(0)
         val text = story.next()
         story.isEnded shouldBe (true)
-        text.get(text.size - 1) shouldBe ("But it is too late: you collapse onto the station platform. This is the end.")
+        text[text.size - 1] shouldBe ("But it is too late: you collapse onto the station platform. This is the end.")
       }
 
       // TODO: Error if fallback choice is not the last.
@@ -279,7 +279,7 @@ class ChoiceSpec : WordSpec() {
         story.choose(0)
         val text = story.next()
         text.size shouldBe (2)
-        text.get(1) shouldBe ("You pull a face, and the soldier comes at you! You shove the guard to one side, but he comes back swinging.")
+        text[1] shouldBe ("You pull a face, and the soldier comes at you! You shove the guard to one side, but he comes back swinging.")
         story.choiceSize shouldBe (1)
         story.choiceText(0) shouldBe ("Grapple and fight")
       }.config(enabled = false)

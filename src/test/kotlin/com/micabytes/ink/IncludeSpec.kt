@@ -21,7 +21,7 @@ class IncludeSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("This is a knot. This is an included knot.")
+        text[0] shouldBe ("This is a knot. This is an included knot.")
       }
 
     }

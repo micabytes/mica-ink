@@ -29,10 +29,10 @@ class GatherSpec : WordSpec() {
         story.choose(1)
         val text = story.next()
         text.size shouldBe (4)
-        text.get(0) shouldBe ("\"What's that?\" my master asked.")
-        text.get(1) shouldBe ("\"Nothing, Monsieur!\" I replied.")
-        text.get(2) shouldBe ("\"Very good, then.\"")
-        text.get(3) shouldBe ("With that Monsieur Fogg left the room.")
+        text[0] shouldBe ("\"What's that?\" my master asked.")
+        text[1] shouldBe ("\"Nothing, Monsieur!\" I replied.")
+        text[2] shouldBe ("\"Very good, then.\"")
+        text[3] shouldBe ("With that Monsieur Fogg left the room.")
       }
 
       val gatherChain =
@@ -55,13 +55,13 @@ class GatherSpec : WordSpec() {
         story.choose(1)
         val text0 = story.next()
         text0.size shouldBe (2)
-        text0.get(1) shouldBe ("I did not pause for breath but kept on running. The road could not be much further! Mackie would have the engine running, and then I'd be safe.")
+        text0[1] shouldBe ("I did not pause for breath but kept on running. The road could not be much further! Mackie would have the engine running, and then I'd be safe.")
         story.choiceSize shouldBe (2)
         story.choose(0)
         val text1 = story.next()
         text1.size shouldBe (4)
-        text1.get(2) shouldBe ("I reached the road and looked about. And would you believe it?")
-        text1.get(3) shouldBe ("The road was empty. Mackie was nowhere to be seen.")
+        text1[2] shouldBe ("I reached the road and looked about. And would you believe it?")
+        text1[3] shouldBe ("The road was empty. Mackie was nowhere to be seen.")
       }
 
       val nestedFlow =
@@ -87,8 +87,8 @@ class GatherSpec : WordSpec() {
         story.choose(2)
         val text = story.next()
         text.size shouldBe (5)
-        text.get(3) shouldBe ("\"Myself!\"")
-        text.get(4) shouldBe ("Mrs. Christie lowered her manuscript a moment. The rest of the writing group sat, open-mouthed.")
+        text[3] shouldBe ("\"Myself!\"")
+        text[4] shouldBe ("Mrs. Christie lowered her manuscript a moment. The rest of the writing group sat, open-mouthed.")
       }
 
       val nestedGather =
@@ -118,14 +118,14 @@ class GatherSpec : WordSpec() {
         story.choose(2)
         val text0 = story.next()
         text0.size shouldBe (5)
-        text0.get(3) shouldBe ("\"Myself!\"")
-        text0.get(4) shouldBe ("\"You must be joking!\"")
+        text0[3] shouldBe ("\"Myself!\"")
+        text0[4] shouldBe ("\"You must be joking!\"")
         story.choiceSize shouldBe(2)
         story.choose(0)
         val text1 = story.next()
         text1.size shouldBe (7)
-        text1.get(5) shouldBe ("\"Mon ami, I am deadly serious.\"")
-        text1.get(6) shouldBe ("Mrs. Christie lowered her manuscript a moment. The rest of the writing group sat, open-mouthed.")
+        text1[5] shouldBe ("\"Mon ami, I am deadly serious.\"")
+        text1[6] shouldBe ("Mrs. Christie lowered her manuscript a moment. The rest of the writing group sat, open-mouthed.")
       }
 
       val deepNesting =
@@ -155,8 +155,8 @@ class GatherSpec : WordSpec() {
         story.choose(0)
         val text = story.next()
         text.size shouldBe (7)
-        text.get(5) shouldBe ("\"...Tell us a tale Captain!\"")
-        text.get(6) shouldBe ("To a man, the crew began to yawn.")
+        text[5] shouldBe ("\"...Tell us a tale Captain!\"")
+        text[6] shouldBe ("To a man, the crew began to yawn.")
       }
 
       val complexFlow =
@@ -189,7 +189,7 @@ class GatherSpec : WordSpec() {
         story.choose(1)
         val text = story.next()
         text.size shouldBe(2)
-        text.get(1) shouldBe ("... but I said nothing and we passed the day in silence.")
+        text[1] shouldBe ("... but I said nothing and we passed the day in silence.")
       }
 
       "offer a compact way to weave and blend text and options (Example 2)" {
@@ -226,7 +226,7 @@ class GatherSpec : WordSpec() {
         story.choose(2)
         val text3 = story.next()
         text3.size shouldBe (9)
-        text3.get(8) shouldBe("I asked nothing further of him then, and after a final, polite cough, he offered nothing more to me. After that, we passed the day in silence.")
+        text3[8] shouldBe("I asked nothing further of him then, and after a final, polite cough, he offered nothing more to me. After that, we passed the day in silence.")
       }
 
     }

@@ -1,7 +1,5 @@
 package com.micabytes.ink
 
-import java.math.BigDecimal
-
 /**
  * Abstract definition of a supported operator. An operator is defined by its name (pattern), precedence and if it is
  * left- or right associative.

@@ -27,7 +27,7 @@ class StitchSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val text = story.next()
         text.size shouldBe (1)
-        text.get(0) shouldBe ("I settled my master.")
+        text[0] shouldBe ("I settled my master.")
       }
 
       "be automatically diverted to if there is no other content in a knot" {
@@ -37,7 +37,7 @@ class StitchSpec : WordSpec() {
         story.choose(1)
         val text = story.next()
         text.size shouldBe (2)
-        text.get(1) shouldBe ("I settled my master.")
+        text[1] shouldBe ("I settled my master.")
       }
 
       val manualStitch =
@@ -60,11 +60,11 @@ class StitchSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val knotText = story.next()
         knotText.size shouldBe (1)
-        knotText.get(0) shouldBe ("How shall we travel?")
+        knotText[0] shouldBe ("How shall we travel?")
         story.choose(1)
         val stitchText = story.next()
         stitchText.size shouldBe (2)
-        stitchText.get(1) shouldBe ("I put myself in third.")
+        stitchText[1] shouldBe ("I put myself in third.")
       }
 
       "be usable locally without the full name" {
@@ -72,11 +72,11 @@ class StitchSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "Test")
         val knotText = story.next()
         knotText.size shouldBe (1)
-        knotText.get(0) shouldBe ("How shall we travel?")
+        knotText[0] shouldBe ("How shall we travel?")
         story.choose(0)
         val stitchText = story.next()
         stitchText.size shouldBe (2)
-        stitchText.get(1) shouldBe ("I settled my master.")
+        stitchText[1] shouldBe ("I settled my master.")
       }
 
     }

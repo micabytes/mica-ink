@@ -6,7 +6,6 @@ projectFilesBackup/
 build/
 .idea/copyright/
 .idea/runConfigurations.xml
-.idea/tasks.xml
 .idea/workspace.xml
 
 # Gradle files

@@ -36,7 +36,7 @@ class TestWrapper : StoryWrapper {
                         """.trimMargin()
       return IOUtils.toInputStream(include1, "UTF-8")
     }
-    throw UnsupportedOperationException("Included fileId " + fileId + " not mocked")
+    throw UnsupportedOperationException("Included fileId $fileId not mocked")
   }
 
 }

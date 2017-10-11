@@ -18,7 +18,7 @@ class KnotSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "test")
         val text = story.next()
         text.size shouldBe 1
-        text.get(0) shouldEqual "Hello, World!"
+        text[0] shouldEqual "Hello, World!"
       }
     }
 
@@ -33,9 +33,9 @@ class KnotSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "test")
         val text = story.next()
         text.size shouldBe 3
-        text.get(0) shouldBe "Hello, world!"
-        text.get(1) shouldBe "Hello?"
-        text.get(2) shouldBe "Hello, are you there?"
+        text[0] shouldBe "Hello, world!"
+        text[1] shouldBe "Hello?"
+        text[2] shouldBe "Hello, are you there?"
       }
     }
 
@@ -51,9 +51,9 @@ class KnotSpec : WordSpec() {
         val story = InkParser.parse(inputStream, TestWrapper(), "test")
         val text = story.next()
         text.size shouldBe 3
-        text.get(0) shouldBe "Hello, world!"
-        text.get(1) shouldBe "Hello?"
-        text.get(2) shouldBe "Hello, are you there?"
+        text[0] shouldBe "Hello, world!"
+        text[1] shouldBe "Hello?"
+        text[2] shouldBe "Hello, are you there?"
       }
     }
 

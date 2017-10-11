@@ -2,6 +2,7 @@ package com.micabytes.ink;
 
 import java.math.BigDecimal;
 
+@SuppressWarnings("unused")
 public class TestClass {
 
   public String hello() {
