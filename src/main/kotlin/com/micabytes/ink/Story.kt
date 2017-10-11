@@ -142,7 +142,7 @@ class Story(internal val wrapper: StoryWrapper,
         is Divert -> {
           container.index ++
           container = current.resolveDivert(this)
-          current.count++
+          container.count ++
           container.index = 0
         }
         is Tag -> {
@@ -627,7 +627,7 @@ return ""
     if (token.startsWith(Symbol.DIVERT)) {
       val k = token.substring(2).trim({ it <= ' ' })
       if (content.containsKey(k))
-        return content.get(k)!!
+        return content[k]!!
       wrapper.logException(InkRunTimeException("Could not identify container id: " + k))
       return BigDecimal.ZERO
     }
@@ -708,7 +708,7 @@ return ""
 
   override fun getFunction(token: String): Function {
     if (hasFunction(token.toLowerCase(Locale.US)))
-      return functions.get(token.toLowerCase(Locale.US))!!
+      return functions[token.toLowerCase(Locale.US)]!!
     throw RuntimeException()
     //return //NullFunction()
     // TODO: Empty Function
@@ -863,17 +863,17 @@ return ""
 
   fun getDivert(d: String): Container {
     if (content.containsKey(d))
-      return content.get(d) as Container
+      return content[d] as Container
     if (content.containsKey(getValueId(d)))
-      return content.get(getValueId(d)) as Container
+      return content[getValueId(d)] as Container
     if (content.containsKey(getKnotId(d)))
-      return content.get(getKnotId(d)) as Container
+      return content[getKnotId(d)] as Container
     if (variables.containsKey(d)) {
-      val t = variables.get(d)
+      val t = variables[d]
       if (t is Container)
         return t
       else
-        throw InkRunTimeException("Attempt to divert to a variable " + d + " which is not a Container")
+        throw InkRunTimeException("Attempt to divert to a variable $d which is not a Container")
     }
     throw InkRunTimeException("Attempt to divert to non-defined node " + d)
   }
