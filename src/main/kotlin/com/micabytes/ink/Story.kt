@@ -142,7 +142,7 @@ class Story(internal val wrapper: StoryWrapper,
         is Divert -> {
           container.index ++
           container = current.resolveDivert(this)
-          container.count ++
+          container.count++
           container.index = 0
         }
         is Tag -> {
@@ -222,7 +222,8 @@ class Story(internal val wrapper: StoryWrapper,
   }
 
   @Throws(InkRunTimeException::class)
-  fun choose(i: Int) {
+  fun choose(idx: Int) {
+    val i = if (idx == -1) choices.size - 1 else idx
     if (i < choices.size && i >= 0) {
       container = choices[i]
       container.count++
@@ -230,7 +231,7 @@ class Story(internal val wrapper: StoryWrapper,
       container.index = 0
       choices.clear()
     } else {
-      val cId = if (container != null) container!!.id else "null"
+      val cId = if (container != null) container.id else "null"
       throw InkRunTimeException("Trying to select a choice " + i + " that does not exist in story: " + fileNames[0] + " container: " + cId + " cIndex: " + container.index)
     }
   }
@@ -627,7 +628,7 @@ return ""
     if (token.startsWith(Symbol.DIVERT)) {
       val k = token.substring(2).trim({ it <= ' ' })
       if (content.containsKey(k))
-        return content[k]!!
+        return content.get(k)!!
       wrapper.logException(InkRunTimeException("Could not identify container id: " + k))
       return BigDecimal.ZERO
     }
@@ -708,7 +709,7 @@ return ""
 
   override fun getFunction(token: String): Function {
     if (hasFunction(token.toLowerCase(Locale.US)))
-      return functions[token.toLowerCase(Locale.US)]!!
+      return functions.get(token.toLowerCase(Locale.US))!!
     throw RuntimeException()
     //return //NullFunction()
     // TODO: Empty Function
@@ -863,17 +864,17 @@ return ""
 
   fun getDivert(d: String): Container {
     if (content.containsKey(d))
-      return content[d] as Container
+      return content.get(d) as Container
     if (content.containsKey(getValueId(d)))
-      return content[getValueId(d)] as Container
+      return content.get(getValueId(d)) as Container
     if (content.containsKey(getKnotId(d)))
-      return content[getKnotId(d)] as Container
+      return content.get(getKnotId(d)) as Container
     if (variables.containsKey(d)) {
-      val t = variables[d]
+      val t = variables.get(d)
       if (t is Container)
         return t
       else
-        throw InkRunTimeException("Attempt to divert to a variable $d which is not a Container")
+        throw InkRunTimeException("Attempt to divert to a variable " + d + " which is not a Container")
     }
     throw InkRunTimeException("Attempt to divert to non-defined node " + d)
   }

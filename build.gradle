@@ -1,10 +1,10 @@
-apply plugin: 'kotlin'
 apply plugin: 'java'
+apply plugin: 'kotlin'
 
 buildscript {
-  ext.kotlin_version = '1.1.3-2'
+  ext.kotlin_version = '1.1.4-3'
+  ext.kotlintest_version = '2.0.7'
   ext.jackson_version = '2.8.7'
-  ext.kotlintest_version = '2.0.3'
   repositories {
     jcenter { url "http://jcenter.bintray.com/" }
   }
@@ -14,7 +14,8 @@ buildscript {
 }
 
 repositories {
-  jcenter { url "http://jcenter.bintray.com/" }
+  jcenter()
+  google()
 }
 
 dependencies {
@@ -23,7 +24,6 @@ dependencies {
   // JSON Libraries - note: need to modify proguard-rules.pro
   compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
   compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-  compile 'com.intellij:annotations:+@jar'
   testCompile "io.kotlintest:kotlintest:$kotlintest_version"
   testCompile 'org.apache.commons:commons-io:1.3.2'
 }

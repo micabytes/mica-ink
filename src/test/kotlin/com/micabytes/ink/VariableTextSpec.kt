@@ -104,7 +104,37 @@ class VariableTextSpec : WordSpec() {
       }
     }
 
-    // TODO: No idea how to do a good tests of Shuffles (random lists).
+    "Shuffles" should {
+      val shuffle =
+          """=== test
+        |The radio hissed into life. {~"Three!"|"Two!"|"One!"}
+        |+ [Again] -> test
+      """.trimMargin()
+
+      "cycle through the element repeatedly" {
+        val inputStream = IOUtils.toInputStream(shuffle, "UTF-8")
+        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+        val text0 = story.next()
+        text0.size shouldBe (1)
+        val res0 = text0.get(0).equals("The radio hissed into life. \"Three!\"") || text0.get(0).equals("The radio hissed into life. \"Two!\"") || text0.get(0).equals("The radio hissed into life. \"One!\"") 
+        res0 shouldBe true
+        story.choose(0)
+        val text1 = story.next()
+        text1.size shouldBe (2)
+        val res1 = text1.get(1).equals("The radio hissed into life. \"Three!\"") || text1.get(1).equals("The radio hissed into life. \"Two!\"") || text1.get(1).equals("The radio hissed into life. \"One!\"")
+        res1 shouldBe true
+        story.choose(0)
+        val text2 = story.next()
+        text2.size shouldBe (3)
+        val res2 = text2.get(2).equals("The radio hissed into life. \"Three!\"") || text2.get(2).equals("The radio hissed into life. \"Two!\"") || text2.get(2).equals("The radio hissed into life. \"One!\"")
+        res2 shouldBe true
+        story.choose(0)
+        val text3 = story.next()
+        text3.size shouldBe (4)
+        val res3 = text3.get(3).equals("The radio hissed into life. \"Three!\"") || text3.get(3).equals("The radio hissed into life. \"Two!\"") || text3.get(3).equals("The radio hissed into life. \"One!\"")
+        res3 shouldBe true
+      }
+    }
 
     "Declaration text" should {
       val emptyElements =
