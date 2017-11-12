@@ -810,9 +810,12 @@ return ""
         try {
           val res = Declaration.evaluate(interrupt.condition, this)
           if (checkResult(res)) {
-            val from = interrupt.text.substring(0, interrupt.text.indexOf(Symbol.DIVERT)).trim({ it <= ' ' })
+            val text = interrupt.text.substring(2)
+            val from = text.substring(0, text.indexOf(Symbol.DIVERT)).trim({ it <= ' ' })
             if (from == divert) {
-              val to = interrupt.text.substring(interrupt.text.indexOf(Symbol.DIVERT) + 2).trim({ it <= ' ' })
+              if (!contains(interrupt.file))
+                add(InkParser.parse(wrapper, interrupt.file))
+              val to = text.substring(text.indexOf(Symbol.DIVERT) + 2).trim({ it <= ' ' })
               interrupt.isActive = false
               putVariable(Symbol.EVENT, interrupt)
               return to
@@ -822,11 +825,16 @@ return ""
           wrapper.logException(e)
           return divert
         }
-
       }
     }
     return divert
   }
+
+  fun addInterrupt(i: StoryInterrupt) = interrupts.add(i)
+
+  fun clearInterrupts() = interrupts.clear()
+
+  fun contains(s: String): Boolean = fileNames.any { it.equals(s, ignoreCase = true) }
 
   companion object {
     private val IS_NULL = "isnull"
@@ -887,7 +895,6 @@ return ""
   }
 
   fun clear() = text.clear()
-
 
 }
 

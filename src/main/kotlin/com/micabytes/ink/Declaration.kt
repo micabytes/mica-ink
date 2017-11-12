@@ -1,6 +1,7 @@
 package com.micabytes.ink
 
 import com.micabytes.ink.util.InkRunTimeException
+import java.math.BigDecimal
 import java.util.regex.Pattern
 
 class Declaration internal constructor(lineNumber: Int,
@@ -92,6 +93,7 @@ class Declaration internal constructor(lineNumber: Int,
     }
 
     fun evaluate(str: String, variables: VariableMap): Any {
+      if (str.isEmpty()) return BigDecimal.ONE
       // TODO: Note that this means that spacing will mess up expressions; needs to be fixed
       var ev: String = ""
       try {
