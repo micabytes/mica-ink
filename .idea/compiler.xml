@@ -4,6 +4,8 @@
     <bytecodeTargetLevel>
       <module name="jInk_main" target="1.8" />
       <module name="jInk_test" target="1.8" />
+      <module name="mica-ink_main" target="1.8" />
+      <module name="mica-ink_test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

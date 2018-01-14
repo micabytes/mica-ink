@@ -1,61 +1,60 @@
 package com.micabytes.ink
 
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldEqual
-import io.kotlintest.specs.WordSpec
+import com.micabytes.ink.helpers.TestWrapper
+import org.amshove.kluent.shouldEqual
 import org.apache.commons.io.IOUtils
+import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.given
+import org.jetbrains.spek.api.dsl.it
 
-class KnotSpec : WordSpec() {
+class KnotSpec : Spek({
 
-  init {
-    
-    "A knot with a single line of plain text" should {
-      val testData = """== hello_world
+  given("A knot with a single line of plain text") {
+    val testData = """== hello_world
                        |Hello, World!""".trimMargin()
 
-      "return a single line of plain text as output" {
-        val inputStream = IOUtils.toInputStream(testData, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "test")
-        val text = story.next()
-        text.size shouldBe 1
-        text[0] shouldEqual "Hello, World!"
-      }
+    it("return a single line of plain text as output") {
+      val inputStream = IOUtils.toInputStream(testData, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "test")
+      val text = story.next()
+      text.size shouldEqual 1
+      text[0] shouldEqual "Hello, World!"
     }
+  }
 
-    "A knot with multiple lines line of plain text" should {
-      val testData = """== hello_world
+  given("A knot with multiple lines line of plain text") {
+    val testData = """== hello_world
                         |Hello, world!
                         |Hello?
                         |Hello, are you there?""".trimMargin()
 
-      "return an equal number of lines as output" {
-        val inputStream = IOUtils.toInputStream(testData, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "test")
-        val text = story.next()
-        text.size shouldBe 3
-        text[0] shouldBe "Hello, world!"
-        text[1] shouldBe "Hello?"
-        text[2] shouldBe "Hello, are you there?"
-      }
+    it("return an equal number of lines as output") {
+      val inputStream = IOUtils.toInputStream(testData, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "test")
+      val text = story.next()
+      text.size shouldEqual 3
+      text[0] shouldEqual "Hello, world!"
+      text[1] shouldEqual "Hello?"
+      text[2] shouldEqual "Hello, are you there?"
     }
+  }
 
-    "A knot with multiple lines line of plain text" should {
-      val testData = """== hello_world
+  given("A knot with multiple lines line of plain text") {
+    val testData = """== hello_world
                         |Hello, world!
                         |Hello?
                         |
                         |Hello, are you there?""".trimMargin()
 
-      "return an equal number of lines as output" {
-        val inputStream = IOUtils.toInputStream(testData, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "test")
-        val text = story.next()
-        text.size shouldBe 3
-        text[0] shouldBe "Hello, world!"
-        text[1] shouldBe "Hello?"
-        text[2] shouldBe "Hello, are you there?"
-      }
+    it("return an equal number of lines as output") {
+      val inputStream = IOUtils.toInputStream(testData, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "test")
+      val text = story.next()
+      text.size shouldEqual 3
+      text[0] shouldEqual "Hello, world!"
+      text[1] shouldEqual "Hello?"
+      text[2] shouldEqual "Hello, are you there?"
     }
-
   }
-}
+
+})

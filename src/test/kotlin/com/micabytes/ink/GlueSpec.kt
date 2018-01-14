@@ -1,31 +1,32 @@
 package com.micabytes.ink
 
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.specs.WordSpec
+import com.micabytes.ink.helpers.TestWrapper
+import org.amshove.kluent.shouldEqual
 import org.apache.commons.io.IOUtils
+import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.given
+import org.jetbrains.spek.api.dsl.it
 
-class GlueSpec : WordSpec() {
+class GlueSpec : Spek({
 
-  init {
-
-    "Glue" should {
-      val simpleGlue =
-          """=== test_knot ===
+  given("Glue") {
+    val simpleGlue =
+        """=== test_knot ===
             |Some <>
             |content<>
             | with glue.
             |""".trimMargin()
 
-      "bind text together across multiple lines of text" {
-        val inputStream = IOUtils.toInputStream(simpleGlue, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        val text = story.next()
-        text.size shouldBe (1)
-        text[0] shouldBe ("Some content with glue.")
-      }
+    it("bind text together across multiple lines of text") {
+      val inputStream = IOUtils.toInputStream(simpleGlue, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      val text = story.next()
+      text.size shouldEqual (1)
+      text[0] shouldEqual ("Some content with glue.")
+    }
 
-      val glueWithDivert =
-          """=== hurry_home ===
+    val glueWithDivert =
+        """=== hurry_home ===
             |We hurried home <>
             |-> to_savile_row
             |
@@ -37,16 +38,14 @@ class GlueSpec : WordSpec() {
             |<> as fast as we could.""".trimMargin()
 
 
-      "bind text together across multiple knots/stitches" {
-        val inputStream = IOUtils.toInputStream(glueWithDivert, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        val text = story.next()
-        text.size shouldBe (1)
-        text[0] shouldBe ("We hurried home to Savile Row as fast as we could.")
-      }
-
+    it("bind text together across multiple knots/stitches") {
+      val inputStream = IOUtils.toInputStream(glueWithDivert, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      val text = story.next()
+      text.size shouldEqual (1)
+      text[0] shouldEqual ("We hurried home to Savile Row as fast as we could.")
     }
 
   }
 
-}
+})

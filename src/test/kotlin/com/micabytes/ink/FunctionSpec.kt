@@ -1,17 +1,18 @@
 package com.micabytes.ink
 
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.specs.WordSpec
+import com.micabytes.ink.helpers.TestWrapper
+import org.amshove.kluent.shouldEqual
 import org.apache.commons.io.IOUtils
+import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.given
+import org.jetbrains.spek.api.dsl.it
 
-class FunctionSpec : WordSpec() {
+class FunctionSpec : Spek({
 
-  init {
+  given("Functions") {
 
-    "Functions" should {
-
-      val funcBasic =
-          """=== test_knot
+    val funcBasic =
+        """=== test_knot
           |VAR x = lerp(2, 8, 0.3)
           |The value of x is {x}.
           |-> END
@@ -20,16 +21,16 @@ class FunctionSpec : WordSpec() {
           |    ~ return ((b - a) * k) + a
         """.trimMargin()
 
-      "return a value from a function in a variable expression" {
-        val inputStream = IOUtils.toInputStream(funcBasic, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        val text = story.next()
-        text.size shouldBe (1)
-        text[0] shouldBe ("The value of x is 3.8.")
-      }
+    it("return a value from a function in a variable expression") {
+      val inputStream = IOUtils.toInputStream(funcBasic, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      val text = story.next()
+      text.size shouldEqual (1)
+      text[0] shouldEqual ("The value of x is 3.8.")
+    }
 
-      val funcNone =
-          """=== test_knot
+    val funcNone =
+        """=== test_knot
           |VAR x = f()
           |The value of x is {x}.
           |-> END
@@ -38,18 +39,18 @@ class FunctionSpec : WordSpec() {
           |    ~ return 3.8
         """.trimMargin()
 
-      "return a value from a function with no parameters" {
-        val inputStream = IOUtils.toInputStream(funcNone, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        val text = story.next()
-        text.size shouldBe (1)
-        text[0] shouldBe ("The value of x is 3.8.")
-      }
+    it("return a value from a function with no parameters") {
+      val inputStream = IOUtils.toInputStream(funcNone, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      val text = story.next()
+      text.size shouldEqual (1)
+      text[0] shouldEqual ("The value of x is 3.8.")
+    }
 
-      //TODO: Should tests that all different kinds of data can be passed as parameters: booleans, numbers, strings, and game objects.
+    //TODO: Should tests that all different kinds of data can be passed as parameters: booleans, numbers, strings, and game objects.
 
-      val funcInline =
-          """=== test_knot
+    val funcInline =
+        """=== test_knot
           |The value of x is {lerp(2, 8, 0.3)}.
           |-> END
           |
@@ -57,16 +58,16 @@ class FunctionSpec : WordSpec() {
           |    ~ return ((b - a) * k) + a
         """.trimMargin()
 
-      "handle conditionals in the function" {
-        val inputStream = IOUtils.toInputStream(funcInline, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        val text = story.next()
-        text.size shouldBe (1)
-        text[0] shouldBe ("The value of x is 3.8.")
-      }
+    it("handle conditionals in the function") {
+      val inputStream = IOUtils.toInputStream(funcInline, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      val text = story.next()
+      text.size shouldEqual (1)
+      text[0] shouldEqual ("The value of x is 3.8.")
+    }
 
-      val setVarFunc =
-          """=== test_knot
+    val setVarFunc =
+        """=== test_knot
           |~ herp(2, 3)
           |The value is {x}.
           |-> END
@@ -75,16 +76,16 @@ class FunctionSpec : WordSpec() {
           |VAR x = a * b
         """.trimMargin()
 
-      "be able to set a variable as a command" {
-        val inputStream = IOUtils.toInputStream(setVarFunc, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        val text = story.next()
-        text.size shouldBe (1)
-        text[0] shouldBe ("The value is 6.")
-      }
+    it("be able to set a variable as a command") {
+      val inputStream = IOUtils.toInputStream(setVarFunc, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      val text = story.next()
+      text.size shouldEqual (1)
+      text[0] shouldEqual ("The value is 6.")
+    }
 
-      val complexFunc1 =
-          """=== test_knot
+    val complexFunc1 =
+        """=== test_knot
           |~ derp(2, 3, 4)
           |The values are {x} and {y}.
           |-> END
@@ -98,16 +99,16 @@ class FunctionSpec : WordSpec() {
           |~ y = x + c
         """.trimMargin()
 
-      "handle conditionals and setting of values (test 1)" {
-        val inputStream = IOUtils.toInputStream(complexFunc1, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        val text = story.next()
-        text.size shouldBe (1)
-        text[0] shouldBe ("The values are 6 and 10.")
-      }
+    it("handle conditionals and setting of values (test 1)") {
+      val inputStream = IOUtils.toInputStream(complexFunc1, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      val text = story.next()
+      text.size shouldEqual (1)
+      text[0] shouldEqual ("The values are 6 and 10.")
+    }
 
-      val complexFunc2 =
-          """=== test_knot
+    val complexFunc2 =
+        """=== test_knot
           |~ derp(2, 3)
           |The values are {x} and {y} and {z}.
           |-> END
@@ -126,16 +127,16 @@ class FunctionSpec : WordSpec() {
           |VAR z = 1
         """.trimMargin()
 
-      "handle conditionals and setting of values (test 2)" {
-        val inputStream = IOUtils.toInputStream(complexFunc2, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        val text = story.next()
-        text.size shouldBe (1)
-        text[0] shouldBe ("The values are -1 and 0 and 1.")
-      }
+    it("handle conditionals and setting of values (test 2)") {
+      val inputStream = IOUtils.toInputStream(complexFunc2, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      val text = story.next()
+      text.size shouldEqual (1)
+      text[0] shouldEqual ("The values are -1 and 0 and 1.")
+    }
 
-      val complexFunc3 =
-          """=== merchant
+    val complexFunc3 =
+        """=== merchant
           |~ merchant_init()
           | "I will pay you {fee} reales if you get the goods to their destination. The goods will take up {weight} cargo spaces."
           |
@@ -158,15 +159,14 @@ class FunctionSpec : WordSpec() {
           |VAR fee = (1 + dst) * 10 * mult
         """.trimMargin()
 
-      "handle conditionals and setting of values (test 3)" {
-        val inputStream = IOUtils.toInputStream(complexFunc3, "UTF-8")
-        val story = InkParser.parse(inputStream, TestWrapper(), "Test")
-        val text = story.next()
-        text.size shouldBe (1)
-        text[0] shouldBe ("\"I will pay you 120 reales if you get the goods to their destination. The goods will take up 20 cargo spaces.\"")
-      }
-
+    it("handle conditionals and setting of values (test 3)") {
+      val inputStream = IOUtils.toInputStream(complexFunc3, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      val text = story.next()
+      text.size shouldEqual (1)
+      text[0] shouldEqual ("\"I will pay you 120 reales if you get the goods to their destination. The goods will take up 20 cargo spaces.\"")
     }
 
   }
-}
+
+})

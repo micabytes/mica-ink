@@ -1,8 +1,10 @@
-# jInk
+# mica-ink
 
-[![CI Status](http://img.shields.io/travis/micabytes/jink.svg?style=flat)](https://travis-ci.org/micabytes/jink)
+[![CI Status](http://img.shields.io/travis/micabytes/mica-ink.svg?style=flat)](https://travis-ci.org/micabytes/mica-ink)
 
-jInk is a Kotlin implementation of Inkle Studios (@inkle) scripting language ink for writing interactive narrative. It remains in-development, in that it is being used for my Android game Pirates and Traders 2, which is still in early access. This means I will likely still make some major changes to the code base and possibly the interface, so use at your own risk.
+[mica-ink](http://github.com/micabytes/mica-ink) is a Kotlin implementation of Inkle Studios (@inkle) scripting language [ink](http://github.com/inkle/ink) for
+writing interactive narrative. It was developed in order to have an ink alternative for Java, and is used as the narrative engine in my various projects; most
+notable [Pirates and Traders 2](https://play.google.com/store/apps/details?id=com.micabytes.pirates2).
 
 Currently, this reimplements Part 1 to Part 3 of the [Ink documentation](https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md), with the following omissions (that I know of - other things may be missing that I've simply forgotten to get implemented):
 
@@ -23,7 +25,7 @@ And of course, the key elements of Part 4 are missing:
 
 Most of the examples in the implemented section of the documentation are used as tests, with a few additional test cases grabbed from the 'ink/Tests' where appropriate.
 
-This implementation does one thing that the standard Ink implementation does not, which is to allow the use of native Java objects as values, and permit the calling of methods on those objects.
+This implementation does one thing that the standard Ink implementation does not, which is to allow the use of native Java/Kotlin objects as values, and permit the calling of methods on those objects.
 
 ## Roadmap
 

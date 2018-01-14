@@ -1,9 +1,9 @@
-package com.micabytes.ink;
+package com.micabytes.ink.helpers;
 
 import java.math.BigDecimal;
 
 @SuppressWarnings("unused")
-public class TestClass {
+public class TestClassJava {
 
   public String hello() {
     return "Hello, is it me you're looking for?";
