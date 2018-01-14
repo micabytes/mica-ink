@@ -8,15 +8,15 @@ import java.io.InputStream
 class TestWrapper : StoryWrapper {
 
   override fun getStoryObject(objId: String): Any {
-    throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    throw UnsupportedOperationException("not implemented")
   }
 
   override fun getInterrupt(s: String): StoryInterrupt {
-    throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    throw UnsupportedOperationException("not implemented")
   }
 
   override fun resolveTag(t: String) {
-    throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    throw UnsupportedOperationException("not implemented")
   }
 
   override fun logDebug(m: String) {
