@@ -28,6 +28,7 @@ jar {
         'Implementation-Version': version
   }
 }
+
 apply plugin: 'org.junit.platform.gradle.plugin'
 
 junitPlatform {
