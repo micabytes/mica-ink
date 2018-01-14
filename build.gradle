@@ -20,6 +20,14 @@ buildscript {
   }
 }
 
+version = '0.1.0'
+
+jar {
+  manifest {
+    attributes 'Implementation-Title': 'mica-ink',
+        'Implementation-Version': version
+  }
+}
 apply plugin: 'org.junit.platform.gradle.plugin'
 
 junitPlatform {
