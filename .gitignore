@@ -3,7 +3,7 @@ local.properties
 
 # IDE and Build environment settings
 *.iml
-.idea/
+Minor.idea/
 .gradle/
 build/
 out/
