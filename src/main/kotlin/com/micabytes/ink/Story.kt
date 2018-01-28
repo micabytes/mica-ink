@@ -86,6 +86,8 @@ class Story(internal val wrapper: StoryWrapper,
     choices.clear()
     currentText = Symbol.GLUE
     endProcessing = false
+    while (container.index >= container.size)
+      increment()
     while (!endProcessing) {
       val current = container.get(container.index)
       when (current) {
