@@ -1,6 +1,8 @@
 # mica-ink
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](https://github.com/micabytes/mica-ink/blob/master/LICENSE)
+[![Build Status](https://travis-ci.org/micabytes/mica-ink.svg?branch=master)](https://travis-ci.org/micabytes/mica-ink)
+[![Release](https://jitpack.io/v/micabytes/mica-ink.svg)](https://jitpack.io/#micabytes/mica-ink)
 
-[![CI Status](http://img.shields.io/travis/micabytes/mica-ink.svg?style=flat)](https://travis-ci.org/micabytes/mica-ink)
 
 [mica-ink](http://github.com/micabytes/mica-ink) is a Kotlin (originally Java) implementation of Inkle Studios (@inkle) scripting language [ink](http://github.com/inkle/ink)
 for writing interactive narrative. It was developed in order to have an ink alternative for Java, and is used as the narrative engine in my various projects;
