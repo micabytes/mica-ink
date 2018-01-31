@@ -1,26 +1,30 @@
 apply plugin: 'java'
+apply plugin: 'base'
 apply plugin: 'kotlin'
 
 buildscript {
   // Properties
-  ext.kotlin_version = '1.2.20'
+  ext.kotlin_version = '1.2.21'
   ext.jackson_version = '2.9.0'
   ext.junit_platform_version = '1.0.2'
   ext.spek_version = '1.1.5'
   ext.kluent_version = '1.33'
   ext.commons_io_version = '2.6'
+  ext.allure_version = '2.4'
 
   repositories {
     jcenter { url "http://jcenter.bintray.com/" }
+    mavenCentral()
   }
 
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     classpath "org.junit.platform:junit-platform-gradle-plugin:$junit_platform_version"
+    classpath "io.qameta.allure:allure-gradle:$allure_version"
   }
 }
 
-version = '0.1.0'
+version = '0.1.1'
 
 jar {
   manifest {
@@ -30,6 +34,7 @@ jar {
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin: 'io.qameta.allure'
 
 junitPlatform {
   filters {
@@ -43,6 +48,7 @@ repositories {
   jcenter()
   google()
   maven { url "http://dl.bintray.com/jetbrains/spek" }
+  mavenCentral()
 }
 
 dependencies {
@@ -50,6 +56,8 @@ dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
   compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+
+  compile 'io.qameta.allure:allure-gradle:2.4'
   testCompile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
   testCompile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
   testCompile("org.jetbrains.spek:spek-api:$spek_version") {
@@ -61,6 +69,16 @@ dependencies {
   }
   testCompile "org.amshove.kluent:kluent:$kluent_version"
   testCompile "commons-io:commons-io:$commons_io_version"
+  testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.1'
+  testCompile 'io.qameta.allure:allure-gradle:2.4'
+}
+
+allure {
+  version = '2.4.1'
+  autoconfigure = true
+  aspectjweaver = true
+  aspectjVersion = '1.8.10'
+
 }
 
 sourceSets {

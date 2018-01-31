@@ -9,10 +9,11 @@ import org.jetbrains.spek.api.dsl.it
 
 class GatherSpec : Spek({
 
-  given("Gathers") {
+  given("an ink script containing a gather") {
 
-    val gatherBasic =
-        """=== test_knot ===
+    it("should gather the flow back together again after a list of choices with text") {
+      val gatherBasic =
+          """=== test_knot ===
           |"What's that?" my master asked.
           |    *  "I am somewhat tired[."]," I repeated.
           |       "Really," he responded. "How deleterious."
@@ -22,8 +23,6 @@ class GatherSpec : Spek({
           |       "Ah," he replied, not unkindly. "I see you are feeling frustrated. Tomorrow, things will improve."
           |- With that Monsieur Fogg left the room.
         """.trimMargin()
-
-    it("gather the flow back together again") {
       val inputStream = IOUtils.toInputStream(gatherBasic, "UTF-8")
       val story = InkParser.parse(inputStream, TestWrapper(), "Test")
       story.next()
@@ -34,6 +33,48 @@ class GatherSpec : Spek({
       text[1] shouldEqual ("\"Nothing, Monsieur!\" I replied.")
       text[2] shouldEqual ("\"Very good, then.\"")
       text[3] shouldEqual ("With that Monsieur Fogg left the room.")
+    }
+
+    it("should gather the flow back together again after a list of choices without text") {
+      val gatherBasic =
+          """=== test_knot ===
+          |"What's that?" my master asked.
+          |    *  ["I am somewhat tired."]
+          |    *  ["Nothing, Monsieur!"]
+          |- Monsieur Fogg ignored me and left the room.
+        """.trimMargin()
+      val inputStream = IOUtils.toInputStream(gatherBasic, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      story.next()
+      story.choose(0)
+      val text = story.next()
+      text.size shouldEqual (2)
+      text[0] shouldEqual ("\"What's that?\" my master asked.")
+      text[1] shouldEqual ("Monsieur Fogg ignored me and left the room.")
+    }
+
+    it("should gather the flow back together again even if the ") {
+      val gatherDivert =
+          """=== test_knot ===
+          |You walk to the bar, but it's so dark here you can't really make anything out. The foyer is back to the north.
+          |-> test_options
+          |
+          |== test_options ==
+          |* [Feel around for a light switch.]
+          |* [Sit on a bar stool.]
+          |+ [Go north.] -> foyer
+          |- In the dark? You could easily disturb something.
+          |  -> test_options
+        """.trimMargin()
+      val inputStream = IOUtils.toInputStream(gatherDivert, "UTF-8")
+      val story = InkParser.parse(inputStream, TestWrapper(), "Test")
+      story.next()
+      story.choose(0)
+      val text = story.next()
+      text.size shouldEqual (2)
+      text[0] shouldEqual ("You walk to the bar, but it's so dark here you can't really make anything out. The foyer is back to the north.")
+      text[1] shouldEqual ("In the dark? You could easily disturb something.")
+      story.choiceSize shouldEqual 2
     }
 
     val gatherChain =
