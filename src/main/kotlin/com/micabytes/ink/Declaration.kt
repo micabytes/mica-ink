@@ -16,7 +16,7 @@ class Declaration internal constructor(lineNumber: Int,
         parent,
         lineNumber) {
 
-  val isDeclaration = decl.startsWith(VAR_)
+  private val isDeclaration = decl.startsWith(VAR_)
 
   @Throws(InkRunTimeException::class)
   fun evaluate(story: Story) {
@@ -80,13 +80,13 @@ class Declaration internal constructor(lineNumber: Int,
   }
 
   companion object {
-    private val VAR_ = "VAR "
-    private val TILDE_ = "~ "
+    private const val VAR_ = "VAR "
+    private const val TILDE_ = "~ "
     private val EQ_SPLITTER = Pattern.compile("[=]+")
-    private val AND_WS = " and "
-    private val OR_WS = " or "
-    private val TRUE_LC = "true"
-    private val FALSE_LC = "false"
+    private const val AND_WS = " and "
+    private const val OR_WS = " or "
+    private const val TRUE_LC = "true"
+    private const val FALSE_LC = "false"
 
     fun getId(parent: Container): String {
       return parent.id + Symbol.DOT + parent.size

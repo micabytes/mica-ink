@@ -9,19 +9,19 @@ class StoryJson private constructor() {
   }
 
   companion object {
-    val FILE = "file"
-    val FILES = "files"
-    val CONTENT = "children"
-    val ID = "id"
-    val COUNT = "count"
-    val VARIABLES = "values"
-    val CONTAINER = "container"
-    val COUNTER = "counter"
-    val TEXT = "text"
-    val CHOICES = "choices"
-    val CHOICES_DETAIL = "choice"
-    val IMAGE = "image"
-    val RUNNING = "running"
-    val INDEX = "index"
+    const val FILE = "file"
+    const val FILES = "files"
+    const val CONTENT = "children"
+    const val ID = "id"
+    const val COUNT = "count"
+    const val VARIABLES = "values"
+    const val CONTAINER = "container"
+    const val COUNTER = "counter"
+    const val TEXT = "text"
+    const val CHOICES = "choices"
+    const val CHOICES_DETAIL = "choice"
+    const val IMAGE = "image"
+    const val RUNNING = "running"
+    const val INDEX = "index"
   }
 }

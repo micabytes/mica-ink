@@ -5,7 +5,7 @@ internal class Stitch(header: String,
                       lineNumber: Int) : ParameterizedContainer(getId(header, parent), ParameterizedContainer.getParameters(header), parent, lineNumber) {
 
   companion object {
-    private val STITCH_HEADER = "="
+    private const val STITCH_HEADER = "="
 
     fun isStitchHeader(str: String): Boolean {
       return str.startsWith(STITCH_HEADER)

@@ -22,19 +22,19 @@ class Story(internal val wrapper: StoryWrapper,
 
   init {
     fileNames.add(fileName)
-    content.put(storyEnd.id, storyEnd)
+    content[storyEnd.id] = storyEnd
     for (cnt in content) {
       if (cnt.value is Knot && (cnt.value as Knot).isFunction)
-        functions.put(cnt.value.id.toLowerCase(Locale.US), cnt.value as Knot)
+        functions[cnt.value.id.toLowerCase(Locale.US)] = cnt.value as Knot
     }
     putVariable(Symbol.TRUE, BigDecimal.ONE)
     putVariable(Symbol.FALSE, BigDecimal.ZERO)
     putVariable(Symbol.PI, Expression.PI)
     putVariable(Symbol.e, Expression.e)
-    functions.put(IS_NULL, IsNullFunction())
-    functions.put(NOT, NotFunction())
-    functions.put(RANDOM, RandomFunction())
-    functions.put(FLOOR, FloorFunction())
+    functions[IS_NULL] = IsNullFunction()
+    functions[NOT] = NotFunction()
+    functions[RANDOM] = RandomFunction()
+    functions[FLOOR] = FloorFunction()
     /*
     functions.put(GET_NULL, GetNullFunction())
     functions.put(IS_KNOT, IsKnotFunction())
@@ -213,7 +213,7 @@ class Story(internal val wrapper: StoryWrapper,
 
   }
 
-  fun addText(current: Content) {
+  private fun addText(current: Content) {
     val nextText = current.getText(this)
     if (currentText.endsWith(Symbol.GLUE) || nextText.startsWith(Symbol.GLUE))
       currentText += nextText
@@ -269,7 +269,7 @@ class Story(internal val wrapper: StoryWrapper,
       expression = expression!!.replace("(?i)\\b$variable\\b".toRegex(), "(" + value + ")")
       rpn = null
     }*/
-    variables.put(key, value)
+    variables[key] = value
   }
 
   fun putVariables(map: Map<String, Any>) {
@@ -630,8 +630,8 @@ return ""
     if (token.startsWith(Symbol.DIVERT)) {
       val k = token.substring(2).trim({ it <= ' ' })
       if (content.containsKey(k))
-        return content.get(k)!!
-      wrapper.logException(InkRunTimeException("Could not identify container id: " + k))
+        return content[k]!!
+      wrapper.logException(InkRunTimeException("Could not identify container id: $k"))
       return BigDecimal.ZERO
     }
     if (content.containsKey(token)) {
@@ -711,7 +711,7 @@ return ""
 
   override fun getFunction(token: String): Function {
     if (hasFunction(token.toLowerCase(Locale.US)))
-      return functions.get(token.toLowerCase(Locale.US))!!
+      return functions[token.toLowerCase(Locale.US)]!!
     throw RuntimeException()
     //return //NullFunction()
     // TODO: Empty Function
@@ -728,7 +728,7 @@ return ""
 
   override fun debugInfo(): String {
     var ret = ""
-    ret += "StoryDebugInfo File: " + fileNames
+    ret += "StoryDebugInfo File: $fileNames"
     ret += if (true) " Container :" + container.id else " Container: null"
     if (container.index < container.size) {
       val cnt = container.get(container.index)
@@ -839,12 +839,12 @@ return ""
   fun contains(s: String): Boolean = fileNames.any { it.equals(s, ignoreCase = true) }
 
   companion object {
-    private val IS_NULL = "isnull"
-    private val GET_NULL = "getnull"
-    private val NOT = "not"
-    private val RANDOM = "random"
-    private val IS_KNOT = "isknot"
-    private val FLOOR = "floor"
+    private const val IS_NULL = "isnull"
+    private const val GET_NULL = "getnull"
+    private const val NOT = "not"
+    private const val RANDOM = "random"
+    private const val IS_KNOT = "isknot"
+    private const val FLOOR = "floor"
 
     private fun cleanUpText(str: String): String {
       return str.replace(Symbol.GLUE.toRegex(), " ") // clean up glue
@@ -874,23 +874,23 @@ return ""
 
   fun getDivert(d: String): Container {
     if (content.containsKey(d))
-      return content.get(d) as Container
+      return content[d] as Container
     if (content.containsKey(getValueId(d)))
-      return content.get(getValueId(d)) as Container
+      return content[getValueId(d)] as Container
     if (content.containsKey(getKnotId(d)))
-      return content.get(getKnotId(d)) as Container
+      return content[getKnotId(d)] as Container
     if (variables.containsKey(d)) {
-      val t = variables.get(d)
+      val t = variables[d]
       if (t is Container)
         return t
       else
-        throw InkRunTimeException("Attempt to divert to a variable " + d + " which is not a Container")
+        throw InkRunTimeException("Attempt to divert to a variable $d which is not a Container")
     }
-    throw InkRunTimeException("Attempt to divert to non-defined node " + d)
+    throw InkRunTimeException("Attempt to divert to non-defined node $d")
   }
 
 
-  fun checkResult(res: Any): Boolean {
+  private fun checkResult(res: Any): Boolean {
     if (res is Boolean)return res
     if (res is BigDecimal) return res > BigDecimal.ZERO
     return false

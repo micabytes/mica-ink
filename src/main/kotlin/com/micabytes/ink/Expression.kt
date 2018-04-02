@@ -15,7 +15,7 @@ import java.util.*
  * @param defaultMathContext The [MathContext] to use by default
  */
 class Expression constructor(originalExpression: String,
-                             val defaultMathContext: MathContext = MathContext.DECIMAL32) {
+                             private val defaultMathContext: MathContext = MathContext.DECIMAL32) {
   /// The expression evaluators exception class.
   class ExpressionException(message: String) : RuntimeException(message)
 
@@ -30,7 +30,7 @@ class Expression constructor(originalExpression: String,
   /// All defined operators with name and implementation.
   private val operators = TreeMap<String, Operator>(String.CASE_INSENSITIVE_ORDER)
   /// The current infix expression, with optional variable substitutions.
-  var expression: String = originalExpression.trim { it <= ' ' }
+  private var expression: String = originalExpression.trim { it <= ' ' }
     private set
 
   /**
@@ -450,7 +450,7 @@ class Expression constructor(originalExpression: String,
         throw ExpressionException("Mismatched parentheses")
       }
       if (!operators.containsKey(element)) {
-        throw ExpressionException("Unknown operator or function: " + element)
+        throw ExpressionException("Unknown operator or function: $element")
       }
       outputQueue.add(element)
     }
@@ -603,8 +603,8 @@ class Expression constructor(originalExpression: String,
     return this
   }
 
-  fun addOperator(oper: Operator) {
-    operators.put(oper.oper, oper)
+  private fun addOperator(oper: Operator) {
+    operators[oper.oper] = oper
   }
 
   private fun getRPN(vMap: VariableMap): List<String> {
@@ -621,7 +621,7 @@ class Expression constructor(originalExpression: String,
     for (token in rpn) {
       if (operators.containsKey(token)) {
         if (stack.peek() < 2) {
-          throw ExpressionException("Missing parameter(s) for operator " + token)
+          throw ExpressionException("Missing parameter(s) for operator $token")
         }
         // pop the operator's 2 parameters and add the result
         stack[stack.size - 1] = stack.peek() - 2 + 1
@@ -675,9 +675,9 @@ class Expression constructor(originalExpression: String,
     /// Definition of e: "Euler's number" as a constant, can be used in expressions as variable.
     val e = BigDecimal("2.71828182845904523536028747135266249775724709369995957496696762772407663")
     /// What character to use for decimal separators.
-    private val decimalSeparator = '.'
+    private const val decimalSeparator = '.'
     /// What character to use for minus sign (negative values).
-    private val minusSign = '-'
+    private const val minusSign = '-'
     /// The BigDecimal representation of the left parenthesis, used for parsing varying numbers of function parameters.
     private val PARAMS_START = object : LazyNumber {
       override fun eval(): BigDecimal {

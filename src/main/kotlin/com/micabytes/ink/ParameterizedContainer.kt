@@ -17,7 +17,7 @@ internal open class ParameterizedContainer(id: String,
   }
 
   fun setValue(key: String, value: Any) {
-    values.put(key, value)
+    values[key] = value
   }
 
   companion object {

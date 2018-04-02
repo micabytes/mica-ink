@@ -36,7 +36,7 @@ object InkParser {
               if (currentContainer != null)
                 currentContainer.add(current)
               if (!content.containsKey(current.id))
-                content.put(current.id, current)
+                content[current.id] = current
             }
           }
           trimmedLine = trimmedLine.substring(0, trimmedLine.indexOf(Symbol.HASHMARK)).trim({ it <= ' ' })
@@ -50,7 +50,7 @@ object InkParser {
           if (current is Container)
             currentContainer = current
           if (!content.containsKey(current.id))
-            content.put(current.id, current)
+            content[current.id] = current
           if (currentContainer != null && topContainer == null)
             topContainer = currentContainer
         }
@@ -58,7 +58,7 @@ object InkParser {
         lineNumber++
       }
     }
-    if (topContainer == null) throw InkParseException("Could not detect a root knot node in " + fileName)
+    if (topContainer == null) throw InkParseException("Could not detect a root knot node in $fileName")
     val story = Story(provider, fileName, topContainer!!, content)
     for (includeFile in includes) {
       story.add(parse(provider, includeFile))
@@ -67,7 +67,7 @@ object InkParser {
   }
 
   @Throws(InkParseException::class)
-  internal fun parseLine(lineNumber: Int, line: String, currentContainer: Container?): List<Content> {
+  private fun parseLine(lineNumber: Int, line: String, currentContainer: Container?): List<Content> {
     val firstChar = if (line.isEmpty()) Symbol.WHITESPACE else line[0]
     when (firstChar) {
       Symbol.HEADER -> {
@@ -76,13 +76,13 @@ object InkParser {
         }
         if (Stitch.isStitchHeader(line)) {
           if (currentContainer == null)
-            throw InkParseException("Stitch without a containing Knot at line " + lineNumber) // add fileName
+            throw InkParseException("Stitch without a containing Knot at line $lineNumber") // add fileName
           return parseContainer(Stitch(line, Stitch.getParent(currentContainer), lineNumber))
         }
       }
       Symbol.CHOICE_DOT, Symbol.CHOICE_PLUS -> {
         if (currentContainer == null)
-          throw InkParseException("Choice without an anchor at line " + lineNumber) // add fileName
+          throw InkParseException("Choice without an anchor at line $lineNumber") // add fileName
         val choiceDepth = Choice.getChoiceDepth(line)
         return parseContainer(Choice(line, choiceDepth, Choice.getParent(currentContainer, choiceDepth), lineNumber))
       }
@@ -90,7 +90,7 @@ object InkParser {
         if (line.startsWith(Symbol.DIVERT))
           return parseDivert(lineNumber, line, currentContainer)
         if (currentContainer == null)
-          throw InkParseException("Dash without an anchor at line " + lineNumber) // add fileName
+          throw InkParseException("Dash without an anchor at line $lineNumber") // add fileName
         if (isConditional(currentContainer)) {
           return parseContainer(ConditionalOption(line, getConditional(currentContainer), lineNumber))
         }
@@ -101,7 +101,7 @@ object InkParser {
       }
       Symbol.VAR_DECL, Symbol.VAR_STAT -> {
         if (currentContainer == null)
-          throw InkParseException("Declaration is not inside a knot/container at line " + lineNumber) // add fileName
+          throw InkParseException("Declaration is not inside a knot/container at line $lineNumber") // add fileName
         if (Declaration.isVariableHeader(line)) {
           return parseContainer(Declaration(lineNumber, line, currentContainer))
         }
@@ -130,7 +130,7 @@ object InkParser {
     return list
   }
 
-  fun isConditional(currentContainer: Container?): Boolean {
+  private fun isConditional(currentContainer: Container?): Boolean {
     var container = currentContainer
     while (container != null) {
       if (container is Conditional) return true
@@ -139,7 +139,7 @@ object InkParser {
     return false
   }
 
-  fun getConditional(currentContainer: Container): Container {
+  private fun getConditional(currentContainer: Container): Container {
     var container = currentContainer
     while (container != null) {
       if (container is Conditional) return container

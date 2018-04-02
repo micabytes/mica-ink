@@ -1,7 +1,6 @@
 package com.micabytes.ink
 
 import com.micabytes.ink.util.InkParseException
-import com.micabytes.ink.util.InkRunTimeException
 import java.util.*
 
 internal class Conditional @Throws(InkParseException::class)
@@ -17,7 +16,7 @@ constructor(header: String,
     SEQUENCE_STOP
   }
 
-  var seqType: SequenceType = SequenceType.SEQUENCE_NONE
+  private var seqType: SequenceType = SequenceType.SEQUENCE_NONE
 
   init {
     val str = header.substring(1).trim({ it <= ' ' })
@@ -64,10 +63,10 @@ constructor(header: String,
   }
 
   companion object {
-    private val STOPPING = "stopping"
-    private val SHUFFLE = "shuffle"
-    private val CYCLE = "cycle"
-    private val ONCE = "once"
+    private const val STOPPING = "stopping"
+    private const val SHUFFLE = "shuffle"
+    private const val CYCLE = "cycle"
+    private const val ONCE = "once"
 
     fun isConditionalHeader(str: String): Boolean {
       return str.startsWith(Symbol.CBRACE_LEFT) && !str.contains(Symbol.CBRACE_RIGHT)

@@ -6,7 +6,7 @@ import java.util.Random
 
 @SuppressWarnings("UtilityClass")
 object StoryText {
-  private val ERROR = "(ERROR:"
+  private const val ERROR = "(ERROR:"
 
   @JvmStatic
   fun getText(text: String, count: Int, variables: VariableMap): String {
@@ -15,7 +15,7 @@ object StoryText {
       val start = ret.lastIndexOf(Symbol.CBRACE_LEFT)
       val end = ret.indexOf(Symbol.CBRACE_RIGHT, start)
       if (end < 0) {
-        variables.logException(InkRunTimeException("Mismatched curly braces in text: " + text))
+        variables.logException(InkRunTimeException("Mismatched curly braces in text: $text"))
         return ret
       }
       val s = ret.substring(start, end + 1)

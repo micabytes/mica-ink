@@ -66,7 +66,7 @@ object StoryLoader {
                     val varName = p.currentName
                     val obj = loadObjectStream(p, story)
                     if (obj != null)
-                      pContainer?.values!!.put(varName, obj)
+                      pContainer?.values!![varName] = obj
                   }
                 }
                 else -> {
@@ -99,7 +99,7 @@ object StoryLoader {
             val varName = p.currentName
             val obj = loadObjectStream(p, story)
             if (obj != null) {
-              story.variables.put(varName, obj)
+              story.variables[varName] = obj
             }
           }
         }
@@ -120,8 +120,7 @@ object StoryLoader {
     if (token.isNumeric)
       return BigDecimal(p.text)
     val str = p.text
-    val obj = story.wrapper.getStoryObject(str)
-    return obj
+    return story.wrapper.getStoryObject(str)
   }
 
 }

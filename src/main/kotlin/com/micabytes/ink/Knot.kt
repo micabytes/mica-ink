@@ -22,12 +22,12 @@ internal class Knot(header: String,
     val callingContainer = story.container
     story.container = this
     for (i in parameters.indices)
-      values.put(parameters[i], params[i])
+      values[parameters[i]] = params[i]
     for (c in children) {
       when (c) {
         is Declaration -> {
           if (c.text.startsWith(Symbol.RETURN)) {
-            values.put(Symbol.RETURN, "")
+            values[Symbol.RETURN] = ""
             c.evaluate(story)
             story.container = callingContainer
             return values[Symbol.RETURN]!!
@@ -41,7 +41,7 @@ internal class Knot(header: String,
             when (oc) {
               is Declaration -> {
                 if (oc.text.startsWith(Symbol.RETURN)) {
-                  values.put(Symbol.RETURN, "")
+                  values[Symbol.RETURN] = ""
                   oc.evaluate(story)
                   story.container = callingContainer
                   return values[Symbol.RETURN]!!
@@ -67,7 +67,7 @@ internal class Knot(header: String,
 
   companion object {
 
-    private val KNOT_HEADER = "=="
+    private const val KNOT_HEADER = "=="
 
     fun isKnot(str: String): Boolean {
       return str.startsWith(KNOT_HEADER)
@@ -79,7 +79,7 @@ internal class Knot(header: String,
         pos++
       }
       val header = StringBuilder(pos + 1)
-      for (i in 0..pos - 1)
+      for (i in 0 until pos)
         header.append(Symbol.HEADER)
       var fullId = id.replace(header.toString().toRegex(), "").trim({ it <= ' ' })
       if (fullId.startsWith(Symbol.FUNCTION)) {

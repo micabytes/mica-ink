@@ -3,36 +3,36 @@ package com.micabytes.ink
 /** Utility class for Ink constants/symbols
  */
 object Symbol {
-  internal val BRACE_LEFT = '('
-  internal val BRACE_RIGHT = ')'
-  val CBRACE_LEFT = '{'
-  val CBRACE_RIGHT = '}'
-  internal val SBRACE_LEFT = '['
-  internal val SBRACE_RIGHT = ']'
-  internal val WHITESPACE = ' '
-  internal val HEADER = '='
-  internal val CHOICE_DOT = '*'
-  internal val CHOICE_PLUS = '+'
-  internal val COLON = ':'
-  internal val COMMENT = "//"
-  internal val DASH = '-'
-  internal val DOT = '.'
-  internal val EVENT = "event"
-  internal val HASHMARK = '#'
-  internal val INCLUDE = "INCLUDE"
-  internal val GLUE = "<>"
-  internal val DIVERT = "->"
+  internal const val BRACE_LEFT = '('
+  internal const val BRACE_RIGHT = ')'
+  const val CBRACE_LEFT = '{'
+  const val CBRACE_RIGHT = '}'
+  internal const val SBRACE_LEFT = '['
+  internal const val SBRACE_RIGHT = ']'
+  internal const val WHITESPACE = ' '
+  internal const val HEADER = '='
+  internal const val CHOICE_DOT = '*'
+  internal const val CHOICE_PLUS = '+'
+  internal const val COLON = ':'
+  internal const val COMMENT = "//"
+  internal const val DASH = '-'
+  internal const val DOT = '.'
+  internal const val EVENT = "event"
+  internal const val HASHMARK = '#'
+  internal const val INCLUDE = "INCLUDE"
+  internal const val GLUE = "<>"
+  internal const val DIVERT = "->"
   //internal val DIVERT_END = "END"
-  internal val THIS = "this"
-  internal val FUNCTION = "function"
-  internal val RETURN = "return"
-  internal val RETURNEQ = "return ="
-  internal val VAR_DECL = 'V'
-  internal val VAR_STAT = '~'
-  internal val NULL = "NULLs"
-  internal val FALSE = "FALSE"
-  internal val TRUE = "TRUE"
-  internal val PI = "PI"
-  internal val e = "e"
+  internal const val THIS = "this"
+  internal const val FUNCTION = "function"
+  internal const val RETURN = "return"
+  internal const val RETURNEQ = "return ="
+  internal const val VAR_DECL = 'V'
+  internal const val VAR_STAT = '~'
+  internal const val NULL = "NULLs"
+  internal const val FALSE = "FALSE"
+  internal const val TRUE = "TRUE"
+  internal const val PI = "PI"
+  internal const val e = "e"
 
 }
