@@ -5,7 +5,7 @@
 
 Note: mica-ink is no longer being actively developed. In current implementation, I'm now instead using [blade-ink](http://github.com/bladecoder/blade-ink) and using external functions + extra text processing to get around the limitations of Ink. The advantage of doing this is that it allows for a better utilization of Ink's native tools (such as Inky) + it helps to concentrate the "Java" community on one library, rather than split us up over multiple OSS projects. Thanks for following this project.
 
-# Introduction
+# README
 [mica-ink](http://github.com/micabytes/mica-ink) is a Kotlin (originally Java) implementation of Inkle Studios (@inkle) scripting language [ink](http://github.com/inkle/ink)
 for writing interactive narrative. It was developed in order to have an ink alternative for Java, and is used as the narrative engine in my various projects;
 most notable [Pirates and Traders 2](https://play.google.com/store/apps/details?id=com.micabytes.pirates2). StoryBytes is a simple open-source sample 
